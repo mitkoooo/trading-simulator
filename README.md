@@ -32,7 +32,7 @@ This project implements a discrete-time stock trading simulator designed to mode
 ## Technologies Used
 
 - **Language**: Python 3.11+
-- **Libraries**: `heapq`, `pandas`, `datetime`, `streamlit` (optional), `pytest`
+- **Libraries**: `pandas`, `streamlit`, `pytest`
 - **Design Paradigms**: Modular OOP, event-driven simulation, separation of concerns
 
 ---
