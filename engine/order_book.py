@@ -12,11 +12,11 @@ class OrderBook:
         self.sell_heap: List[Order] = []
         pass
 
-    def add_buy(self, order: Order) -> None:
+    def add_order(self, order: Order) -> None:
         # TODO: docstring
         pass
 
-    def add_sell(self, order: Order) -> None:
+    def _add(self, heap: List[Order], order: Order, max_heap: bool) -> None:
         # TODO: docstring
         pass
 

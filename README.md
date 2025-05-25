@@ -121,3 +121,7 @@ Email: [vadim@mitko.me](vadim@mitko.me)
 GitHub: [github.com/mitkoooo](https://github.com/mitkoooo)
 
 LinkedIn: [linkedin.com/in/vadim-mitko-b021772a1/](https://linkedin.com/in/vadim-mitko-b021772a1/)
+
+## Week 1 Design
+
+Week 1 uses a uniform ±1% stub; in Week 8 we’ll swap in Gaussian GBM via tick_model.

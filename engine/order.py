@@ -3,7 +3,26 @@ from typing import Optional, Literal
 
 
 class Order:
-    # TODO: docstring
+    """A client order to buy or sell shares on the exchange.
+
+    Attributes:
+        trader_id (int): ID of the trader submitting the order.
+        symbol (str): Stock ticker (e.g. "AAPL").
+        order_type (Literal["buy", "sell"]): Direction of the order.
+        quantity (int): Number of shares; must be > 0.
+        limit_price (Optional[float]): Limit price; None for market orders.
+        order_id (Optional[int]): Unique ID, auto-generated if omitted.
+        timestamp (datetime): Creation time of the order.
+
+    Example:
+        >>> o = Order(
+        ...     trader_id=1,
+        ...     symbol="MTKO",
+        ...     order_type="buy",
+        ...     quantity=2,
+        ...     limit_price=999.0
+        ... )
+    """
 
     def __init__(
         self,
@@ -16,24 +35,42 @@ class Order:
         order_id: Optional[int] = None,
         timestamp: Optional[datetime] = None,
     ):
-        # TODO: docstring
+        """Initialize a new Order.
 
-        # system‐generated if not provided:
-        self.order_id = order_id  # TODO: add ID generator
-        self.timestamp = timestamp or datetime.now()
+        Args:
+            trader_id (int): ID of the submitting trader.
+            symbol (str): Stock ticker.
+            order_type (Literal['buy','sell']): One of 'buy' or 'sell'.
+            quantity (int): >0 shares to trade.
+            limit_price (Optional[float]): Limit price; None for market orders.
+            order_id (Optional[int]): Unique ID, auto-generated if None.
+            timestamp (Optional[datetime]): Creation time, auto-set if None.
 
-        self.order_id = order_id
+        Raises:
+            ValueError: If quantity <= 0 or order_type invalid.
+        """
+
+        if quantity <= 0:
+            raise ValueError(
+                f"Order must have quantity > 0. Current order quantity: {quantity}."
+            )
+
+        if order_type not in ["buy", "sell"]:
+            raise ValueError("Invalid order type. Must be of type: 'buy' or 'sell'.")
+
+        # TODO: implement auto-generation of order_id
         self.trader_id = trader_id
         self.symbol = symbol
-        self.order_type = order_type  # 'buy' or 'sell'
+        self.order_type = order_type
         self.quantity = quantity
         self.limit_price = limit_price
-        self.timestamp = timestamp
+        self.order_id = order_id  # or auto generated
+        self.timestamp = timestamp or datetime.now()
 
     def __eq__(self, other: "Order") -> bool:
-        # TODO: docstring
+        """Compare orders by order_id for equality."""
         pass
 
     def __lt__(self, other: "Order") -> bool:
-        # TODO: docstring
+        """Define ordering: e.g., by price then timestamp for heap operations."""
         pass
