@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import Dict, List
 
-from order_book import OrderBook
-from stock import Stock
-from order import Order
-from trade import Trade
+from .order_book import OrderBook
+from .stock import Stock
+from .order import Order
+from .trade import Trade
 
 
 class Exchange:

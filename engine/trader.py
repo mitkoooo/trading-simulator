@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional
-from order import Order
+from .order import Order
 
 
 class Trader:
@@ -33,27 +33,39 @@ class Trader:
         self.transaction_log: List[Order] = []
 
     def place_order(
-        self, symbol: str, order_type: str, qty: int, price: Optional[float]
+        self, symbol: str, order_type: str, quantity: int, price: Optional[float]
     ) -> Order:
-        """Construct and enqueue an Order for matching.
+        """Create a new Order for this trader.
 
         Args:
-            symbol (str): Ticker symbol, e.g. "AAPL".
-            order_type (str): A literal of either "buy" or "sell".
-            qty (int): Number of shares; must be > 0.
-            price (Optional[float]): Limit price for limit orders;
-                None indicates a market order.
+            symbol (str): Stock ticker, e.g. "AAPL".
+            order_type (str): "buy" or "sell".
+            quantity (int): Shares to trade; must be > 0.
+            price (Optional[float]): Limit price, or None for market order.
 
         Returns:
-            Order: The newly created Order object.
-
-        Side-Effects:
-            - Adds the Order to the Exchange's order queue.
+            Order: the created order instance.
 
         Raises:
-            ValueError: If qty <= 0 or order_type not in {"buy", "sell"}.
+            ValueError: If quantity <= 0 or order_type is invalid.
+
+        Note:
+            Caller must enqueue the returned Order with Exchange.add_order().
         """
-        pass
+
+        if quantity <= 0:
+            raise ValueError(f"quantity must be > 0 (got {quantity})")
+
+        if order_type not in ("buy", "sell"):
+            raise ValueError(f"order_type must be 'buy' or 'sell' (got {order_type!r})")
+
+        return Order(
+            trader_id=self.trader_id,
+            symbol=symbol,
+            order_type=order_type,
+            quantity=quantity,
+            limit_price=price,
+        )
 
     def update_portfolio(
         self, order: Order, executed_qty: int, execution_price: float

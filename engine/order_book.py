@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from order import Order
+from .order import Order
 
 
 class OrderBook:
