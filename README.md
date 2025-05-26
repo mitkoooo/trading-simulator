@@ -56,7 +56,7 @@ This project implements a discrete-time stock trading simulator designed to mode
 ### Prerequisites
 
 - Python 3.11 or newer
-- `pip`, `venv`, or `poetry` for dependency management
+- `venv` for dependency management
 
 ### Installation
 
