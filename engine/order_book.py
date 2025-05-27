@@ -10,11 +10,13 @@ class OrderBook:
         # TODO: docstring
         self.buy_heap: List[Order] = []
         self.sell_heap: List[Order] = []
-        pass
+        self._heap_map = {"buy": self.buy_heap, "sell": self.sell_heap}
 
     def add_order(self, order: Order) -> None:
-        # TODO: docstring
-        pass
+        if order.order_type not in self._heap_map:
+            raise ValueError(f"Unknown order type: {order.order_type}")
+
+        (self._heap_map[order.order_type]).append(order)
 
     def _add(self, heap: List[Order], order: Order, max_heap: bool) -> None:
         # TODO: docstring
