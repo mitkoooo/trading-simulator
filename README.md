@@ -40,13 +40,16 @@ This project implements a discrete-time stock trading simulator designed to mode
 ## Repository Structure
 
 ```bash
-    trading-simulator/
-    ├── engine/
-    ├── data/
-    ├── scripts/
-    ├── tests/
-    ├── main.py
-    └── README.md
+trading-simulator/
+├── engine/
+├── data/
+├── scripts/
+├── cli/
+├── view/
+├── tests/
+├── logging_config.py
+├── main.py
+└── README.md
 ```
 
 ---
@@ -58,7 +61,7 @@ This project implements a discrete-time stock trading simulator designed to mode
 - Python 3.11 or newer
 - `pip`, `venv` for dependency management
 
-### Installation
+### Clone & install dependencies
 
 ```bash
 git clone https://github.com/vadimmitko/trading-simulator.git
@@ -72,16 +75,45 @@ pip install -r requirements.txt
 
 ## Usage
 
-To simulate a trading session:
+Start the CLI:
 
 ```bash
 python main.py
 ```
 
-To evaluate a custom bot strategy or run performance tests:
+You’ll see:
 
-```bash
-python scripts/sample_bot.py
+```text
+Welcome to York Stock Exchange. To continue please enter one of the following commands:
+
+    next - To update stock prices
+    match - To match orders
+    status - To display pending orders
+    buy - To buy a stock
+    sell - To sell a stock
+    quit - to exit York Stock Exchange
+```
+
+Use the commands
+
+```text
+>>> next
+AAPL: $150.23
+MSFT: $295.12
+…
+>>> buy AAPL 5 150.00
+Order placed for AAPL.
+Cash balance: $999250.00
+Holdings: {'AAPL': 5}
+
+>>> status
+[2025-05-28 10:15:00] Pending Buy Order: 5 shares of AAPL at $150.00.
+
+>>> match AAPL
+No trades yet
+
+>>> quit
+Thank you for using York Stock Exchange.
 ```
 
 ---

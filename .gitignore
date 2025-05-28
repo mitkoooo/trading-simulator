@@ -1,2 +1,5 @@
 venv/
 trading.log
+
+__pycache__/
+*.py[cod]
