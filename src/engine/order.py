@@ -55,6 +55,11 @@ class Order:
                 f"Order must have quantity > 0. Current order quantity: {quantity}."
             )
 
+        if limit_price and limit_price <= 0:
+            raise ValueError(
+                f"Order must have limit_price > 0. Current limit price: {limit_price}"
+            )
+
         if order_type not in ["buy", "sell"]:
             raise ValueError("Invalid order type. Must be of type: 'buy' or 'sell'.")
 

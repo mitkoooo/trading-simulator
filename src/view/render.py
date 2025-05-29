@@ -3,10 +3,8 @@ from engine.trader import Trader
 
 
 def display_prices(exchange: Exchange):
-    print("")
+    print()
     for stock in exchange.market_data.values():
-        nxt = stock.simulate_price_tick()
-        stock.update_price(nxt)
         print(f"{stock.symbol}: ${stock.price:.2f}")
     print()
 

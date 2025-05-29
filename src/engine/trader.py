@@ -14,7 +14,7 @@ class Trader:
         transaction_log (List[Order]): List of previous transactions.
 
     Example:
-        >>> t = Trader(trader_id=1, starting_cash=10000.0)
+        >>> t = Trader(trader_id=1, cash_balance=10000.0)
         >>> o = t.place_order("MTKO", "buy", 42, 999.0)
     """
 

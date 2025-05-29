@@ -2,11 +2,12 @@ from cli.validation import parse_order, validate_symbol
 from view.render import display_prices, display_portfolio, display_pending_orders
 from engine.exchange import Exchange
 from engine.trader import Trader
-from logging_config import setup_logger
+import logging
+from logging_config import LOG_NAME
 
 from typing import List
 
-logger = setup_logger("york_exchange")
+logger = logging.getLogger(LOG_NAME)
 
 
 def handle_order(exchange: Exchange, trader: Trader, order_type: str, args: list[str]):
@@ -47,6 +48,7 @@ def log_command(fn):
 
 @log_command
 def do_next(exchange: Exchange, trader: Trader):
+    exchange.process_tick()
     display_prices(exchange)
     display_portfolio(trader)
 
@@ -73,7 +75,7 @@ def do_place_order(
 
 @log_command
 def do_match(exchange: Exchange, args: List[str]):
-    if len(args) != 1:
+    if not args or len(args) != 1:
         print("Usage: match SYMBOL")
         logger.warning(
             "%s command usage error: args=%r — %s",

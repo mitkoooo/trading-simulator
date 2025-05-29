@@ -21,12 +21,12 @@ class Exchange:
         current_time (datetime): Timestamp of the last processed tick.
 
     Example:
-        >>> from trader import Trader
-        >>> from exchange import Exchange
-        >>> from stock import Stock
+        >>> from engine.trader import Trader
+        >>> from engine.exchange import Exchange
+        >>> from engine.stock import Stock
         >>> market = {"MTKO": Stock("MTKO", 100.0)}
         >>> ex = Exchange(market)
-        >>> t = Trader(trader_id=1, starting_cash=10000.0)
+        >>> t = Trader(trader_id=1, cash_balance=10000.0)
         >>> o = t.place_order("MTKO", "buy", 42, 999.0)
         >>> ex.add_order(o)
         >>> ex.process_tick()
@@ -58,6 +58,10 @@ class Exchange:
         """Advance the exchange clock and update market prices based on stocks."""
         self.current_time = datetime.now()
 
+        for stock in self.market_data.values():
+            nxt = stock.simulate_price_tick()
+            stock.update_price(nxt)
+
     def match_orders(self, symbol: str) -> List[Trade]:
         """Match buy and sell orders in the specified symbol's order book.
 
@@ -67,4 +71,4 @@ class Exchange:
         Returns:
             List[Trade]: List of executed trades for this symbol.
         """
-        pass
+        return []

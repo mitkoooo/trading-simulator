@@ -3,11 +3,11 @@ import sys
 import os
 
 CLI_LOOP_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "main.py")
+    os.path.join(os.path.dirname(__file__), "..", "src", "main.py")
 )
 
 
-def run_cli(commands: str):
+def run_cli(commands: str, tmp_path):
     """Helper: run main.py with a sequence of newline-separated commands."""
     proc = subprocess.run(
         [sys.executable, CLI_LOOP_PATH],
@@ -15,16 +15,26 @@ def run_cli(commands: str):
         text=True,
         capture_output=True,
         timeout=5.00,
+        cwd=str(tmp_path),
     )
 
     assert proc.returncode == 0, f"CLI crashed: {proc.stderr!r}"
     return proc.stdout
 
 
-def test_smoke_flow():
+def test_smoke_flow(tmp_path):
     cmds = "\n".join(["next", "buy AAPL 1 150.0", "status", "quit"]) + "\n"
-    output = run_cli(cmds)
+    output = run_cli(cmds, tmp_path)
 
     assert "AAPL" in output
     assert "Cash balance:" in output
     assert "Pending" in output or "order" in output.lower()
+
+    # Verify that logs went into tmp_path/trading.log, not project root
+    log_file = tmp_path / "trading.log"
+    assert log_file.exists()
+    content = log_file.read_text()
+    print(content)
+    assert "NEXT command received" and "NEXT command processed" in content
+    assert "BUY order queued: symbol=AAPL" in content
+    assert "STATUS viewed:" in content

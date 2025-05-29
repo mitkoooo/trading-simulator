@@ -2,9 +2,10 @@ from engine.exchange import Exchange
 from engine.trader import Trader
 
 from typing import List, Tuple
-from logging_config import setup_logger
+import logging
+from logging_config import LOG_NAME
 
-logger = setup_logger("york_exchange")
+logger = logging.getLogger(LOG_NAME)
 
 
 def parse_order(args: List[str]) -> Tuple[str, int, float]:
