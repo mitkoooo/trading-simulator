@@ -13,7 +13,7 @@ class Trader:
         holdings (Dict[str, int]): A map of the trader's stock holdings.
         transaction_log (List[Order]): List of previous transactions.
 
-    Example:
+    Examples:
         >>> t = Trader(trader_id=1, cash_balance=10000.0)
         >>> o = t.place_order("MTKO", "buy", 42, 999.0)
     """
@@ -26,6 +26,10 @@ class Trader:
         """Initialize trader with ID and starting cash.
 
         Holdings and transaction_log start empty.
+
+        Examples:
+        >>> t = Trader(trader_id=1, cash_balance=10000.0)
+        >>> o = t.place_order("MTKO", "buy", 42, 999.0)
         """
         self.trader_id = trader_id
         self.cash_balance = cash_balance
@@ -51,6 +55,15 @@ class Trader:
 
         Note:
             Caller must enqueue the returned Order with Exchange.add_order().
+
+        Examples:
+        >>> from engine.exchange import Exchange
+        >>> from engine.stock import Stock
+        >>> data = {"MTKO": Stock("MTKO", 100.0)}
+        >>> exchange = Exchange(market_data=data)
+        >>> t = Trader(trader_id=1, cash_balance=10000.0)
+        >>> o = t.place_order("MTKO", "buy", 42, 999.0)
+        >>> exchange.add_order(o)
         """
 
         if quantity <= 0:

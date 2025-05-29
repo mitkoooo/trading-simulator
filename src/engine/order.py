@@ -14,7 +14,7 @@ class Order:
         order_id (Optional[int]): Unique ID, auto-generated if omitted.
         timestamp (datetime): Creation time of the order.
 
-    Example:
+    Examples:
         >>> o = Order(
         ...     trader_id=1,
         ...     symbol="MTKO",
@@ -48,6 +48,15 @@ class Order:
 
         Raises:
             ValueError: If quantity <= 0 or order_type invalid.
+
+        Examples:
+        >>> o = Order(
+        ...     trader_id=1,
+        ...     symbol="MTKO",
+        ...     order_type="buy",
+        ...     quantity=2,
+        ...     limit_price=999.0
+        ... )
         """
 
         if quantity <= 0:
