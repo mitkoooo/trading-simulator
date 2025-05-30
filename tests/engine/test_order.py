@@ -1,4 +1,3 @@
-import pytest
 from engine.order import Order
 
 

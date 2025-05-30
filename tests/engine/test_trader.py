@@ -1,4 +1,3 @@
-import pytest
 from engine.trader import Trader
 from engine.order import Order
 

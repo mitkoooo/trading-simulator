@@ -1,4 +1,3 @@
-import pytest
 from engine.stock import Stock
 
 

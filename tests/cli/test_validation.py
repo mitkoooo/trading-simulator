@@ -1,4 +1,3 @@
-import pytest
 from cli.validation import validate_symbol, parse_order
 
 

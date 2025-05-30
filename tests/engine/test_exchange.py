@@ -1,4 +1,3 @@
-import pytest
 from engine.exchange import Exchange
 from engine.trader import Trader
 

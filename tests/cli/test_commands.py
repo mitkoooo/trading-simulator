@@ -1,4 +1,3 @@
-import pytest
 import logging
 
 from cli.commands import validate_symbol, handle_order, do_next
@@ -25,16 +24,14 @@ def test_validate_symbol_unknown(sample_market, caplog):
     assert "BUY command usage error" in caplog.text
 
 
-def test_handle_order_invalid_args_num(sample_market: Exchange, caplog):
+def test_handle_order_invalid_args_num(sample_market: Exchange, caplog, trader: Trader):
     caplog.set_level(logging.WARNING)
 
-    t = Trader(trader_id=1, cash_balance=100_000_000)
-
-    o = Order(trader_id=t.trader_id, symbol="AAPL", order_type="buy", quantity=42)
+    o = Order(trader_id=trader.trader_id, symbol="AAPL", order_type="buy", quantity=42)
 
     handle_order(
         exchange=sample_market,
-        trader=t,
+        trader=trader,
         order_type=o.order_type,
         args=["AAPL", "42"],
     )
@@ -43,11 +40,10 @@ def test_handle_order_invalid_args_num(sample_market: Exchange, caplog):
     assert len(sample_market.order_books["AAPL"].buy_heap) == 0
 
 
-def test_handle_order_adds_order(sample_market: Exchange):
-    t = Trader(trader_id=1, cash_balance=100_000_000)
+def test_handle_order_adds_order(sample_market: Exchange, trader: Trader):
 
     o = Order(
-        trader_id=t.trader_id,
+        trader_id=trader.trader_id,
         symbol="AAPL",
         order_type="buy",
         quantity=42,
@@ -56,7 +52,7 @@ def test_handle_order_adds_order(sample_market: Exchange):
 
     handle_order(
         exchange=sample_market,
-        trader=t,
+        trader=trader,
         order_type=o.order_type,
         args=["AAPL", "42", "100.00"],
     )
@@ -64,15 +60,13 @@ def test_handle_order_adds_order(sample_market: Exchange):
     assert len(sample_market.order_books["AAPL"].buy_heap) == 1
 
 
-def test_do_next_updates_prices(sample_market: Exchange):
+def test_do_next_updates_prices(sample_market: Exchange, trader: Trader):
     old_p = 100.0
-    t = Trader(1, 1000.0)
-    do_next(sample_market, t)
+    do_next(sample_market, trader)
     assert sample_market.market_data.get("AAPL").price != old_p
 
 
-def test_do_next_updates_time(sample_market: Exchange):
+def test_do_next_updates_time(sample_market: Exchange, trader: Trader):
     old_time = sample_market.current_time
-    t = Trader(1, 1000.0)
-    do_next(sample_market, t)
+    do_next(sample_market, trader)
     assert sample_market.current_time != old_time
