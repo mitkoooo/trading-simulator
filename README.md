@@ -102,7 +102,9 @@ AAPL: $150.23
 MSFT: $295.12
 …
 >>> buy AAPL 5 150.00
+
 Order placed for AAPL.
+
 Cash balance: $999250.00
 Holdings: {'AAPL': 5}
 
@@ -154,6 +156,53 @@ GitHub: [github.com/mitkoooo](https://github.com/mitkoooo)
 
 LinkedIn: [linkedin.com/in/vadim-mitko-b021772a1/](https://linkedin.com/in/vadim-mitko-b021772a1/)
 
-## Week 1 Design
+## Week 1 Complete
 
-Week 1 uses a uniform ±1% stub; in Week 8 we’ll swap in Gaussian GBM via tick_model.
+#### Core CLI & Engine
+
+- **Interactive CLI** with commands:
+
+  - `next` — advance prices
+  - `buy SYMBOL QTY PRICE` / `sell SYMBOL QTY PRICE` — enqueue orders
+  - `status` — list pending orders
+  - `match SYMBOL` — stubbed matching engine
+
+- **Uniform ±1% tick stub** for Week 1 (will swap to Gaussian GBM in Week 8).
+
+#### Observability
+
+- **Structured logging** of every command (file handler, custom formatter).
+- **Smoke test** driving the CLI via subprocess to catch errors.
+
+#### Quality & Documentation
+
+- **Unit tests** covering all `engine/` classes and CLI validation logic (≥ 80 % coverage).
+- **Docstrings** on every public method + executable examples passing `pytest --doctest-modules`.
+
+---
+
+### Quick demo
+
+```text
+$ python main.py
+Welcome to York Stock Exchange!
+
+>>> next
+AAPL: $150.23
+MSFT: $295.12
+
+>>> buy AAPL 5 150.00
+Order placed for AAPL.
+
+Cash balance: $999250.00
+Holdings: {'AAPL': 5}
+
+>>> status
+[2025-05-28 10:15:00] Pending Buy Order: 5 shares of AAPL at $150.00.
+
+>>> match AAPL
+No trades yet
+
+>>> quit
+Thank you for using York Stock Exchange.
+```
