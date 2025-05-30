@@ -1,6 +1,13 @@
 import logging
 
-from cli.commands import validate_symbol, handle_order, do_next
+from cli.commands import (
+    validate_symbol,
+    handle_order,
+    do_next,
+    do_place_order,
+    do_match,
+    do_status,
+)
 
 from engine.exchange import Exchange
 from engine.order import Order
@@ -70,3 +77,19 @@ def test_do_next_updates_time(sample_market: Exchange, trader: Trader):
     old_time = sample_market.current_time
     do_next(sample_market, trader)
     assert sample_market.current_time != old_time
+
+
+def test_do_place_order_places_order(sample_market: Exchange, trader: Trader):
+    do_place_order(sample_market, trader, "buy", ["AAPL", "1", "100"])
+
+    assert len(sample_market.order_books.get("AAPL").buy_heap) == 1
+    assert sample_market.order_books.get("AAPL").buy_heap[0].quantity == 1
+    assert sample_market.order_books.get("AAPL").buy_heap[0].limit_price == 100.00
+
+
+def test_do_match_invalid_args_num(sample_market: Exchange, caplog):
+    caplog.set_level(logging.WARNING)
+
+    do_match(sample_market, [])
+
+    assert "MATCH command usage error" in caplog.text
