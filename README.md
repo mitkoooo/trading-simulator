@@ -41,14 +41,15 @@ This project implements a discrete-time stock trading simulator designed to mode
 
 ```bash
 trading-simulator/
-├── engine/
+├── src/
+│   ├── cli/
+│   ├── engine/
+│   ├── view/
+│   ├── logging_config.py
+│   └── main.py
 ├── data/
 ├── scripts/
-├── cli/
-├── view/
 ├── tests/
-├── logging_config.py
-├── main.py
 └── README.md
 ```
 
