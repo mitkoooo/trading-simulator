@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional, Literal
+import uuid
 
 
 class Order:
@@ -72,19 +73,30 @@ class Order:
         if order_type not in ["buy", "sell"]:
             raise ValueError("Invalid order type. Must be of type: 'buy' or 'sell'.")
 
-        # TODO: implement auto-generation of order_id
         self.trader_id = trader_id
         self.symbol = symbol
         self.order_type = order_type
         self.quantity = quantity
         self.limit_price = limit_price
-        self.order_id = order_id  # or auto generated
+        self.order_id = order_id or str(uuid.uuid4())  # or auto-generated
         self.timestamp = timestamp or datetime.now()
 
     def __eq__(self, other: "Order") -> bool:
-        """Compare orders by order_id for equality."""
-        pass
+        """Compare orders by order_id for equality.
+
+        (Implemented in Week 2.)
+
+        Raises:
+            NotImplementedError: until matching engine is hooked up.
+        """
+        raise NotImplementedError("update_portfolio is not yet implemented")
 
     def __lt__(self, other: "Order") -> bool:
-        """Define ordering: e.g., by price then timestamp for heap operations."""
-        pass
+        """Define ordering: e.g., by price then timestamp for heap operations.
+
+        (Implemented in Week 2.)
+
+        Raises:
+            NotImplementedError: until matching engine is hooked up.
+        """
+        raise NotImplementedError("update_portfolio is not yet implemented")

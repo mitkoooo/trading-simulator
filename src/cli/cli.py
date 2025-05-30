@@ -84,7 +84,7 @@ class CLI:
         >>> exchange = Exchange(market_data={})
         >>> trader = Trader(trader_id=1, cash_balance=1000)
         >>> cli = CLI(exchange, trader, logger)
-        >>> # This would start an interactive loop; skip execution in doctest
+        >>> # This would start an interactive loop
         >>> cli.run()  # doctest: +SKIP
         """
         while True:

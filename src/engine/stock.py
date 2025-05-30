@@ -110,22 +110,22 @@ class Stock:
     def gbm_model(stock: "Stock") -> float:
         """Compute next price via Gaussian GBM.
 
-                Tick model that is used after week 8.
+        Tick model that is used after week 8.
 
-                Args:
-                  stock (Stock): The stock whose next price is to be etermined
-        d
-                Returns:
-                  float: The stock's next price based on Gaussian GBM model
+        Args:
+          stock (Stock): The stock whose next price is to be determined
 
-                Examples:
-                >>> s = Stock("MTKO", 999.0, tick_model=Stock.gbm_model)
-                >>> old = s.price
-                >>> next_price = s.simulate_price_tick()
-                >>> s.update_price(next_price)
-                >>> new = s.price
-                >>> old != new
-                True
+        Returns:
+          float: The stock's next price based on Gaussian GBM model
+
+        Examples:
+        >>> s = Stock("MTKO", 999.0, tick_model=Stock.gbm_model)
+        >>> old = s.price
+        >>> next_price = s.simulate_price_tick()
+        >>> s.update_price(next_price)
+        >>> new = s.price
+        >>> old != new
+        True
         """
         sigma = stock.volatility
         z = random.gauss(0, 1)

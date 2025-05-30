@@ -154,7 +154,7 @@ def do_match(exchange: Exchange, args: List[str]):
     trades = exchange.match_orders(symbol)
 
     if not trades:
-        print("\nNo trades yet")
+        print("\nNo trades yet\n")
     else:
         for t in trades:
             print(f"TRADE: {t.symbol} {t.quantity} @ ${t.price:.2f}")

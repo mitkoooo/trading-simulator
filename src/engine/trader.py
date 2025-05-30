@@ -83,5 +83,11 @@ class Trader:
     def update_portfolio(
         self, order: Order, executed_qty: int, execution_price: float
     ) -> None:
-        # TODO: docstring
-        pass
+        """
+        Apply a filled trade to the trader's cash & holdings.
+        (Implemented in Week 2.)
+
+        Raises:
+            NotImplementedError: until matching engine is hooked up.
+        """
+        raise NotImplementedError("update_portfolio is not yet implemented")
