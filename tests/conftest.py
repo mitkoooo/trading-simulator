@@ -12,4 +12,4 @@ def sample_market():
 
 @pytest.fixture
 def trader():
-    return Trader(trader_id=1, cash_balance=1_000_000)
+    return Trader(trader_id=1, starting_balance=1_000_000)

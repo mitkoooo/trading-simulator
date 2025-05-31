@@ -22,7 +22,7 @@ MARKET_DATA = {
 def main():
     logger = setup_logger()
     exchange = Exchange(market_data=MARKET_DATA)
-    trader = Trader(trader_id=1, cash_balance=1000000)
+    trader = Trader(trader_id=1, starting_balance=1000000)
 
     logger.info("York Stock Exchange CLI v1.0 starting up")
 

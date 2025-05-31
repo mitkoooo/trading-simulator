@@ -24,7 +24,7 @@ class Exchange:
         >>> from engine.trader import Trader
         >>> data = {"MTKO": Stock("MTKO", 100.0)}
         >>> exchange = Exchange(market_data=data)
-        >>> t = Trader(trader_id=1, cash_balance=10000.0)
+        >>> t = Trader(trader_id=1, starting_balance=10000.0)
         >>> o = t.place_order("MTKO", "buy", 42, 999.0)
         >>> exchange.add_order(o)
         >>> exchange.process_tick()

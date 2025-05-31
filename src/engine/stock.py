@@ -46,13 +46,6 @@ class Stock:
         Args:
           new_price (float): The new market price to set; must be non-negative.
 
-        Returns:
-          None
-
-        Side-Effects:
-          - Updates `self.price` to `new_price`.
-          - Appends `new_price` to `self.history`.
-
         Examples:
         >>> s = Stock("MTKO", 999.0)
         >>> old = s.price

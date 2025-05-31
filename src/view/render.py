@@ -4,7 +4,7 @@ from engine.trader import Trader
 
 def display_prices(exchange: Exchange):
     """
-    Simulate a tick and print each stock’s updated price.
+    Simulate a tick and print each stock's updated price.
 
     Examples:
     >>> from engine.stock import Stock
@@ -30,13 +30,13 @@ def display_portfolio(trader: Trader):
     Examples:
         >>> from engine.trader import Trader
         >>> from view.render   import display_portfolio
-        >>> tr = Trader(trader_id=1, cash_balance=1000.0)
+        >>> tr = Trader(trader_id=1, starting_balance=1000.0)
         >>> display_portfolio(tr)  # doctest: +NORMALIZE_WHITESPACE
         Cash balance: $1000.0
         Holdings: {}
     """
-    print(f"\nCash balance: ${trader.cash_balance}")
-    print(f"Holdings: {trader.holdings}\n")
+    print(f"\nCash balance: ${trader.portfolio.cash}")
+    print(f"Holdings: {trader.portfolio.holdings}\n")
 
 
 def display_pending_orders(exchange: Exchange):
@@ -49,7 +49,7 @@ def display_pending_orders(exchange: Exchange):
         >>> from engine.trader   import Trader
         >>> from view.render     import display_pending_orders
         >>> ex = Exchange(market_data={"AAPL": Stock("AAPL", 100.0)})
-        >>> tr = Trader(trader_id=1, cash_balance=1000.0)
+        >>> tr = Trader(trader_id=1, starting_balance=1000.0)
         >>> o = tr.place_order(symbol="AAPL", order_type="buy", quantity=1, price=100.0)
         >>> ex.add_order(o)
         >>> display_pending_orders(ex)  # doctest: +SKIP

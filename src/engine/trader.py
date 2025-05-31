@@ -1,5 +1,7 @@
-from typing import Dict, List, Optional
+from typing import List, Optional
 from .order import Order
+from .portfolio import Portfolio
+from .trade import Trade
 
 
 class Trader:
@@ -9,31 +11,30 @@ class Trader:
 
     Attributes:
         trader_id (int): A unique trader identifier.
-        cash_balance (float): Available cash balance.
+        starting_balance (float): Available cash balance.
         holdings (Dict[str, int]): A map of the trader's stock holdings.
         transaction_log (List[Order]): List of previous transactions.
 
     Examples:
-        >>> t = Trader(trader_id=1, cash_balance=10000.0)
+        >>> t = Trader(trader_id=1, starting_balance=10000.0)
         >>> o = t.place_order("MTKO", "buy", 42, 999.0)
     """
 
     def __init__(
         self,
         trader_id: int,
-        cash_balance: float,
+        starting_balance: float,
     ):
         """Initialize trader with ID and starting cash.
 
         Holdings and transaction_log start empty.
 
         Examples:
-        >>> t = Trader(trader_id=1, cash_balance=10000.0)
+        >>> t = Trader(trader_id=1, starting_balance=10000.0)
         >>> o = t.place_order("MTKO", "buy", 42, 999.0)
         """
         self.trader_id = trader_id
-        self.cash_balance = cash_balance
-        self.holdings: Dict[str, int] = {}
+        self.portfolio = Portfolio(starting_balance)
         self.transaction_log: List[Order] = []
 
     def place_order(
@@ -61,7 +62,7 @@ class Trader:
         >>> from engine.stock import Stock
         >>> data = {"MTKO": Stock("MTKO", 100.0)}
         >>> exchange = Exchange(market_data=data)
-        >>> t = Trader(trader_id=1, cash_balance=10000.0)
+        >>> t = Trader(trader_id=1, starting_balance=10000.0)
         >>> o = t.place_order("MTKO", "buy", 42, 999.0)
         >>> exchange.add_order(o)
         """
@@ -81,13 +82,15 @@ class Trader:
         )
 
     def update_portfolio(
-        self, order: Order, executed_qty: int, execution_price: float
+        self, trade: Trade, executed_qty: int, execution_price: float
     ) -> None:
-        """
-        Apply a filled trade to the trader's cash & holdings.
-        (Implemented in Week 2.)
+        """Update portfolio based on a filled trade.
 
-        Raises:
-            NotImplementedError: until matching engine is hooked up.
+        Args:
+            trade (Trade): a matched trade containing buy_order, sell_order, quantity, price.
         """
+        # This method should:
+        #  - If this trader was the buyer: deduct (trade.quantity x trade.price) from cash, and increase holdings[trade.symbol] by trade.quantity.
+        #  - If this trader was the seller: add (trade.quantity x trade.price) to cash, and decrease holdings[trade.symbol] by trade.quantity.
+
         raise NotImplementedError("update_portfolio is not yet implemented")
