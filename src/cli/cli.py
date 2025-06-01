@@ -20,7 +20,7 @@ class CLI:
     Examples:
         >>> from logging_config import setup_logger
         >>> exchange = Exchange(market_data={})
-        >>> trader = Trader(trader_id=1, cash_balance=100000)
+        >>> trader = Trader(trader_id=1, starting_balance=100000)
         >>> logger = setup_logger()
         >>> cli = CLI(exchange, trader, logger)
         >>> list(cli.commands)
@@ -44,7 +44,7 @@ class CLI:
         Examples:
         >>> from logging_config import setup_logger
         >>> exchange = Exchange(market_data={})
-        >>> trader = Trader(trader_id=1, cash_balance=100000)
+        >>> trader = Trader(trader_id=1, starting_balance=100000)
         >>> logger = setup_logger()
         >>> cli = CLI(exchange, trader, logger)
         >>> isinstance(cli, CLI)
@@ -82,7 +82,7 @@ class CLI:
         >>> from logging_config import setup_logger
         >>> logger = setup_logger()
         >>> exchange = Exchange(market_data={})
-        >>> trader = Trader(trader_id=1, cash_balance=1000)
+        >>> trader = Trader(trader_id=1, starting_balance=1000)
         >>> cli = CLI(exchange, trader, logger)
         >>> # This would start an interactive loop
         >>> cli.run()  # doctest: +SKIP

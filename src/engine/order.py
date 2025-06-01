@@ -81,22 +81,65 @@ class Order:
         self.order_id = order_id or str(uuid.uuid4())  # or auto-generated
         self.timestamp = timestamp or datetime.now()
 
+        self.sequence: Optional[int] = None  # Serialization number for OrderBook
+
     def __eq__(self, other: "Order") -> bool:
         """Compare orders by order_id for equality.
 
-        (Implemented in Week 2.)
-
-        Raises:
-            NotImplementedError: until matching engine is hooked up.
+        Returns:
+        (bool): True if two orders have the same order_id, False otherwise.
         """
-        raise NotImplementedError("update_portfolio is not yet implemented")
+        if isinstance(other, Order) == False:
+            return False
+
+        return self.order_id == other.order_id
+
+    def __hash__(self):
+        return hash(self.order_id)
 
     def __lt__(self, other: "Order") -> bool:
-        """Define ordering: e.g., by price then timestamp for heap operations.
+        """Define ordering for heap operations: price priority then FIFO sequence.
 
-        (Implemented in Week 2.)
+        Args:
+            other (Order): Another Order to compare against.
+
+        Returns:
+            bool: True if self has higher priority than other (i.e., “comes out first” in a min-heap).
 
         Raises:
-            NotImplementedError: until matching engine is hooked up.
+            TypeError: If `other` is not an Order.
+            ValueError: If `self.order_type` and `other.order_type` differ.
         """
-        raise NotImplementedError("update_portfolio is not yet implemented")
+
+        if not isinstance(other, Order):
+            raise TypeError(f"Cannot compare Order with {type(other).__name__}")
+
+        if self.order_type not in ("buy", "sell") or other.order_type not in (
+            "buy",
+            "sell",
+        ):
+            raise ValueError("order_type must be 'buy' or 'sell'")
+
+        if self.order_type != other.order_type:
+            raise ValueError(
+                f"Cannot compare {self.order_type!r} order with {other.order_type!r} order"
+            )
+
+        if self.order_type == "buy":
+            # Higher price ⇒ “less” so it pops first in the min-heap
+            if self.limit_price != other.limit_price:
+                return self.limit_price > other.limit_price
+
+            if self.timestamp != other.timestamp:
+                return self.timestamp < other.timestamp
+
+            return self.sequence < other.sequence
+
+        # Lower price ⇒ “less” so it pops first
+        if self.limit_price != other.limit_price:
+            return self.limit_price < other.limit_price
+
+        if self.timestamp != other.timestamp:
+            return self.timestamp < other.timestamp
+
+        return self.sequence < other.sequence

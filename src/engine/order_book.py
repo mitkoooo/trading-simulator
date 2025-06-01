@@ -1,4 +1,6 @@
 from typing import List, Optional
+import heapq
+
 
 from .order import Order
 
@@ -11,6 +13,7 @@ class OrderBook:
     Attributes:
         buy_heap (List[Order]): A min-heap that prioritizes pending buy orders.
         sell_heap (List[Order]): A max-heap that prioritizes pending sell orders.
+        global_seq (int): OrderBook-wide counter of the next order sequence.
 
     Examples:
     >>> from engine.order_book import OrderBook
@@ -29,9 +32,10 @@ class OrderBook:
     """
 
     def __init__(self):
-        self.buy_heap: List[Order] = []
-        self.sell_heap: List[Order] = []
-        self._heap_map = {"buy": self.buy_heap, "sell": self.sell_heap}
+        self._buy_heap: List[Order] = []
+        self._sell_heap: List[Order] = []
+        self._heap_map = {"buy": self._buy_heap, "sell": self._sell_heap}
+        self._global_seq = 0
 
     def add_order(self, order: Order) -> None:
         """
@@ -47,9 +51,11 @@ class OrderBook:
         if order.order_type not in self._heap_map:
             raise ValueError(f"Unknown order type: {order.order_type}")
 
+        self.serialize(order)
+
         heap = self._heap_map[order.order_type]
 
-        heap.append(order)
+        heapq.heappush(heap, order)
 
     def peek_best_buy(self) -> Optional[Order]:
         """
@@ -57,11 +63,10 @@ class OrderBook:
 
         Returns:
             The Order with the highest limit_price, or None if no buy orders.
-
-        Raises:
-            NotImplementedError: until heap logic is implemented.
         """
-        raise NotImplementedError("peek_best_sell not yet implemented")
+        if not self._buy_heap:
+            return None
+        return self._buy_heap[0]
 
     def peek_best_sell(self) -> Optional[Order]:
         """
@@ -69,24 +74,21 @@ class OrderBook:
 
         Returns:
             The Order with the lowest limit_price, or None if no sell orders.
-
-        Raises:
-            NotImplementedError: until heap logic is implemented.
         """
-        raise NotImplementedError("peek_best_sell not yet implemented")
+        if not self._sell_heap:
+            return None
+        return self._sell_heap[0]
 
-    def pop_best_buy(self) -> Order:
+    def pop_best_buy(self) -> Optional[Order]:
         """
         Remove and return the highest-price buy order.
 
         Returns:
             The Order with the highest limit_price.
-
-        Raises:
-            IndexError: if there are no buy orders.
-            NotImplementedError: until heap logic is implemented.
         """
-        raise NotImplementedError("OrderBook.pop_best_buy not yet implemented")
+        if not self._buy_heap:
+            return None
+        return heapq.heappop(self._buy_heap)
 
     def pop_best_sell(self) -> Order:
         """
@@ -97,6 +99,45 @@ class OrderBook:
 
         Raises:
             IndexError: if there are no sell orders.
-            NotImplementedError: until heap logic is implemented.
         """
-        raise NotImplementedError("OrderBook.pop_best_sell not yet implemented")
+        if not self._sell_heap:
+            return None
+        return heapq.heappop(self._sell_heap)
+
+    def serialize(self, order: Order) -> None:
+        """Adds a sequence number to Order object
+
+        Args:
+            order (Order): Order to be serialized
+        """
+        if order.sequence != None:
+            return
+
+        order.sequence = self._global_seq
+
+        self._global_seq += 1
+
+    def buy_size(self) -> int:
+        """Return the number of buy orders currently in the book."""
+        return len(self._buy_heap)
+
+    def sell_size(self) -> int:
+        """Return the number of sell orders currently in the book."""
+        return len(self._sell_heap)
+
+    @property
+    def total_size(self) -> int:
+        """Return the total number of orders (buy + sell)."""
+        return len(self._buy_heap) + len(self._sell_heap)
+
+    def get_buy_orders(self) -> List[Order]:
+        """
+        Return a list of all buy Orders currently in the book (unsorted).
+        """
+        return [order for order in self._buy_heap]
+
+    def get_sell_orders(self) -> List[Order]:
+        """
+        Return a list of all sell Orders currently in the book (unsorted).
+        """
+        return [order for order in self._sell_heap]

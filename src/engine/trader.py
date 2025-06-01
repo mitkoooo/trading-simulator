@@ -11,7 +11,7 @@ class Trader:
 
     Attributes:
         trader_id (int): A unique trader identifier.
-        starting_balance (float): Available cash balance.
+        starting_balance (float): Initial cash for deposit.
         holdings (Dict[str, int]): A map of the trader's stock holdings.
         transaction_log (List[Order]): List of previous transactions.
 

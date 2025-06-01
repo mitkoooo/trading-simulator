@@ -44,7 +44,7 @@ def test_handle_order_invalid_args_num(sample_market: Exchange, caplog, trader: 
     )
 
     assert "BUY command usage error" in caplog.text
-    assert len(sample_market.order_books["AAPL"].buy_heap) == 0
+    assert len(sample_market.order_books["AAPL"]._buy_heap) == 0
 
 
 def test_handle_order_adds_order(sample_market: Exchange, trader: Trader):
@@ -64,7 +64,7 @@ def test_handle_order_adds_order(sample_market: Exchange, trader: Trader):
         args=["AAPL", "42", "100.00"],
     )
 
-    assert len(sample_market.order_books["AAPL"].buy_heap) == 1
+    assert len(sample_market.order_books["AAPL"]._buy_heap) == 1
 
 
 def test_do_next_updates_prices(sample_market: Exchange, trader: Trader):
@@ -82,9 +82,9 @@ def test_do_next_updates_time(sample_market: Exchange, trader: Trader):
 def test_do_place_order_places_order(sample_market: Exchange, trader: Trader):
     do_place_order(sample_market, trader, "buy", ["AAPL", "1", "100"])
 
-    assert len(sample_market.order_books.get("AAPL").buy_heap) == 1
-    assert sample_market.order_books.get("AAPL").buy_heap[0].quantity == 1
-    assert sample_market.order_books.get("AAPL").buy_heap[0].limit_price == 100.00
+    assert sample_market.order_books.get("AAPL").buy_size() == 1
+    assert sample_market.order_books.get("AAPL").peek_best_buy().quantity == 1
+    assert sample_market.order_books.get("AAPL").peek_best_buy().limit_price == 100.00
 
 
 def test_do_match_invalid_args_num(sample_market: Exchange, caplog):

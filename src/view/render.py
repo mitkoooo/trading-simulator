@@ -55,11 +55,10 @@ def display_pending_orders(exchange: Exchange):
         >>> display_pending_orders(ex)  # doctest: +SKIP
     """
     for order_book in exchange.order_books.values():
-        for heap in [order_book.sell_heap, order_book.buy_heap]:
-            for order in heap:
-                message = (
-                    f"\n[{order.timestamp:%Y-%m-%d %H:%M:%S}] Pending {order.order_type.capitalize()} Order: "
-                    f"{order.quantity} share{'s' if order.quantity != 1 else ''} of {order.symbol} "
-                    f"at ${order.limit_price:,.2f}."
-                )
-                print(message)
+        for order in order_book.get_buy_orders() + order_book.get_sell_orders():
+            message = (
+                f"\n[{order.timestamp:%Y-%m-%d %H:%M:%S}] Pending {order.order_type.capitalize()} Order: "
+                f"{order.quantity} share{'s' if order.quantity != 1 else ''} of {order.symbol} "
+                f"at ${order.limit_price:,.2f}."
+            )
+            print(message)
