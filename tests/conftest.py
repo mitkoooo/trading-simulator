@@ -5,9 +5,11 @@ from engine.stock import Stock
 
 
 @pytest.fixture
-def sample_market():
+def sample_market(trader: Trader):
     data = {sym: Stock(sym, 100.0) for sym in ("AAPL", "MSFT")}
-    return Exchange(market_data=data)
+    ex = Exchange(market_data=data)
+    ex.register_trader(trader)
+    return ex
 
 
 @pytest.fixture

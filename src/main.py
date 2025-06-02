@@ -2,8 +2,8 @@ from engine.exchange import Exchange
 from engine.trader import Trader
 from engine.stock import Stock
 from view.render import display_portfolio
-from cli.commands import COMMANDS, log_quit
 from cli.cli import CLI
+from engine.order import Order
 
 from logging_config import setup_logger
 
@@ -23,6 +23,7 @@ def main():
     logger = setup_logger()
     exchange = Exchange(market_data=MARKET_DATA)
     trader = Trader(trader_id=1, starting_balance=1000000)
+    exchange.register_trader(trader)
 
     logger.info("York Stock Exchange CLI v1.0 starting up")
 

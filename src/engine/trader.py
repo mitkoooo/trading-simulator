@@ -11,8 +11,7 @@ class Trader:
 
     Attributes:
         trader_id (int): A unique trader identifier.
-        starting_balance (float): Initial cash for deposit.
-        holdings (Dict[str, int]): A map of the trader's stock holdings.
+        portfolio (Portfolio): #TODO
         transaction_log (List[Order]): List of previous transactions.
 
     Examples:
@@ -73,6 +72,13 @@ class Trader:
         if order_type not in ("buy", "sell"):
             raise ValueError(f"order_type must be 'buy' or 'sell' (got {order_type!r})")
 
+        holdings_num = self.portfolio.holdings.get(symbol, 0)
+
+        if order_type == "sell" and holdings_num < quantity:
+            raise ValueError(
+                f"Cannot sell quantity greater than the number of stocks owned (got {quantity}, but owns {holdings_num})"
+            )
+
         return Order(
             trader_id=self.trader_id,
             symbol=symbol,
@@ -81,16 +87,10 @@ class Trader:
             limit_price=price,
         )
 
-    def update_portfolio(
-        self, trade: Trade, executed_qty: int, execution_price: float
-    ) -> None:
+    def update_portfolio(self, trade: Trade) -> None:
         """Update portfolio based on a filled trade.
 
         Args:
             trade (Trade): a matched trade containing buy_order, sell_order, quantity, price.
         """
-        # This method should:
-        #  - If this trader was the buyer: deduct (trade.quantity x trade.price) from cash, and increase holdings[trade.symbol] by trade.quantity.
-        #  - If this trader was the seller: add (trade.quantity x trade.price) to cash, and decrease holdings[trade.symbol] by trade.quantity.
-
-        raise NotImplementedError("update_portfolio is not yet implemented")
+        return self.portfolio.apply_trade(trade, self.trader_id)

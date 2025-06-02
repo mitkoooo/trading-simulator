@@ -5,6 +5,7 @@ from .order_book import OrderBook
 from .stock import Stock
 from .order import Order
 from .trade import Trade
+from .trader import Trader
 
 
 class Exchange:
@@ -41,6 +42,7 @@ class Exchange:
             >>> data = {sym: Stock(sym, 100.0) for sym in ("AAPL", "MSFT")}
             >>> exchange = Exchange(market_data=data)
         """
+        self.traders: Dict[int, Trader] = {}
         self.market_data = market_data
         self.order_books: Dict[str, OrderBook] = {
             symbol: OrderBook() for symbol in market_data.keys()
@@ -62,6 +64,13 @@ class Exchange:
             1
         """
         self.order_books[order.symbol].add_order(order)
+
+    def register_trader(self, trader: Trader) -> None:
+        """Register trader in a stock exchange"""
+        if trader.trader_id in self.traders:
+            raise ValueError(f"Trader ID {trader.trader_id} already registered")
+
+        self.traders[trader.trader_id] = trader
 
     def process_tick(
         self,
@@ -100,4 +109,42 @@ class Exchange:
             >>> exchange.match_orders("AAPL")
             []
         """
-        return []
+
+        order_book = self.order_books.get(symbol)
+        trades: List[Trade] = []
+
+        while True:
+            best_buy, best_sell = (
+                order_book.peek_best_buy(),
+                order_book.peek_best_sell(),
+            )
+
+            if not best_buy or not best_sell:
+                break
+
+            if best_buy.limit_price < best_sell.limit_price:
+                break
+
+            exec_qty = min(best_buy.quantity, best_sell.quantity)
+            exec_price = best_sell.limit_price
+
+            new_trade = Trade(best_buy, best_sell, symbol, exec_qty, exec_price)
+
+            best_buy.quantity -= exec_qty
+            best_sell.quantity -= exec_qty
+
+            if best_buy.quantity == 0:
+                order_book.pop_best_buy()
+
+            if best_sell.quantity == 0:
+                order_book.pop_best_sell()
+
+            seller_id, buyer_id = best_sell.trader_id, best_buy.trader_id
+
+            seller, buyer = self.traders[seller_id], self.traders[buyer_id]
+
+            seller.update_portfolio(new_trade), buyer.update_portfolio(new_trade)
+
+            trades.append(new_trade)
+
+        return trades

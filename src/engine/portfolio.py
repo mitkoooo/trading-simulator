@@ -45,19 +45,27 @@ class Portfolio:
         """
         return self._holdings
 
-    def apply_trade(self, trade: Trade) -> None:
+    def apply_trade(self, trade: Trade, trader_id) -> None:
         """Update cash and holdings based on a filled trade.
 
         Args:
             trade (Trade): Filled trade
         """
-        # +TODO: After finishing Trade, finish this method
-
         # This method should:
-        # 1. Deduct executed_qty * execution_price from cash for a BUY.
-        # 2. Add executed_qty * execution_price to cash for a SELL.
-        # 3. Increase (or decrease) positions[trade.symbol] accordingly.
-        pass
+        #  - If this trader was the buyer: deduct (trade.quantity x trade.price) from cash, and increase holdings[trade.symbol] by trade.quantity.
+        #  - If this trader was the seller: add (trade.quantity x trade.price) to cash, and decrease holdings[trade.symbol] by trade.quantity.
+        price, qty, symbol = trade.price, trade.quantity, trade.symbol
+
+        if symbol not in self.holdings:
+            self._holdings[symbol] = 0
+
+        if trader_id == trade.buy_order.trader_id:
+            self._cash -= qty * price
+            self._holdings[symbol] += qty
+
+        if trader_id == trade.sell_order.trader_id:
+            self._cash += qty * price
+            self._holdings[symbol] -= qty
 
 
 def value(self, market_data: Dict[str, Stock]) -> float:
