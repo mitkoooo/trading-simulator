@@ -79,13 +79,16 @@ class Trader:
                 f"Cannot sell quantity greater than the number of stocks owned (got {quantity}, but owns {holdings_num})"
             )
 
-        return Order(
+        o = Order(
             trader_id=self.trader_id,
             symbol=symbol,
             order_type=order_type,
             quantity=quantity,
             limit_price=price,
         )
+        self.portfolio.reserve_assets(o)
+
+        return o
 
     def update_portfolio(self, trade: Trade) -> None:
         """Update portfolio based on a filled trade.

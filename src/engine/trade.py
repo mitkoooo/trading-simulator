@@ -25,6 +25,8 @@ class Trade:
         symbol: str,
         quantity: int,
         price: float,
+        orig_buy_qty: int,
+        orig_sell_qty: int,
     ):
         """
         Create a Trade. Used by Exchange.match_orders().
@@ -49,3 +51,5 @@ class Trade:
         self.quantity = quantity
         self.price = price
         self.timestamp = datetime.now()
+        self.orig_buy_qty = orig_buy_qty
+        self.orig_sell_qty = orig_sell_qty

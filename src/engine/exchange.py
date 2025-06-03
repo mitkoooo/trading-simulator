@@ -125,10 +125,20 @@ class Exchange:
             if best_buy.limit_price < best_sell.limit_price:
                 break
 
-            exec_qty = min(best_buy.quantity, best_sell.quantity)
+            orig_buy_qty = best_buy.quantity
+            orig_sell_qty = best_sell.quantity
+            exec_qty = min(orig_buy_qty, orig_sell_qty)
             exec_price = best_sell.limit_price
 
-            new_trade = Trade(best_buy, best_sell, symbol, exec_qty, exec_price)
+            new_trade = Trade(
+                best_buy,
+                best_sell,
+                symbol,
+                exec_qty,
+                exec_price,
+                orig_buy_qty,
+                orig_sell_qty,
+            )
 
             best_buy.quantity -= exec_qty
             best_sell.quantity -= exec_qty
