@@ -58,9 +58,9 @@ class Portfolio:
         price, qty, symbol = trade.price, trade.quantity, trade.symbol
 
         # Ensure we have keys in _holdings / _reserved_holdings
-        if symbol not in self.portfolio._holdings:
+        if symbol not in self._holdings:
             self._holdings[symbol] = 0
-        if symbol not in self.portfolio._reserved_holdings:
+        if symbol not in self._reserved_holdings:
             self._reserved_holdings[symbol] = 0
 
         # ===== BUY SIDE =====
@@ -142,7 +142,7 @@ class Portfolio:
                 raise ValueError("Insufficient available cash to place buy order.")
             # Reserve cash
             self._cash -= cost_estimate
-            self._cash_reserved += cost_estimate
+            self._reserved_cash += cost_estimate
 
         elif order.order_type == "sell":
             held = self._holdings.get(sym, 0)
@@ -150,7 +150,7 @@ class Portfolio:
                 raise ValueError("Insufficient shares to place sell order.")
             # Reserve shares
             self._holdings[sym] = held - qty
-            self._reserved_shares[sym] = self._reserved_shares.get(sym, 0) + qty
+            self._reserved_holdings[sym] = self._reserved_holdings.get(sym, 0) + qty
 
         else:
             raise ValueError(f"Unknown order_type: {order.order_type}")
