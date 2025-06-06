@@ -23,6 +23,9 @@ def main():
     logger = setup_logger()
     exchange = Exchange(market_data=MARKET_DATA)
     trader = Trader(trader_id=1, starting_balance=1000000)
+    trader2 = Trader(trader_id=42, starting_balance=1000000)
+    trader2.portfolio._holdings["AAPL"] = 999
+
     exchange.add_order(
         Order(
             trader_id=42,
@@ -33,19 +36,19 @@ def main():
         )
     )
     exchange.register_trader(trader)
+    exchange.register_trader(trader2)
 
     logger.info("York Stock Exchange CLI v1.0 starting up")
 
-    WELCOME_MESSAGE = """
-      Welcome to York Stock Exchange. To continue please enter one of the following commands:
+    WELCOME_MESSAGE = """Welcome to York Stock Exchange. To continue please enter one of the following commands:
 
-          next - To update stock prices
-          match - To match orders
-          status - To display pending orders
-          buy - To buy a stock
-          sell - To sell a stock
-          quit - to exit York Stock Exchange
-      """
+    next    -   update stock prices
+    match   -   match orders
+    status  -   display pending orders
+    buy     -   buy a stock
+    sell    -   sell a stock
+    quit    -   exit York Stock Exchange
+"""
 
     print(WELCOME_MESSAGE)
     display_portfolio(trader)

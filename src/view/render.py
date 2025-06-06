@@ -14,29 +14,56 @@ def display_prices(exchange: Exchange):
     >>> ex = Exchange(market_data={"AAPL": s})
     >>> s.update_price(101.0)
     >>> display_prices(ex)  # doctest: +NORMALIZE_WHITESPACE
-    AAPL: $101.00
+    AAPL  | $101.00
     """
-
-    print()
     for stock in exchange.market_data.values():
-        print(f"{stock.symbol}: ${stock.price:.2f}")
-    print()
+        print(f"{stock.symbol:<5} | ${stock.price:.2f}")
 
 
 def display_portfolio(trader: Trader):
     """
-    Print the trader's cash balance and current holdings.
+    Print the trader's cash balance and current holdings in a Bloomberg‐style box.
 
     Examples:
         >>> from engine.trader import Trader
-        >>> from view.render   import display_portfolio
+        >>> from view.render import display_portfolio
         >>> tr = Trader(trader_id=1, starting_balance=1000.0)
         >>> display_portfolio(tr)  # doctest: +NORMALIZE_WHITESPACE
-        Cash balance: $1000.0
-        Holdings: {}
+        ┌────────────────────────────────┐
+        │           PORTFOLIO            │
+        ├────────────────────────────────┤
+        │ Cash: $1000.0                  │
+        │ Holdings:                      │
+        │   None                         │
+        └────────────────────────────────┘
     """
-    print(f"\nCash balance: ${trader.portfolio.cash}")
-    print(f"Holdings: {trader.portfolio.holdings}\n")
+    box_width = 32
+    inner_width = box_width - 2
+    top = "┌" + "─" * inner_width + "┐"
+    title = "│" + "PORTFOLIO".center(inner_width) + "│"
+    sep = "├" + "─" * inner_width + "┤"
+    cash_line = f"│ Cash: ${trader.portfolio.cash}".ljust(inner_width + 1) + "│"
+    holdings_header = "│ Holdings:".ljust(inner_width + 1) + "│"
+
+    print()
+    print(top)
+    print(title)
+    print(sep)
+    print(cash_line)
+    print(holdings_header)
+
+    holdings = trader.portfolio.holdings
+    if not holdings:
+        none_line = f"│    None".ljust(inner_width + 1) + "│"
+        print(none_line)
+    else:
+        for symbol, qty in holdings.items():
+            line = f"│    {symbol}: {qty}".ljust(inner_width + 1) + "│"
+            print(line)
+
+    bottom = "└" + "─" * inner_width + "┘"
+    print(bottom)
+    print()
 
 
 def display_pending_orders(exchange: Exchange):
@@ -59,6 +86,6 @@ def display_pending_orders(exchange: Exchange):
             message = (
                 f"\n[{order.timestamp:%Y-%m-%d %H:%M:%S}] Pending {order.order_type.capitalize()} Order: "
                 f"{order.quantity} share{'s' if order.quantity != 1 else ''} of {order.symbol} "
-                f"at ${order.limit_price:,.2f}."
+                f"@ ${order.limit_price:,.2f}."
             )
             print(message)

@@ -95,5 +95,22 @@ class Trader:
 
         Args:
             trade (Trade): a matched trade containing buy_order, sell_order, quantity, price.
+
+        Examples:
+        >>> from engine.trader import Trader
+        >>> from engine.order import Order
+        >>> from engine.trade import Trade
+        >>> # Create a trader with 1000 starting cash
+        >>> t1 = Trader(trader_id=1, starting_balance=1000.0)
+        >>> # Create a buy and sell order
+        >>> buy_order = Order(trader_id=1, symbol="AAPL", order_type="buy", quantity=2, limit_price=50.0)
+        >>> sell_order = Order(trader_id=2, symbol="AAPL", order_type="sell", quantity=2, limit_price=50.0)
+        >>> # Execute a trade of 2 shares at 50.0
+        >>> trade = Trade(buy_order, sell_order, "AAPL", 2, 50.0, 2, 2)
+        >>> t1.update_portfolio(trade)
+        >>> t1.portfolio.cash
+        900.0
+        >>> t1.portfolio.holdings["AAPL"]
+        2
         """
         return self.portfolio.apply_trade(trade, self.trader_id)

@@ -158,6 +158,12 @@ def do_match(exchange: Exchange, args: List[str]):
     else:
         for t in trades:
             print(f"TRADE: {t.symbol} {t.quantity} @ ${t.price:.2f}")
+            logger.info(
+                "MATCH command status: trade symbol=%s processed @ qty=%d, price=%.2f",
+                symbol,
+                t.quantity,
+                t.price,
+            )
 
 
 @log_command

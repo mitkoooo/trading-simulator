@@ -23,12 +23,25 @@ def run_cli(commands: str, tmp_path):
 
 
 def test_smoke_flow(tmp_path):
-    cmds = "\n".join(["next", "buy AAPL 1 150.0", "status", "quit"]) + "\n"
+    cmds = (
+        "\n".join(
+            [
+                "next",
+                "buy AAPL 1 150.0",
+                "match AAPL",
+                "status",
+                "quit",
+            ]
+        )
+        + "\n"
+    )
     output = run_cli(cmds, tmp_path)
 
+    # Basic CLI output checks
     assert "AAPL" in output
     assert "Cash balance:" in output
-    assert "Pending" in output or "order" in output.lower()
+    assert "Order placed for AAPL." in output
+    assert "TRADE: AAPL" in output or "TRADE: AAPL 1 @ $150.00" in output
 
     # Verify that logs went into tmp_path/trading.log, not project root
     log_file = tmp_path / "trading.log"
