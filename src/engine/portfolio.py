@@ -116,17 +116,19 @@ class Portfolio:
             float: Total value of portfolio.
         """
 
-        total = self._cash
+        total = self._cash + self._reserved_cash
 
-        for symbol, qty in self._holdings.items():
-            current_price = market_data.get(symbol, None)
+        # Add value of free holdings
+        for symbol, qty in self.holdings.items():
+            stock = market_data.get(symbol)
+            price = stock.price if (stock is not None) else 0.0
+            total += qty * price
 
-            if current_price is not None:
-                current_price = current_price.price
-            else:
-                current_price = 0.0
-
-            total += qty * current_price
+        # Add value of reserved holdings
+        for symbol, qty in self._reserved_holdings.items():
+            stock = market_data.get(symbol)
+            price = stock.price if (stock is not None) else 0.0
+            total += qty * price
 
         return total
 

@@ -23,6 +23,15 @@ def main():
     logger = setup_logger()
     exchange = Exchange(market_data=MARKET_DATA)
     trader = Trader(trader_id=1, starting_balance=1000000)
+    exchange.add_order(
+        Order(
+            trader_id=42,
+            symbol="AAPL",
+            order_type="sell",
+            quantity=999,
+            limit_price=150,
+        )
+    )
     exchange.register_trader(trader)
 
     logger.info("York Stock Exchange CLI v1.0 starting up")
