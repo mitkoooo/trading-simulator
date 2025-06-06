@@ -26,7 +26,7 @@ class Exchange:
         >>> data = {"MTKO": Stock("MTKO", 100.0)}
         >>> exchange = Exchange(market_data=data)
         >>> t = Trader(trader_id=1, starting_balance=10000.0)
-        >>> o = t.place_order("MTKO", "buy", 42, 999.0)
+        >>> o = t.place_order("MTKO", "buy", 42, 10.0)
         >>> exchange.add_order(o)
         >>> exchange.process_tick()
         >>> trades = exchange.match_orders("MTKO")
@@ -60,7 +60,7 @@ class Exchange:
             >>> exchange = Exchange(market_data=data)
             >>> o = Order(trader_id=1,symbol="AAPL",order_type="buy", quantity=42, limit_price=100.0)
             >>> exchange.add_order(o)
-            >>> len(exchange.order_books["AAPL"].buy_heap)
+            >>> exchange.order_books["AAPL"].buy_size()
             1
         """
         self.order_books[order.symbol].add_order(order)

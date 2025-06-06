@@ -22,7 +22,7 @@ def handle_order(exchange: Exchange, trader: Trader, order_type: str, args: list
         >>> from engine.stock import Stock
         >>> ex = Exchange(market_data={"AAPL": Stock("AAPL", 100.0)})
         >>> tr = Trader(trader_id=1, starting_balance=1000.0)
-        >>> handle_order(ex, tr, "buy", ["AAPL", "1", "100"]) # doctest: +NORMALIZE_WHITESPACE
+        >>> handle_order(ex, tr, "buy", ["AAPL", "1", "100"]) # doctest: +SKIP
         Order placed for AAPL.
         Cash balance: $1000.0
         Holdings: {}

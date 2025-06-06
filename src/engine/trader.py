@@ -16,7 +16,7 @@ class Trader:
 
     Examples:
         >>> t = Trader(trader_id=1, starting_balance=10000.0)
-        >>> o = t.place_order("MTKO", "buy", 42, 999.0)
+        >>> o = t.place_order("MTKO", "buy", 42, 10.0)
     """
 
     def __init__(
@@ -30,7 +30,7 @@ class Trader:
 
         Examples:
         >>> t = Trader(trader_id=1, starting_balance=10000.0)
-        >>> o = t.place_order("MTKO", "buy", 42, 999.0)
+        >>> o = t.place_order("MTKO", "buy", 42, 10.0)
         """
         self.trader_id = trader_id
         self.portfolio = Portfolio(starting_balance)
@@ -62,7 +62,7 @@ class Trader:
         >>> data = {"MTKO": Stock("MTKO", 100.0)}
         >>> exchange = Exchange(market_data=data)
         >>> t = Trader(trader_id=1, starting_balance=10000.0)
-        >>> o = t.place_order("MTKO", "buy", 42, 999.0)
+        >>> o = t.place_order("MTKO", "buy", 42, 10.0)
         >>> exchange.add_order(o)
         """
 

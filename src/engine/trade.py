@@ -40,7 +40,10 @@ class Trade:
 
         Example:
             >>> from engine.trade import Trade
-            >>> t = Trade("AAPL", 5, 150.0)
+            >>> from engine.order import Order
+            >>> o1 = Order(1, "AAPL", "buy", 4, 42)
+            >>> o2 = Order(2, "AAPL", "sell", 4, 42)
+            >>> t = Trade(o1, o2, "AAPL", 4, 42, 4, 42)
             >>> t.symbol
             'AAPL'
         """
