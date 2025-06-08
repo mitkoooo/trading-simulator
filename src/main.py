@@ -24,7 +24,7 @@ def main():
     exchange = Exchange(market_data=MARKET_DATA)
     trader = Trader(trader_id=1, starting_balance=1000000)
     trader2 = Trader(trader_id=42, starting_balance=1000000)
-    trader2.portfolio._holdings["AAPL"] = 999
+    trader2.portfolio._positions["AAPL"] = 999
 
     exchange.add_order(
         Order(
@@ -51,7 +51,7 @@ def main():
 """
 
     print(WELCOME_MESSAGE)
-    display_portfolio(trader)
+    display_portfolio(exchange, trader)
 
     CLI(exchange, trader, logger).run()
 

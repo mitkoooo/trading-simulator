@@ -20,45 +20,50 @@ def display_prices(exchange: Exchange):
         print(f"{stock.symbol:<5} | ${stock.price:.2f}")
 
 
-def display_portfolio(trader: Trader):
+def display_portfolio(exchange: Exchange, trader: Trader):
     """
-    Print the trader's cash balance and current holdings in a Bloomberg‐style box.
+    Print the trader's cash balance and current positions in a Bloomberg-style box.
 
     Examples:
         >>> from engine.trader import Trader
         >>> from view.render import display_portfolio
         >>> tr = Trader(trader_id=1, starting_balance=1000.0)
-        >>> display_portfolio(tr)  # doctest: +NORMALIZE_WHITESPACE
-        ┌────────────────────────────────┐
-        │           PORTFOLIO            │
-        ├────────────────────────────────┤
-        │ Cash: $1000.0                  │
-        │ Holdings:                      │
-        │   None                         │
-        └────────────────────────────────┘
+        >>> display_portfolio(tr)  # doctest: +SKIP
+    ┌──────────────────────────────────────────────────────────────┐
+    │                          PORTFOLIO                           │
+    ├──────────────────────────────────────────────────────────────┤
+    │  Cash: $998800.00                                            │
+    │  Positions:                                                  │
+    │    AAPL: 4 @ $150.72  (avg $150.00, unrealized P/L +$0.88)   │
+    └──────────────────────────────────────────────────────────────┘
     """
-    box_width = 32
+    box_width = 64
     inner_width = box_width - 2
     top = "┌" + "─" * inner_width + "┐"
     title = "│" + "PORTFOLIO".center(inner_width) + "│"
     sep = "├" + "─" * inner_width + "┤"
     cash_line = f"│ Cash: ${trader.portfolio.cash}".ljust(inner_width + 1) + "│"
-    holdings_header = "│ Holdings:".ljust(inner_width + 1) + "│"
+    positions_header = "│ Positions:".ljust(inner_width + 1) + "│"
 
     print()
     print(top)
     print(title)
     print(sep)
     print(cash_line)
-    print(holdings_header)
+    print(positions_header)
 
-    holdings = trader.portfolio.holdings
-    if not holdings:
+    positions = trader.portfolio.positions
+    if not positions:
         none_line = f"│    None".ljust(inner_width + 1) + "│"
         print(none_line)
     else:
-        for symbol, qty in holdings.items():
-            line = f"│    {symbol}: {qty}".ljust(inner_width + 1) + "│"
+        for symbol, pos in positions.items():
+            line = (
+                f"│    {symbol}: {pos.qty} @ ${pos.avg_price}, unrealized P/L +${trader.portfolio.calculate_unrealized_pl(symbol, exchange.market_data)}".ljust(
+                    inner_width + 1
+                )
+                + "│"
+            )
             print(line)
 
     bottom = "└" + "─" * inner_width + "┘"

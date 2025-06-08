@@ -5,9 +5,9 @@ from .trade import Trade
 
 
 class Trader:
-    """Represents a market participant with cash balance and equity holdings.
+    """Represents a market participant with cash balance and equity positions.
 
-    Allows a trader to place buy/sell orders and tracks cash, holdings, and transaction history.
+    Allows a trader to place buy/sell orders and tracks cash, positions, and transaction history.
 
     Attributes:
         trader_id (int): A unique trader identifier.
@@ -26,7 +26,7 @@ class Trader:
     ):
         """Initialize trader with ID and starting cash.
 
-        Holdings and transaction_log start empty.
+        positions and transaction_log start empty.
 
         Examples:
         >>> t = Trader(trader_id=1, starting_balance=10000.0)
@@ -72,11 +72,11 @@ class Trader:
         if order_type not in ("buy", "sell"):
             raise ValueError(f"order_type must be 'buy' or 'sell' (got {order_type!r})")
 
-        holdings_num = self.portfolio.holdings.get(symbol, 0)
+        positions_num = self.portfolio.positions.get(symbol, 0)
 
-        if order_type == "sell" and holdings_num < quantity:
+        if order_type == "sell" and positions_num < quantity:
             raise ValueError(
-                f"Cannot sell quantity greater than the number of stocks owned (got {quantity}, but owns {holdings_num})"
+                f"Cannot sell quantity greater than the number of stocks owned (got {quantity}, but owns {positions_num})"
             )
 
         o = Order(
@@ -110,7 +110,15 @@ class Trader:
         >>> t1.update_portfolio(trade)
         >>> t1.portfolio.cash
         900.0
-        >>> t1.portfolio.holdings["AAPL"]
+        >>> t1.portfolio.positions["AAPL"]
         2
         """
+        o = (
+            trade.buy_order
+            if trade.buy_order.trader_id == self.trader_id
+            else trade.sell_order
+        )
+
+        self.transaction_log.append(o)
+
         return self.portfolio.apply_trade(trade, self.trader_id)

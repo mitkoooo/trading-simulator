@@ -47,7 +47,7 @@ def handle_order(exchange: Exchange, trader: Trader, order_type: str, args: list
     )
     exchange.add_order(o)
     print(f"\nOrder placed for {symbol}.")
-    display_portfolio(trader)
+    display_portfolio(exchange, trader)
 
 
 def log_command(fn):
@@ -89,7 +89,7 @@ def do_next(exchange: Exchange, trader: Trader):
     """
     exchange.process_tick()
     display_prices(exchange)
-    display_portfolio(trader)
+    display_portfolio(exchange, trader)
 
 
 @log_command
@@ -191,7 +191,7 @@ def do_status(exchange: Exchange, trader: Trader):
     else:
         print("\nCurrently there are no pending orders on the exchange.")
 
-    display_portfolio(trader)
+    display_portfolio(exchange, trader)
 
     logger.info("STATUS viewed: %d pending orders", pending)
 
