@@ -1,4 +1,5 @@
 import pytest
+
 from engine.exchange import Exchange
 from engine.trader import Trader
 from engine.stock import Stock

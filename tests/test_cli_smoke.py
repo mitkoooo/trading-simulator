@@ -39,7 +39,8 @@ def test_smoke_flow(tmp_path):
 
     # Basic CLI output checks
     assert "AAPL" in output
-    assert "Cash balance:" in output
+    assert "Cash:" in output
+    assert "Positions:" in output
     assert "Order placed for AAPL." in output
     assert "TRADE: AAPL" in output or "TRADE: AAPL 1 @ $150.00" in output
 

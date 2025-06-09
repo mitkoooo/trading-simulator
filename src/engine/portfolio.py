@@ -156,12 +156,16 @@ class Portfolio:
             self._reserved_cash += cost_estimate
 
         elif order.order_type == "sell":
-            held = self._positions.get(sym, 0)
+            pos = self._positions.setdefault(sym, Position())
+
+            held = pos.qty
+
             if held < qty:
                 raise ValueError("Insufficient shares to place sell order.")
             # Reserve shares
-            self._positions[sym] = held - qty
-            self._reserved_positions[sym] = self._reserved_positions.get(sym, 0) + qty
+            pos.qty = held - qty
+            reserved_pos = self._reserved_positions.setdefault(sym, Position())
+            reserved_pos.qty = reserved_pos.qty + qty
 
         else:
             raise ValueError(f"Unknown order_type: {order.order_type}")

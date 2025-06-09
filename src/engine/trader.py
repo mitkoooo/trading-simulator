@@ -2,6 +2,7 @@ from typing import List, Optional
 from .order import Order
 from .portfolio import Portfolio
 from .trade import Trade
+from .position import Position
 
 
 class Trader:
@@ -72,7 +73,9 @@ class Trader:
         if order_type not in ("buy", "sell"):
             raise ValueError(f"order_type must be 'buy' or 'sell' (got {order_type!r})")
 
-        positions_num = self.portfolio.positions.get(symbol, 0)
+        pos = self.portfolio.positions.get(symbol, Position())
+
+        positions_num = pos.qty
 
         if order_type == "sell" and positions_num < quantity:
             raise ValueError(
