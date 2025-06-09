@@ -27,6 +27,16 @@ def handle_order(exchange: Exchange, trader: Trader, order_type: str, args: list
         Cash balance: $1000.0
         Holdings: {}
     """
+    if trader is None:
+        print("\nYou must log in to use this command. Please use login <trader_id>.\n")
+        logger.warning(
+            "%s command usage error: args=%r — %s",
+            order_type.upper(),
+            args,
+            "user not logged in",
+        )
+        return
+
     symbol, quantity, price = parse_order(args)
 
     if not quantity or not price or not symbol:
@@ -157,35 +167,29 @@ def do_match(exchange: Exchange, args: List[str]):
         print("\nNo trades yet\n")
     else:
         for t in trades:
-            print(f"\nTRADE: {t.symbol} {t.quantity} @ ${t.price:.2f}\n")
+            print(f"\nTRADE: {t.quantity}×{t.symbol} @ ${t.price:.2f}")
             logger.info(
                 "MATCH command status: trade symbol=%s processed @ qty=%d, price=%.2f",
                 symbol,
                 t.quantity,
                 t.price,
             )
+        print()
 
 
 @log_command
-def do_portfolio(exchange: Exchange, args: List[str]):
-    if args is None or len(args) != 1 or args[0].isnumeric() == False:
-        print("\nUsage: portfolio <TRADER_ID>\n")
+def do_portfolio(exchange: Exchange, trader: Trader):
+    if trader is None:
+        print("\nYou must log in to use this command. Please use login <trader_id>.\n")
         logger.warning(
-            "%s command usage error: args=%r — %s",
+            "%s command usage error: %s",
             "PORTFOLIO",
-            args,
-            "bad trader_id",
+            "user not logged in",
         )
         return
 
-    trader_id = int(args[0])
-
-    if exchange.traders.get(trader_id, None) == None:
-        print("\nUnknown trader_id. Please try again.\n")
-        return
-
     logger.info("PORTFOLIO viewed")
-    display_portfolio(exchange, exchange.traders[trader_id])
+    display_portfolio(exchange, exchange.traders[trader.trader_id])
 
 
 @log_command

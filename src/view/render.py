@@ -59,7 +59,7 @@ def display_portfolio(exchange: Exchange, trader: Trader):
     else:
         for symbol, pos in positions.items():
             line = (
-                f"│    {symbol}: {pos.qty} @ ${pos.avg_price}, unrealized P/L +${trader.portfolio.calculate_unrealized_pl(symbol, exchange.market_data)}".ljust(
+                f"│    {symbol}: {pos.qty} @ ${pos.avg_price}, unrealized P/L +${trader.portfolio.calculate_unrealized_pl(symbol, exchange.market_data):,.2f}".ljust(
                     inner_width + 1
                 )
                 + "│"

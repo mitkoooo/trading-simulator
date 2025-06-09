@@ -1,26 +1,66 @@
-from typing import Callable
+from typing import Callable, Optional
+from datetime import timedelta
+
+from .exchange import Exchange
+from .trade import Trade
 
 
 class MarketSimulator:
-    """Orchestrates live or historical tick feeds into Exchange
+    """
+    Drives price ticks and matching in one place.
 
-    Responsibilities (planned for Week 3):
-        - start_stream() -> None
-        - stop_stream() -> None
-        - register_listener(callback) -> None
+    Responsibilities:
+      - step(): advance one tick + match all symbols
+      - (Future) start/end real-time streams
+      - (Future) replay historical CSV feeds
+      - (Future) register_listener(callback)
     """
 
-    def __init__(self):
-        """Initialize the MarketSimulator.
-
-        This stub will later connect to a live market-data websocket or
-        replay ticks from a CSV file in Week 3's real-time integration.
-
-        Raises:
-            NotImplementedError: until real-time feed support is implemented.
+    def __init__(self, exchange: Exchange, tick_interval: timedelta):
         """
-        # hook up websocket or CSV playback
-        raise NotImplementedError("MarketSimulator.__init__ not yet implemented")
+        Args:
+            exchange: the Exchange instance to drive
+            tick_interval: how much “time” passes per step()
+        """
+        self.exchange = exchange
+        self.tick_interval = tick_interval
+        self._running = False
+
+    def step(self) -> list[Trade]:
+        """
+        Advance prices by one tick, then match all symbols.
+        Returns the list of Trades executed this step.
+        """
+        # 1) advance every stock by one tick
+        self.exchange.process_tick()
+        # 2) match on every book, collect trades
+        symbols = self.exchange.order_books.keys()
+
+        for symbol in symbols:
+            self.exchange.match_orders(symbol)
+        return
+
+    def run(self, steps: Optional[int] = None) -> None:
+        """
+        Auto-run for `steps` iterations (or endlessly if None).
+        """
+        self._running = True
+        count = 0
+
+        while self._running and (steps is None or count < steps):
+            trades = self.step()
+
+            if not trades:
+                continue
+
+            for t in trades:
+                print(f"\nTRADE: {t.quantity}x{t.symbol} @ ${t.price:.2f}")
+            print()
+            count += 1
+
+    def stop(self):
+        """Stop an ongoing run()."""
+        self._running = False
 
     def start_stream(self) -> None:
         """Begin feeding ticks into Exchange

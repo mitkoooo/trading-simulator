@@ -26,10 +26,12 @@ def test_smoke_flow(tmp_path):
     cmds = (
         "\n".join(
             [
+                "login 1",
                 "next",
                 "buy AAPL 1 150.0",
                 "match AAPL",
                 "status",
+                "portfolio",
                 "quit",
             ]
         )
@@ -42,7 +44,7 @@ def test_smoke_flow(tmp_path):
     assert "Cash:" in output
     assert "Positions:" in output
     assert "Order placed for AAPL." in output
-    assert "TRADE: AAPL" in output or "TRADE: AAPL 1 @ $150.00" in output
+    assert "TRADE: AAPL" in output or "TRADE: 1×AAPL @ $150.00" in output
 
     # Verify that logs went into tmp_path/trading.log, not project root
     log_file = tmp_path / "trading.log"

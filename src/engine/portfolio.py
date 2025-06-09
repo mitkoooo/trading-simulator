@@ -46,9 +46,9 @@ class Portfolio:
         """
         Returns a copy of the current positions dictionary.
         """
-        return self._positions
+        return dict(self._positions)
 
-    def apply_trade(self, trade: Trade, trader_id) -> None:
+    def apply_trade(self, trade: Trade, trader_id: int) -> None:
         """Update cash and positions based on a filled trade.
 
         Args:
@@ -57,8 +57,11 @@ class Portfolio:
         price, qty, symbol = trade.price, trade.quantity, trade.symbol
 
         # Ensure we have keys in _positions / _reserved_positions
-        pos = self._positions.setdefault(symbol, Position())
-        reserved_pos = self._reserved_positions.setdefault(symbol, Position())
+        pos = self._positions.setdefault(
+            symbol,
+            Position(0, price),
+        )
+        reserved_pos = self._reserved_positions.setdefault(symbol, Position(0, price))
 
         # ===== BUY SIDE =====
         if trader_id == trade.buy_order.trader_id:
@@ -71,16 +74,18 @@ class Portfolio:
             # Unreserve the cash
             self._reserved_cash -= old_reservation
 
+            self._cash += old_reservation
+
             # Calculate the actual cost
             actual_cost = qty * price
+
+            # Deduct the actual cost
+            self._cash -= actual_cost
 
             # Refund unused reserved cash
             refund_amount = old_reservation - actual_cost
             if refund_amount > 0:
                 self._cash += refund_amount
-
-            # Deduct the actual cost
-            self._cash -= actual_cost
 
             # Get old values to update the running avg
             old_qty, old_avg = pos.qty, pos.avg_price

@@ -52,7 +52,7 @@ def test_match_multistep_match(
     sample_market: Exchange, trader: Trader, trader2: Trader
 ):
     SYMBOL = "AAPL"
-    trader.portfolio._positions[SYMBOL] = Position(qty=10)
+    trader.portfolio._positions[SYMBOL] = Position(10, 0)
 
     qty_sell = 5
     qty_buy = 10
