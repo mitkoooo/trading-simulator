@@ -67,15 +67,15 @@ def test_handle_order_adds_order(sample_market: Exchange, trader: Trader):
     assert len(sample_market.order_books["AAPL"]._buy_heap) == 1
 
 
-def test_do_next_updates_prices(sample_market: Exchange, trader: Trader):
+def test_do_next_updates_prices(sample_market: Exchange):
     old_p = 100.0
-    do_next(sample_market, trader)
+    do_next(sample_market)
     assert sample_market.market_data.get("AAPL").price != old_p
 
 
-def test_do_next_updates_time(sample_market: Exchange, trader: Trader):
+def test_do_next_updates_time(sample_market: Exchange):
     old_time = sample_market.current_time
-    do_next(sample_market, trader)
+    do_next(sample_market)
     assert sample_market.current_time != old_time
 
 

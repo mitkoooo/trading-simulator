@@ -1,6 +1,13 @@
 from typing import List, Callable, Optional
 import logging
-from cli.commands import do_next, do_place_order, do_match, do_status, log_quit
+from cli.commands import (
+    do_next,
+    do_place_order,
+    do_match,
+    do_status,
+    log_quit,
+    do_portfolio,
+)
 from engine.exchange import Exchange
 from engine.trader import Trader
 
@@ -56,7 +63,7 @@ class CLI:
 
         # map command strings to handler callables
         self.commands: dict[str, Callable[[Optional[List[str]]], None]] = {
-            "next": lambda args=None: do_next(self.exchange, self.trader),
+            "next": lambda args=None: do_next(self.exchange),
             "buy": lambda args=[]: do_place_order(
                 self.exchange, self.trader, "buy", args
             ),
@@ -64,7 +71,8 @@ class CLI:
                 self.exchange, self.trader, "sell", args
             ),
             "match": lambda args=[]: do_match(self.exchange, args),
-            "status": lambda args=None: do_status(self.exchange, self.trader),
+            "status": lambda args=None: do_status(self.exchange),
+            "portfolio": lambda args=[]: do_portfolio(self.exchange, args),
         }
 
     def run(self):

@@ -94,3 +94,4 @@ def display_pending_orders(exchange: Exchange):
                 f"@ ${order.limit_price:,.2f}."
             )
             print(message)
+    print()

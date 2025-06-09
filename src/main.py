@@ -1,6 +1,7 @@
 from engine.exchange import Exchange
 from engine.trader import Trader
 from engine.stock import Stock
+from engine.position import Position
 from view.render import display_portfolio
 from cli.cli import CLI
 from engine.order import Order
@@ -24,7 +25,7 @@ def main():
     exchange = Exchange(market_data=MARKET_DATA)
     trader = Trader(trader_id=1, starting_balance=1000000)
     trader2 = Trader(trader_id=42, starting_balance=1000000)
-    trader2.portfolio._positions["AAPL"] = 999
+    trader2.portfolio._positions["AAPL"] = Position(999, 150.0)
 
     exchange.add_order(
         Order(
@@ -42,12 +43,13 @@ def main():
 
     WELCOME_MESSAGE = """Welcome to York Stock Exchange. To continue please enter one of the following commands:
 
-    next    -   update stock prices
-    match   -   match orders
-    status  -   display pending orders
-    buy     -   buy a stock
-    sell    -   sell a stock
-    quit    -   exit York Stock Exchange
+    next      -   update stock prices
+    match     -   match orders
+    portfolio -   display trader's portfolio
+    status    -   display pending orders
+    buy       -   buy a stock
+    sell      -   sell a stock
+    quit      -   exit York Stock Exchange
 """
 
     print(WELCOME_MESSAGE)

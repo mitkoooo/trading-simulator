@@ -26,7 +26,7 @@ def parse_order(args: List[str]) -> Tuple[str, int, float]:
         ('AAPL', None, None)
     """
 
-    if len(args) != 3:
+    if args is None or len(args) != 3:
         return None, None, None
 
     symbol, quantity, price = args
