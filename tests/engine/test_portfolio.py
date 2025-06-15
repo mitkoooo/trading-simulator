@@ -2,6 +2,7 @@ from engine.exchange import Exchange
 from engine.trader import Trader
 from engine.order import Order
 from engine.position import Position
+from engine.stock import Stock
 
 
 def test_portfolio_value_pure_cash(trader: Trader, sample_market: Exchange):
@@ -50,3 +51,44 @@ def test_portfolio_reserve_assets_sell(trader: Trader):
     trader.portfolio.reserve_assets(o)
 
     assert trader.portfolio.positions[TICKET].qty == old_qty - ORDER_QTY
+
+
+def test_portfolio_calculate_unrealized_pl_loss(trader: Trader):
+    AVG_PRICE = 150.00
+    POSITION_QTY = 50
+    TICKET = "AAPL"
+    MARKET_DATA = {"AAPL": Stock(TICKET, AVG_PRICE - 1)}
+
+    trader.portfolio._positions[TICKET] = Position(POSITION_QTY, AVG_PRICE)
+
+    pl = trader.portfolio.calculate_unrealized_pl(TICKET, MARKET_DATA)
+
+    assert pl == -(1 * POSITION_QTY)
+
+
+def test_portfolio_calculate_unrealized_pl_profit(trader: Trader):
+    AVG_PRICE = 150.00
+    POSITION_QTY = 50
+    TICKET = "AAPL"
+    MARKET_DATA = {"AAPL": Stock(TICKET, AVG_PRICE + 1)}
+
+    trader.portfolio._positions[TICKET] = Position(POSITION_QTY, AVG_PRICE)
+
+    pl = trader.portfolio.calculate_unrealized_pl(TICKET, MARKET_DATA)
+
+    assert pl == +(1 * POSITION_QTY)
+
+
+def test_portfolio_calculate_pl_unknown_ticket(trader: Trader):
+    AVG_PRICE = 150.00
+    POSITION_QTY = 50
+    TICKET = "FOO"
+    MARKET_DATA = {"AAPL": Stock(TICKET, AVG_PRICE + 1)}
+
+    trader.portfolio._positions[TICKET] = Position(POSITION_QTY, AVG_PRICE)
+
+    try:
+        pl = trader.portfolio.calculate_unrealized_pl(TICKET, MARKET_DATA)
+        assert False
+    except:
+        assert True
