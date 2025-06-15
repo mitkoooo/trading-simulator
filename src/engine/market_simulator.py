@@ -6,24 +6,36 @@ from .trade import Trade
 
 
 class MarketSimulator:
-    """
-    Drives price ticks and matching in one place.
+    """Drives price ticks and matches them automatically based on historical/live data.
 
-    Responsibilities:
-      - step(): advance one tick + match all symbols
-      - (Future) start/end real-time streams
-      - (Future) replay historical CSV feeds
-      - (Future) register_listener(callback)
+    Examples:
+    >>> from engine.exchange import Exchange
+    >>> from engine.order import Order
+    >>> from datetime import timedelta
+    >>> MARKET_DATA = {"AAPL": 150.00}
+    >>> TICK_INTERVAL = timedelta(seconds=1)
+    >>> ex = Exchange(MARKET_DATA)
+    >>> o = Order(
+        ...     trader_id=1,
+        ...     symbol="AAPL",
+        ...     order_type="buy",
+        ...     quantity=2,
+        ...     limit_price=150.0)
+    >>> exchange.add_order(o)
+    >>> ms = MarketSimulator(ex, TICK_INTERVAL)
+    >>> ms.run()
+
+
     """
 
     def __init__(self, exchange: Exchange, tick_interval: timedelta):
         """
         Args:
-            exchange: the Exchange instance to drive
-            tick_interval: how much “time” passes per step()
+            exchange (Exchange): the Exchange instance to drive
+            tick_interval (timedelta): how much “time” passes per step()
         """
-        self.exchange = exchange
-        self.tick_interval = tick_interval
+        self._exchange = exchange
+        self._tick_interval = tick_interval
         self._running = False
 
     def step(self) -> list[Trade]:
@@ -32,17 +44,19 @@ class MarketSimulator:
         Returns the list of Trades executed this step.
         """
         # 1) advance every stock by one tick
-        self.exchange.process_tick()
+        self._exchange.process_tick()
         # 2) match on every book, collect trades
-        symbols = self.exchange.order_books.keys()
+        symbols = self._exchange.order_books.keys()
 
         for symbol in symbols:
-            self.exchange.match_orders(symbol)
+            self._exchange.match_orders(symbol)
         return
 
     def run(self, steps: Optional[int] = None) -> None:
-        """
-        Auto-run for `steps` iterations (or endlessly if None).
+        """Execute preplaced orders or orders based on historical data.
+
+        Attributes:
+            steps (Optional[int]): Auto run for `steps` iterations (endlessly if None).
         """
         self._running = True
         count = 0
