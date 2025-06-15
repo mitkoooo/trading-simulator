@@ -190,6 +190,11 @@ class Portfolio:
                    zero if you hold no position in symbol
         """
 
+        if symbol not in market_data:
+            raise ValueError(
+                f"Cannot calculate unrealized P/L for a nonexistent symbol (Got {symbol})."
+            )
+
         pos = self._positions.get(symbol, Position())
 
         return (market_data[symbol].price - pos.avg_price) * pos.qty
