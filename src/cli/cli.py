@@ -133,6 +133,7 @@ class CLI:
             else:
                 print("Unknown command. Please try again.")
 
+    # TODO: move to a Session class so the login is separate from CLI and can be used with other GUI
     def do_login(self, args):
         if args is None or len(args) != 1 or args[0].isnumeric() == False:
             print("\nUsage: login <trader_id>\n")
