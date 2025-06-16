@@ -5,12 +5,16 @@ from engine.trader import Trader
 import logging
 from logging_config import LOG_NAME
 
-from typing import List, Callable, Optional
+from typing import List
+
+from app.session import Session
 
 logger = logging.getLogger(LOG_NAME)
 
 
-def handle_order(exchange: Exchange, trader: Trader, order_type: str, args: list[str]):
+def handle_order(
+    exchange: Exchange, session: Session, order_type: str, args: list[str]
+):
     """
     Handle a buy or sell order: parse args, validate and enqueue the order, then show portfolio.
 
@@ -27,7 +31,11 @@ def handle_order(exchange: Exchange, trader: Trader, order_type: str, args: list
         Cash balance: $1000.0
         Holdings: {}
     """
-    if trader is None:
+
+    try:
+        trader = session.require_active()
+
+    except:
         print("\nYou must log in to use this command. Please use login <trader_id>.\n")
         logger.warning(
             "%s command usage error: args=%r — %s",
@@ -104,7 +112,7 @@ def do_next(exchange: Exchange):
 
 @log_command
 def do_place_order(
-    exchange: Exchange, trader: Trader, order_type: str, args: List[str]
+    exchange: Exchange, session: Session, order_type: str, args: List[str]
 ):
     """
     Enqueue a buy/sell order and log details if valid.
@@ -121,7 +129,7 @@ def do_place_order(
 
     symbol, qty, price = parse_order(args)
 
-    handle_order(exchange, trader, order_type, args)
+    handle_order(exchange, session, order_type, args)
 
     # only log if parsing succeeded
     if None not in (symbol, qty, price):
@@ -178,8 +186,11 @@ def do_match(exchange: Exchange, args: List[str]):
 
 
 @log_command
-def do_portfolio(exchange: Exchange, trader: Trader):
-    if trader is None:
+def do_portfolio(exchange: Exchange, session: Session):
+
+    try:
+        trader = session.require_active()
+    except:
         print("\nYou must log in to use this command. Please use login <trader_id>.\n")
         logger.warning(
             "%s command usage error: %s",
@@ -218,6 +229,48 @@ def do_status(exchange: Exchange):
         print("\nCurrently there are no pending orders on the exchange.\n")
 
     logger.info("STATUS viewed: %d pending orders", pending)
+
+
+@log_command
+def do_login(session: Session, args):
+    if args is None or len(args) != 1 or args[0].isnumeric() == False:
+        print("\nUsage: login <trader_id>\n")
+        logger.warning(
+            "%s command usage error: args=%r — %s",
+            "LOGIN",
+            args,
+            "bad trader_id",
+        )
+        return
+
+    trader_id = int(args[0])
+
+    try:
+        session.login(trader_id)
+        print(f"\n Logged in as trader {session.active_trader.trader_id}\n")
+    except:
+        print("\nUnknown trader_id. Please try again.\n")
+        logger.warning(
+            "%s command usage error: args=%r — %s",
+            "LOGIN",
+            args,
+            "unknown trader_id",
+        )
+        return
+
+
+@log_command
+def do_logout(session: Session):
+    try:
+        session.logout()
+        print("\nYou have successfully logged out.\n")
+    except:
+        print("\nYou cannot log out if you are currently not logged in.\n")
+        logger.warning(
+            "%s command usage error: %s",
+            "LOGOUT",
+            "no active trader logged in",
+        )
 
 
 def log_quit():

@@ -7,9 +7,12 @@ from .commands import (
     do_status,
     log_quit,
     do_portfolio,
+    do_login,
+    do_logout,
 )
 from engine.exchange import Exchange
-from engine.trader import Trader
+
+from app.session import Session
 
 
 class CLI:
@@ -36,7 +39,7 @@ class CLI:
 
     def __init__(
         self,
-        exchange,
+        exchange: Exchange,
         logger: logging.Logger,
     ):
         """
@@ -57,11 +60,12 @@ class CLI:
         True
         """
         self.exchange = exchange
-        self.active_trader: Trader | None = None
+        self.session = Session(exchange.traders)
         self.logger = logger
 
         HELP_MENU = """
     login      — Authenticate using your Trader ID
+    logout     - Log out the trader
     help       — Display this menu
     next       — Refresh market data
     match      — Execute order matching
@@ -74,19 +78,18 @@ class CLI:
 
         # map command strings to handler callables
         self.commands: dict[str, Callable[[Optional[List[str]]], None]] = {
-            "login": lambda args=[]: self.do_login(args),
+            "login": lambda args=[]: do_login(self.session, args),
+            "logout": lambda args=None: do_logout(self.session),
             "next": lambda args=None: do_next(self.exchange),
             "buy": lambda args=[]: do_place_order(
-                self.exchange, self.active_trader, "buy", args
+                self.exchange, self.session, "buy", args
             ),
             "sell": lambda args=[]: do_place_order(
-                self.exchange, self.active_trader, "sell", args
+                self.exchange, self.session, "sell", args
             ),
             "match": lambda args=[]: do_match(self.exchange, args),
             "status": lambda args=None: do_status(self.exchange),
-            "portfolio": lambda args=None: do_portfolio(
-                self.exchange, self.active_trader
-            ),
+            "portfolio": lambda args=None: do_portfolio(self.exchange, self.session),
             "help": lambda args=None: print(HELP_MENU),
         }
 
@@ -122,7 +125,7 @@ class CLI:
                 continue
 
             cmd, *args = raw.split()
-            if cmd == "quit":
+            if cmd in ["quit", "exit"]:
                 log_quit()
                 break
 
@@ -134,28 +137,3 @@ class CLI:
                 print("Unknown command. Please try again.")
 
     # TODO: move to a Session class so the login is separate from CLI and can be used with other GUI
-    def do_login(self, args):
-        if args is None or len(args) != 1 or args[0].isnumeric() == False:
-            print("\nUsage: login <trader_id>\n")
-            self.logger.warning(
-                "%s command usage error: args=%r — %s",
-                "LOGIN",
-                args,
-                "bad trader_id",
-            )
-            return
-
-        trader_id = int(args[0])
-
-        if trader_id not in self.exchange.traders.keys():
-            print("\nUnknown trader_id. Please try again.\n")
-            self.logger.warning(
-                "%s command usage error: args=%r — %s",
-                "LOGIN",
-                args,
-                "unknown trader_id",
-            )
-            return
-
-        self.active_trader = self.exchange.traders[trader_id]
-        print(f"\n Logged in as trader {self.active_trader.trader_id}\n")
