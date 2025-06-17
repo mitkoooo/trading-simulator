@@ -1,16 +1,18 @@
+import argparse
+from datetime import timedelta
+from logging_config import setup_logger
+
 from engine.exchange import Exchange
+from engine.order import Order
 from engine.trader import Trader
 from engine.stock import Stock
 from engine.position import Position
 from engine.market_simulator import MarketSimulator
-from view.render import display_portfolio
-from cli.cli import CLI
-from engine.order import Order
 
-import argparse
-from datetime import timedelta
-from logging_config import setup_logger
-from logging import Logger
+from cli.cli import CLI
+
+from app.context import AppContext
+from app.session import Session
 
 # Dummy initial prices for Day 3 CLI setup
 MARKET_DATA = {
@@ -24,26 +26,8 @@ MARKET_DATA = {
 }
 
 
-def manual_loop(exchange: Exchange, logger: Logger):
-    WELCOME_MESSAGE = """
-YORK STOCK EXCHANGE TERMINAL
-
-Please log in with your Trader ID before issuing any other commands.
-
-    login      — Authenticate using your Trader ID
-    help       — Display this menu
-    next       — Refresh market data
-    match      — Execute order matching
-    portfolio  — View your portfolio holdings and P&L
-    status     — Show pending orders
-    buy        — Place a buy order
-    sell       — Place a sell order
-    quit       — Exit the terminal
-"""
-
-    print(WELCOME_MESSAGE)
-
-    CLI(exchange, logger).run()
+def manual_loop(context: AppContext):
+    CLI(context).run()
 
 
 def main():
@@ -92,7 +76,7 @@ def main():
             steps = int(args.auto)  # the provided number
         sim.run(steps)
     else:
-        manual_loop(exchange, logger)
+        manual_loop(context=AppContext(Session(exchange.traders), exchange, logger))
 
 
 if __name__ == "__main__":
