@@ -1,20 +1,21 @@
-from cli.validation import parse_order, validate_symbol
-from view.render import display_prices, display_portfolio, display_pending_orders
-from engine.exchange import Exchange
-from engine.trader import Trader
-import logging
-from logging_config import LOG_NAME
-
 from typing import List
 
+from engine.exchange import Exchange
+
 from app.session import Session
+from app.context import AppContext
 
-logger = logging.getLogger(LOG_NAME)
+from cli.validation import parse_order, validate_symbol
+
+from view.render import (
+    display_prices,
+    display_portfolio,
+    display_pending_orders,
+    display_help_menu,
+)
 
 
-def handle_order(
-    exchange: Exchange, session: Session, order_type: str, args: list[str]
-):
+def handle_order(context: AppContext, order_type: str, args: list[str]):
     """
     Handle a buy or sell order: parse args, validate and enqueue the order, then show portfolio.
 
@@ -31,6 +32,7 @@ def handle_order(
         Cash balance: $1000.0
         Holdings: {}
     """
+    exchange, session, logger = context.exchange, context.session, context.logger
 
     try:
         trader = session.require_active()
@@ -67,31 +69,7 @@ def handle_order(
     print(f"\nOrder placed for {symbol}.\n")
 
 
-def log_command(fn):
-    """
-    Decorator: log command invocation and completion at INFO level.
-
-    Examples:
-        >>> @log_command
-        ... def my_func(x):
-        ...     return x + 1
-        >>> my_func(2)
-        3
-    """
-
-    def wrapper(*args, **kwargs):
-        cmd = fn.__name__.replace("do_", "").upper()
-
-        logger.info("%s command received: args=%r", cmd, args or kwargs)
-        result = fn(*args, **kwargs)
-        logger.info("%s command processed", cmd)
-        return result
-
-    return wrapper
-
-
-@log_command
-def do_next(exchange: Exchange):
+def do_next(context: AppContext):
     """
     Advance the market by one tick and display prices & portfolio.
 
@@ -104,16 +82,15 @@ def do_next(exchange: Exchange):
         >>> do_next(ex, tr) is None
         True
     """
+    exchange = context.exchange
+
     exchange.process_tick()
     print()
     display_prices(exchange)
     print()
 
 
-@log_command
-def do_place_order(
-    exchange: Exchange, session: Session, order_type: str, args: List[str]
-):
+def do_place_order(context: AppContext, order_type: str, args: List[str]):
     """
     Enqueue a buy/sell order and log details if valid.
 
@@ -127,9 +104,11 @@ def do_place_order(
         True
     """
 
+    logger = context.logger
+
     symbol, qty, price = parse_order(args)
 
-    handle_order(exchange, session, order_type, args)
+    handle_order(context, order_type, args)
 
     # only log if parsing succeeded
     if None not in (symbol, qty, price):
@@ -142,8 +121,7 @@ def do_place_order(
         )
 
 
-@log_command
-def do_match(exchange: Exchange, args: List[str]):
+def do_match(context: AppContext, args: List[str]):
     """
     Attempt to match orders for a given symbol and display results.
 
@@ -154,6 +132,8 @@ def do_match(exchange: Exchange, args: List[str]):
         >>> do_match(ex, ['AAPL'])
         No trades yet
     """
+    logger, exchange = context.logger, context.exchange
+
     if not args or len(args) != 1:
         print("\nUsage: match <SYMBOL>\n")
         logger.warning(
@@ -185,8 +165,9 @@ def do_match(exchange: Exchange, args: List[str]):
         print()
 
 
-@log_command
-def do_portfolio(exchange: Exchange, session: Session):
+def do_portfolio(context: AppContext):
+
+    session, logger, exchange = context.session, context.logger, context.exchange
 
     try:
         trader = session.require_active()
@@ -203,8 +184,7 @@ def do_portfolio(exchange: Exchange, session: Session):
     display_portfolio(exchange, exchange.traders[trader.trader_id])
 
 
-@log_command
-def do_status(exchange: Exchange):
+def do_status(context: AppContext):
     """
     Display pending orders and the trader's portfolio.
 
@@ -219,6 +199,8 @@ def do_status(exchange: Exchange):
         Cash balance: $1000.0
         Holdings: {}
     """
+    logger, exchange = context.logger, context.exchange
+
     pending = sum(
         len(book._buy_heap) + len(book._sell_heap)
         for book in exchange.order_books.values()
@@ -231,8 +213,9 @@ def do_status(exchange: Exchange):
     logger.info("STATUS viewed: %d pending orders", pending)
 
 
-@log_command
-def do_login(session: Session, args):
+def do_login(context: AppContext, args):
+    logger, session = context.logger, context.session
+
     if args is None or len(args) != 1 or args[0].isnumeric() == False:
         print("\nUsage: login <trader_id>\n")
         logger.warning(
@@ -259,8 +242,9 @@ def do_login(session: Session, args):
         return
 
 
-@log_command
-def do_logout(session: Session):
+def do_logout(context: AppContext):
+    session, logger = context.session, context.logger
+
     try:
         session.logout()
         print("\nYou have successfully logged out.\n")
@@ -273,7 +257,11 @@ def do_logout(session: Session):
         )
 
 
-def log_quit():
+def do_help():
+    display_help_menu()
+
+
+def log_quit(context: AppContext):
     """
     Print goodbye and log shutdown.
 
@@ -281,5 +269,7 @@ def log_quit():
         >>> log_quit() # doctest: +NORMALIZE_WHITESPACE
         Thank you for using York Stock Exchange.
     """
+    logger = context.logger
+
     print("\nThank you for using York Stock Exchange.")
     logger.info("York Stock Exchange CLI shutting down")

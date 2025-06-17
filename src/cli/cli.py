@@ -1,5 +1,5 @@
 from typing import List, Callable, Optional
-import logging
+
 from .commands import (
     do_next,
     do_place_order,
@@ -9,10 +9,33 @@ from .commands import (
     do_portfolio,
     do_login,
     do_logout,
+    do_help,
 )
-from engine.exchange import Exchange
 
-from app.session import Session
+from app.context import AppContext
+
+from view.render import display_welcome
+
+import functools
+
+
+def log_command_factory(logger):
+    """
+    Returns a decorator that will log using the supplied `logger`.
+    """
+
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            cmd = fn.__name__.replace("do_", "").upper()
+            logger.info("%s command received: args=%r, kwargs=%r", cmd, args, kwargs)
+            result = fn(*args, **kwargs)
+            logger.info("%s command processed", cmd)
+            return result
+
+        return wrapper
+
+    return decorator
 
 
 class CLI:
@@ -37,18 +60,12 @@ class CLI:
         ['next', 'buy', 'sell', 'match', 'status']
     """
 
-    def __init__(
-        self,
-        exchange: Exchange,
-        logger: logging.Logger,
-    ):
+    def __init__(self, context: AppContext):
         """
         Initialize the CLI with its core dependencies and command map.
 
         Args:
-            exchange (Exchange): the market exchange instance for price and order operations.
-            trader (Trader): the trader instance representing the user.
-            logger (logging.Logger): logger used to record command execution.
+            context (AppContext): Current application context.
 
         Examples:
         >>> from logging_config import setup_logger
@@ -59,38 +76,50 @@ class CLI:
         >>> isinstance(cli, CLI)
         True
         """
-        self.exchange = exchange
-        self.session = Session(exchange.traders)
-        self.logger = logger
+        self.context = context
 
-        HELP_MENU = """
-    login      — Authenticate using your Trader ID
-    logout     - Log out the trader
-    help       — Display this menu
-    next       — Refresh market data
-    match      — Execute order matching
-    portfolio  — View your portfolio holdings and P&L
-    status     — Show pending orders
-    buy        — Place a buy order
-    sell       — Place a sell order
-    quit       — Exit the terminal
-    """
+        wrap = log_command_factory(self.context.logger)
+
+        # --- helper factories ---
+        def _no_args(fn):
+            """Wrap a command fn(ctx) → None"""
+
+            @functools.wraps(fn)
+            def handler(_args=None):
+                return fn(self.context)
+
+            return wrap(handler)
+
+        def _with_args(fn):
+            """Wrap a command fn(ctx, args) → None"""
+
+            @functools.wraps(fn)
+            def handler(args=None):
+                return fn(self.context, args or [])
+
+            return wrap(handler)
+
+        def _with_side(side):
+            """Special factory for buy/sell which need (ctx, side, args)"""
+
+            @functools.wraps(do_place_order)
+            def handler(args=None):
+                return do_place_order(self.context, side, args or [])
+
+            return wrap(handler)
 
         # map command strings to handler callables
-        self.commands: dict[str, Callable[[Optional[List[str]]], None]] = {
-            "login": lambda args=[]: do_login(self.session, args),
-            "logout": lambda args=None: do_logout(self.session),
-            "next": lambda args=None: do_next(self.exchange),
-            "buy": lambda args=[]: do_place_order(
-                self.exchange, self.session, "buy", args
-            ),
-            "sell": lambda args=[]: do_place_order(
-                self.exchange, self.session, "sell", args
-            ),
-            "match": lambda args=[]: do_match(self.exchange, args),
-            "status": lambda args=None: do_status(self.exchange),
-            "portfolio": lambda args=None: do_portfolio(self.exchange, self.session),
-            "help": lambda args=None: print(HELP_MENU),
+        # --- build the dispatch table ---
+        self.commands: dict[str, Callable] = {
+            "login": _with_args(do_login),
+            "logout": _no_args(do_logout),
+            "next": _no_args(do_next),
+            "buy": _with_side("buy"),
+            "sell": _with_side("sell"),
+            "match": _with_args(do_match),
+            "status": _no_args(do_status),
+            "portfolio": _no_args(do_portfolio),
+            "help": _no_args(do_help),
         }
 
     def run(self):
@@ -113,6 +142,8 @@ class CLI:
         >>> # This would start an interactive loop
         >>> cli.run()  # doctest: +SKIP
         """
+
+        display_welcome()
         while True:
             try:
                 raw = input(">>> ")
@@ -126,7 +157,7 @@ class CLI:
 
             cmd, *args = raw.split()
             if cmd in ["quit", "exit"]:
-                log_quit()
+                log_quit(self.context)
                 break
 
             handler = self.commands.get(cmd)
@@ -135,5 +166,3 @@ class CLI:
                 handler(args if args else None)
             else:
                 print("Unknown command. Please try again.")
-
-    # TODO: move to a Session class so the login is separate from CLI and can be used with other GUI

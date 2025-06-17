@@ -1,6 +1,25 @@
 from engine.exchange import Exchange
 from engine.trader import Trader
 
+HELP_MENU = """
+    login      — Authenticate using your Trader ID
+    logout     - Log out the trader
+    help       — Display this menu
+    next       — Refresh market data
+    match      — Execute order matching
+    portfolio  — View your portfolio holdings and P&L
+    status     — Show pending orders
+    buy        — Place a buy order
+    sell       — Place a sell order
+    quit       — Exit the terminal
+    """
+
+WELCOME_MESSAGE = f"""
+YORK STOCK EXCHANGE TERMINAL
+
+Please log in with your Trader ID before issuing any other commands.
+{HELP_MENU}"""
+
 
 def display_prices(exchange: Exchange):
     """
@@ -95,3 +114,13 @@ def display_pending_orders(exchange: Exchange):
             )
             print(message)
     print()
+
+
+def display_welcome():
+
+    print(WELCOME_MESSAGE)
+
+
+def display_help_menu():
+
+    print(HELP_MENU)
