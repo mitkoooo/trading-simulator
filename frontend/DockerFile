@@ -1,0 +1,30 @@
+# frontend/Dockerfile
+
+FROM node:18-bullseye-slim
+WORKDIR /app
+COPY ./package.json ./yarn.lock /app/
+
+# Copy your entire source so Vite can find index.html, src/, public/, etc.
+COPY . .
+
+RUN yarn install --frozen-lockfile
+
+# Expose dev server or build
+
+# For development:
+
+  
+ENV VITE_DEV_HOST=0.0.0.0
+ENV VITE_DEV_PORT=3000
+
+EXPOSE 3000
+CMD ["yarn",  "dev"]
+
+# For production build + serve, you’d use:
+
+# RUN npm run build
+
+# RUN yarn install -g serve
+
+# CMD ["serve", "-s", "dist", "-l", "3000"]
+
