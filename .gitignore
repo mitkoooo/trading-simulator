@@ -1,7 +1,40 @@
+# ── Python virtual environments & caches ─────────────
 venv/
-trading.log
-
+.venv/
 __pycache__/
 *.py[cod]
 *.egg-info/
 .coverage
+htmlcov/
+.pytest_cache/
+
+# ── Environment & secrets ────────────────────────────
+.env
+.env.*.local
+
+# ── Logs & runtime state ────────────────────────────
+trading.log
+*.log
+*.pid
+
+# ── Docker artifacts & volumes ───────────────────────
+docker-image-*.tar
+docker-compose.override.yml
+data/
+volumes/
+
+# ── Node/Vite build artifacts ────────────────────────
+frontend/node_modules/
+dist/
+.vite/
+
+# ── Yarn error logs ───────────────────────────────────
+yarn-error.log
+
+# ── IDE / Editor folders ─────────────────────────────
+.vscode/
+!.vscode/extensions.json
+
+# ── macOS / misc OS files ─────────────────────────────
+.DS_Store
+Thumbs.db
