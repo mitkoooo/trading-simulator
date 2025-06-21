@@ -75,7 +75,7 @@ trading-simulator/
   Install Docker Desktop (macOS/Windows) or `docker.io` + `docker-compose` (Linux) so you can spin up both services with a single command.
 
 - **Python 3.11+ & Poetry** (backend)  
-  We use Poetry to manage and lock Python dependencies.
+  Poetry is used to manage and lock Python dependencies.
 
   ```bash
   # Install Poetry (if not already)
