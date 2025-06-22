@@ -51,6 +51,6 @@ class Session:
         return self._active_trader
 
     @property
-    def active_trader(self) -> Trader:
+    def active_trader(self) -> Trader | None:
         """Currently logged in trader"""
         return self._active_trader

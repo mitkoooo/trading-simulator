@@ -1,4 +1,6 @@
+from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, WebSocket, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
 from typing import Dict
 
@@ -11,7 +13,19 @@ from engine.position import Position
 from app.session import Session
 
 
+class LoginRequest(BaseModel):
+    trader_id: int
+
+
 app = FastAPI(title="York Stock Exchange")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # my front-end origin
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],  # or ["*"]
+    allow_headers=["*"],
+)
 
 MARKET_DATA: Dict[str, Stock] = {
     "AAPL": Stock("AAPL", 150.00),
@@ -48,7 +62,9 @@ session: Session = Session(exchange.traders)
 
 
 @app.post("/login")
-def login(trader_id: str):
+def login(data: LoginRequest):
+    trader_id = data.trader_id
+
     id = int(trader_id)
 
     try:
@@ -56,6 +72,15 @@ def login(trader_id: str):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return {"status": "logged_in", "trader": id}
+
+
+@app.post("/logout")
+def logout():
+    try:
+        session.logout()
+    except RuntimeError as e:
+        raise HTTPException(status_code=204, detail=str(e))
+    return {"status": "logged_out"}
 
 
 @app.post("/next_tick")
@@ -87,6 +112,15 @@ def portfolio():
     safe: dict = jsonable_encoder(trader.portfolio)
 
     return safe
+
+
+@app.get("/me")
+def me():
+    if not session.active_trader:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
+    return {"trader_id": session.active_trader.trader_id}
 
 
 # ——— WebSocket for real-time ticks ———
