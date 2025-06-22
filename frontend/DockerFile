@@ -5,7 +5,7 @@ WORKDIR /app
 COPY ./package.json ./yarn.lock /app/
 
 # Copy your entire source so Vite can find index.html, src/, public/, etc.
-COPY . .
+COPY . /app/
 
 RUN yarn install --frozen-lockfile
 
