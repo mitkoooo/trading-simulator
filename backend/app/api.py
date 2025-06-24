@@ -123,6 +123,23 @@ def me():
     return {"trader_id": session.active_trader.trader_id}
 
 
+@app.get("/me/portfolio")
+def me_portfolio():
+    if not session.active_trader:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
+
+    trader_id = session.active_trader.trader_id
+
+    trader = exchange.traders.get(trader_id, None)
+
+    if not trader:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Trader not found")
+
+    return {"positions": trader.portfolio.positions}
+
+
 # ——— WebSocket for real-time ticks ———
 async def market_ws(ws: WebSocket):
     await ws.accept()
