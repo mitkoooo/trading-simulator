@@ -5,8 +5,8 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { useState } from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { isAuthenticated } from "../utils/auth";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import { isAuthenticated } from "../api/auth";
 
 // ——— Types ———
 interface LoginFormData {

@@ -11,6 +11,7 @@ htmlcov/
 # ── Environment & secrets ────────────────────────────
 .env
 .env.*.local
+.env.*
 
 # ── Logs & runtime state ────────────────────────────
 trading.log

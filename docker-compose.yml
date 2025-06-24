@@ -20,7 +20,6 @@ services:
     environment:
       - TMPDIR=/app/.tanstack/tmp
       - CHOKIDAR_USEPOLLING=true # for Vite’s file watcher over Docker mounts
-      - VITE_API_URL=http://localhost:3000
     depends_on:
       - backend
 
