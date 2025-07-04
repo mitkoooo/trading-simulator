@@ -7,14 +7,12 @@ import {
 import { useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { isAuthenticated } from "../api/auth";
+import { API_BASE } from "../config/api";
 
 // ——— Types ———
 interface LoginFormData {
   trader_id: number;
 }
-
-// ——— Constants ———
-const API_URL = "http://localhost:8000";
 
 // ——— Route Definition ———
 export const Route = createFileRoute("/login")({
@@ -45,7 +43,7 @@ function Login() {
   ) => {
     const trader_id = data.trader_id;
 
-    const res = await fetch(`${API_URL}/login`, {
+    const res = await fetch(`${API_BASE}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ trader_id }),

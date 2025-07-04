@@ -116,6 +116,9 @@ class Portfolio:
             # If partially filled, re-reserve the remaining shares
             if remaining_qty > 0:
                 reserved_pos.qty = reserved_pos.qty + remaining_qty
+            else:
+                self._positions.pop(symbol, None)
+                self._reserved_positions.pop(symbol, None)
 
         return
 
@@ -133,16 +136,16 @@ class Portfolio:
         total = self._cash + self._reserved_cash
 
         # Add value of free positions
-        for symbol, qty in self.positions.items():
+        for symbol, position in self.positions.items():
             stock = market_data.get(symbol)
             price = stock.price if (stock is not None) else 0.0
-            total += qty * price
+            total += position.qty * price
 
         # Add value of reserved positions
-        for symbol, qty in self._reserved_positions.items():
+        for symbol, position in self._reserved_positions.items():
             stock = market_data.get(symbol)
             price = stock.price if (stock is not None) else 0.0
-            total += qty * price
+            total += position.qty * price
 
         return total
 

@@ -38,7 +38,7 @@ class Stock:
         self.price = price
         self.volatility = volatility
         self.history: List[float] = [price]
-        self.tick_model = tick_model or self._uniform_stub
+        self._tick_model = tick_model or self._uniform_stub
 
     def update_price(self, new_price: float) -> None:
         """Update the stock's current price and append it to its history.
@@ -75,7 +75,7 @@ class Stock:
         True
         """
 
-        return self.tick_model(self)
+        return self._tick_model(self)
 
     @staticmethod
     def _uniform_stub(stock: "Stock") -> float:

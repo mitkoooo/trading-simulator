@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from engine.trader import Trader
 
@@ -51,6 +51,6 @@ class Session:
         return self._active_trader
 
     @property
-    def active_trader(self) -> Trader | None:
+    def active_trader(self) -> Optional[Trader]:
         """Currently logged in trader"""
         return self._active_trader

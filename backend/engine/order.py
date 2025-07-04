@@ -33,7 +33,7 @@ class Order:
         quantity: int,
         limit_price: Optional[float] = None,
         *,
-        order_id: Optional[int] = None,
+        order_id: Optional[str] = None,
         timestamp: Optional[datetime] = None,
     ):
         """Initialize a new Order.

@@ -1,0 +1,30 @@
+import { API_BASE } from "../config/api";
+
+export async function postOrder(
+  symbol: string,
+  order_type: "buy" | "sell",
+  quantity: number,
+  price?: number
+): Promise<boolean> {
+  const order = { symbol, order_type, quantity, price };
+
+  try {
+    const res = await fetch(`${API_BASE}/order`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(order),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Couldn't place the order (${res.status})`);
+    }
+
+    return res.ok;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+}
