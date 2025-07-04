@@ -26,8 +26,10 @@ volumes/
 
 # ── Node/Vite build artifacts ────────────────────────
 frontend/node_modules/
+frontend/.tanstack/
 dist/
 .vite/
+
 
 # ── Yarn error logs ───────────────────────────────────
 yarn-error.log
