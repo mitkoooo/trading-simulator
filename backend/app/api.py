@@ -2,7 +2,9 @@ from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, WebSocket, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
-from typing import Dict
+from typing import Dict, Optional, Literal
+
+from logging_config import setup_logger
 
 from engine.stock import Stock
 from engine.exchange import Exchange
@@ -11,10 +13,18 @@ from engine.order import Order
 from engine.position import Position
 
 from app.session import Session
+from app.context import AppContext
 
 
 class LoginRequest(BaseModel):
     trader_id: int
+
+
+class OrderRequest(BaseModel):
+    order_type: Literal["buy", "sell"]
+    symbol: str
+    quantity: int
+    price: float
 
 
 app = FastAPI(title="York Stock Exchange")
@@ -37,26 +47,20 @@ MARKET_DATA: Dict[str, Stock] = {
     "FB": Stock("FB", 355.45),
 }
 
+logger = setup_logger()
 exchange: Exchange = Exchange(MARKET_DATA)
 trader = Trader(trader_id=1, starting_balance=1000000)
 trader2 = Trader(trader_id=42, starting_balance=1000000)
 
-trader2.portfolio._positions["AAPL"] = Position(0, 150.0)
-trader2.portfolio._reserved_positions["AAPL"] = Position(999, 150.0)
-
-exchange.add_order(
-    Order(
-        trader_id=42,
-        symbol="AAPL",
-        order_type="sell",
-        quantity=999,
-        limit_price=150,
-    )
-)
+trader2.portfolio._positions["AAPL"] = Position(999, 150.0)
+order = trader2.place_order("AAPL", "sell", 999, 150)
+exchange.add_order(order)
 exchange.register_trader(trader)
 exchange.register_trader(trader2)
 
 session: Session = Session(exchange.traders)
+
+app_context = AppContext(session, exchange, logger)
 
 # ——— HTTP Endpoints ———
 
@@ -90,16 +94,41 @@ def next_tick():
 
 
 @app.post("/order")
-def place_order(side: str, symbol: str, quantity: int):
+def place_order(data: OrderRequest):
+
+    order_type, symbol, quantity, price = (
+        data.order_type,
+        data.symbol,
+        data.quantity,
+        data.price,
+    )
+
     try:
-        trader = session.require_active()
+        trader = app_context.session.require_active()
     except RuntimeError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
-    order = trader.place_order(side, symbol, quantity)
 
-    safe: dict = jsonable_encoder(order)
+    try:
+        app_context.exchange.verify_symbol(symbol)
+        order = trader.place_order(symbol, order_type, quantity, price)
+        app_context.exchange.add_order(order)
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
-    return safe
+    return {"status": "order_placed", "order_id": order.order_id}
+
+
+@app.get("/match-orders")
+def match_orders():
+    order_books = app_context.exchange.order_books
+
+    if len(order_books) == 0:
+        return
+
+    for symbol in order_books:
+        app_context.exchange.match_orders(symbol)
+
+    return
 
 
 @app.get("/portfolio")
@@ -137,7 +166,38 @@ def me_portfolio():
     if not trader:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Trader not found")
 
-    return {"positions": trader.portfolio.positions}
+    return {
+        "portfolio": {
+            "positions": trader.portfolio.positions,
+            "cash": trader.portfolio.cash,
+            "value": trader.portfolio.value(app_context.exchange.market_data),
+        }
+    }
+
+
+@app.get("/me/pending-orders")
+def me_pending_orders():
+    if not session.active_trader:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
+
+    orders = session.active_trader.pending_orders
+
+    return jsonable_encoder(orders)
+
+
+@app.get("/market-data")
+def market_data():
+    return {"market_data": app_context.exchange.market_data}
+
+
+@app.get("/market-data/next")
+def market_data_next():
+
+    app_context.exchange.process_tick()
+
+    return market_data()
 
 
 # ——— WebSocket for real-time ticks ———

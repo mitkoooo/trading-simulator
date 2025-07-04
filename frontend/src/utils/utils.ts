@@ -1,4 +1,4 @@
-type DataMap<T> = Record<string, T>;
+import type { DataMap } from "../types/domain";
 
 export function mapToArray<T>(
   data: DataMap<T>,

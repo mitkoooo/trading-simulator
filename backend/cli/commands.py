@@ -1,8 +1,5 @@
 from typing import List
 
-from engine.exchange import Exchange
-
-from app.session import Session
 from app.context import AppContext
 
 from cli.validation import parse_order, validate_symbol

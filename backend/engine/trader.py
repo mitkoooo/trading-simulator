@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 from .order import Order
 from .portfolio import Portfolio
 from .trade import Trade
@@ -36,6 +36,7 @@ class Trader:
         self.trader_id = trader_id
         self.portfolio = Portfolio(starting_balance)
         self.transaction_log: List[Order] = []
+        self._pending_orders: Dict[str, Order] = {}
 
     def place_order(
         self, symbol: str, order_type: str, quantity: int, price: Optional[float]
@@ -71,7 +72,7 @@ class Trader:
             raise ValueError(f"quantity must be > 0 (got {quantity})")
 
         if order_type not in ("buy", "sell"):
-            raise ValueError(f"order_type must be 'buy' or 'sell' (got {order_type!r})")
+            raise ValueError(f"order_type must be 'buy' or 'sell' (got {order_type})")
 
         pos = self.portfolio.positions.get(symbol, Position())
 
@@ -90,6 +91,7 @@ class Trader:
             limit_price=price,
         )
         self.portfolio.reserve_assets(o)
+        self._pending_orders[o.order_id] = o
 
         return o
 
@@ -122,6 +124,24 @@ class Trader:
             else trade.sell_order
         )
 
-        self.transaction_log.append(o)
+        print(
+            self.pending_orders,
+            o.order_id,
+            o.order_type,
+            o.trader_id,
+            o.quantity,
+            o.limit_price,
+        )
+
+        if o.quantity == 0:
+            self._pending_orders.pop(o.order_id)
+            self.transaction_log.append(o)
+        else:
+            self._pending_orders[o.order_id].quantity = o.quantity
 
         return self.portfolio.apply_trade(trade, self.trader_id)
+
+    @property
+    def pending_orders(self) -> List[Order]:
+        """Returns trader's pending orders on the exchange."""
+        return set(self._pending_orders.values())

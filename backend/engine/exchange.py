@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from .order_book import OrderBook
 from .stock import Stock
@@ -63,6 +63,9 @@ class Exchange:
             >>> exchange.order_books["AAPL"].buy_size()
             1
         """
+        if order.symbol not in self.market_data:
+            raise KeyError(f"The symbol does not exist")
+
         self.order_books[order.symbol].add_order(order)
 
     def register_trader(self, trader: Trader) -> None:
@@ -125,6 +128,56 @@ class Exchange:
             if best_buy.limit_price < best_sell.limit_price:
                 break
 
+            # 1) Decide taker (the one that arrived later)
+            if (best_buy.timestamp, best_buy.sequence) > (
+                best_sell.timestamp,
+                best_sell.sequence,
+            ):
+                taker_side = "buy"
+                taker = best_buy
+                maker_peek = order_book.peek_best_sell
+                maker_pop = order_book.pop_best_sell
+                maker_push = order_book.add_order
+                price_cross = lambda m: taker.limit_price >= m.limit_price
+                exec_price = lambda m: m.limit_price
+            else:
+                taker_side = "sell"
+                taker = best_sell
+                maker_peek = order_book.peek_best_buy
+                maker_pop = order_book.pop_best_buy
+                maker_push = order_book.add_order
+                price_cross = lambda m: m.limit_price >= taker.limit_price
+                exec_price = lambda m: m.limit_price
+
+            # 2) Scan the maker heap for a valid counterparty
+            skipped: List[Order] = []
+            maker: Optional[Order] = None
+            while taker.quantity > 0:
+                candidate = maker_peek()
+                if not candidate or not price_cross(candidate):
+                    break
+
+                maker_pop()
+                if candidate.trader_id == taker.trader_id:
+                    # same trader → buffer and keep scanning
+                    skipped.append(candidate)
+                    continue
+
+                maker = candidate
+                break
+
+            # 3) No valid maker found → restore and exit
+            if maker is None:
+                for o in skipped:
+                    maker_push(o)
+                break
+
+            # 4) Execute the trade
+            if taker_side == "buy":
+                best_buy, best_sell = taker, maker
+            else:
+                best_buy, best_sell = maker, taker
+
             orig_buy_qty = best_buy.quantity
             orig_sell_qty = best_sell.quantity
             exec_qty = min(orig_buy_qty, orig_sell_qty)
@@ -143,10 +196,16 @@ class Exchange:
             best_buy.quantity -= exec_qty
             best_sell.quantity -= exec_qty
 
-            if best_buy.quantity == 0:
+            # If the BUY side still has shares, re‐insert it
+            if best_buy.quantity > 0:
+                order_book.add_order(best_buy)
+            else:
                 order_book.pop_best_buy()
 
-            if best_sell.quantity == 0:
+            # If the SELL side still has shares, re‐insert it
+            if best_sell.quantity > 0:
+                order_book.add_order(best_sell)
+            else:
                 order_book.pop_best_sell()
 
             seller_id, buyer_id = best_sell.trader_id, best_buy.trader_id
@@ -157,4 +216,12 @@ class Exchange:
 
             trades.append(new_trade)
 
+            # 6) Restore any skipped same‐trader orders
+            for o in skipped:
+                order_book.add_order(o)
+
         return trades
+
+    def verify_symbol(self, symbol) -> None:
+        if symbol not in self.market_data:
+            raise KeyError(f"The symbol '{symbol}' does on exist")
