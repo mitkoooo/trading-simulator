@@ -9,3 +9,18 @@ export function mapToArray<T>(
     [keyName]: key,
   }));
 }
+
+export function formatNumber(num: number): string {
+  const [intPart, decimalPart] = num.toString().split(".");
+  const formattedInt = formatNumberRecursive(parseInt(intPart));
+  return decimalPart ? `${formattedInt}.${decimalPart}` : formattedInt;
+}
+
+function formatNumberRecursive(num: number): string {
+  if (num < 1000) {
+    return `${num}`;
+  }
+  const remainder = num % 1000;
+  const prefix = formatNumberRecursive(Math.floor(num / 1000));
+  return `${prefix},${remainder.toString().padStart(3, "0")}`;
+}

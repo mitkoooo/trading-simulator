@@ -45,6 +45,8 @@ MARKET_DATA: Dict[str, Stock] = {
     "TSLA": Stock("TSLA", 720.25),
     "NFLX": Stock("NFLX", 505.60),
     "FB": Stock("FB", 355.45),
+    "NVDA": Stock("NVDA", 670.15),
+    "INTC": Stock("INTC", 42.30),
 }
 
 logger = setup_logger()
@@ -166,12 +168,16 @@ def me_portfolio():
     if not trader:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Trader not found")
 
+    total_PnL = 0
+
+    for symbol in trader.portfolio.positions:
+        total_PnL += trader.portfolio.calculate_unrealized_pl(symbol, MARKET_DATA)
+
     return {
-        "portfolio": {
-            "positions": trader.portfolio.positions,
-            "cash": trader.portfolio.cash,
-            "value": trader.portfolio.value(app_context.exchange.market_data),
-        }
+        "positions": list(trader.portfolio.positions.values()),
+        "cash": trader.portfolio.cash,
+        "value": trader.portfolio.value(app_context.exchange.market_data),
+        "totalPnL": total_PnL,
     }
 
 

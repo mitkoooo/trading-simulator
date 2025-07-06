@@ -1,7 +1,6 @@
 import { API_BASE } from "../config/api";
 import type { MePortfolioResponse } from "../types/api";
-import type { Portfolio, Position } from "../types/domain";
-import { mapToArray } from "../utils/utils";
+import type { Portfolio } from "../types/domain";
 
 export async function getPortfolio(): Promise<Portfolio> {
   const res = await fetch(`${API_BASE}/me/portfolio`, {
@@ -12,11 +11,5 @@ export async function getPortfolio(): Promise<Portfolio> {
 
   const data: MePortfolioResponse = await res.json();
 
-  const arr = mapToArray(data.portfolio.positions, "ticket") as Position[];
-
-  return {
-    positions: arr,
-    cash: data.portfolio.cash,
-    value: data.portfolio.value,
-  };
+  return data;
 }

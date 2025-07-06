@@ -24,7 +24,6 @@ const OrderView = ({ orderVisible }: OrderViewProps): React.JSX.Element => {
           throw Error(errorMessage);
         } else {
           const pendingOrders: Order[] = await res.json();
-          console.log(pendingOrders);
           setOrders(pendingOrders);
         }
       } catch (err: unknown) {

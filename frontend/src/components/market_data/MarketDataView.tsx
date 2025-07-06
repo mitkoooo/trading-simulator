@@ -1,15 +1,15 @@
-import type { Stock } from "../types/domain";
+import type { Stock } from "../../types/domain";
 
 type MarketDataViewProps = {
-  market_data: Stock[] | null;
+  marketData: Stock[] | null;
 }; /* use `interface` if exporting so that consumers can extend */
 
 const MarketDataView = ({
-  market_data,
+  marketData,
 }: MarketDataViewProps): React.JSX.Element => {
   return (
     <div>
-      {market_data?.map((stock) => (
+      {marketData?.map((stock) => (
         <div
           key={stock.symbol}
           className="border flex justify-between w-40 p-2"
