@@ -27,7 +27,7 @@ class Stock:
         self,
         symbol: str,
         price: float,
-        volatility: float = 0.01,
+        volatility: float = 0.1,
         tick_model: Callable[["Stock"], float] = None,
     ):
         """Initialize a Stock with a symbol, starting price, volatility, and optional model.

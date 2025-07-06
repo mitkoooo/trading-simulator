@@ -5,11 +5,10 @@ export interface MeResponse {
 }
 
 export interface MePortfolioResponse {
-  portfolio: {
-    positions: DataMap<Position>;
-    cash: number;
-    value: number;
-  };
+  positions: Position[];
+  cash: number;
+  value: number;
+  totalPnL: number;
 }
 
 export interface MarketDataResponse {

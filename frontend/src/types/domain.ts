@@ -8,6 +8,7 @@ export interface Portfolio {
   positions: Position[];
   cash: number;
   value: number;
+  totalPnL: number;
 }
 
 export interface Stock {

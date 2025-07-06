@@ -1,16 +1,72 @@
 @import "tailwindcss";
 
+@layer utilities {
+  @keyframes ticker-sequential {
+    0% {
+      transform: translateX(100vw); /* fully off-screen right */
+    }
+
+    100% {
+      transform: translateX(-100vw); /* fully off-screen left */
+    }
+  }
+
+  .animate-ticker-item {
+    animation-name: ticker-sequential;
+    animation-duration: 36s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+    white-space: nowrap;
+    will-change: transform;
+  }
+}
+
+@theme {
+  --font-sans: "Inter", "sans-serif";
+  --font-logo: "Montserrat", "sans-serif";
+  --font-mono: "Fira Code", "monospace";
+
+  --color-canvas: #121212;
+  --color-panel: #1e1e1e;
+  --color-card: #2a2a2a;
+  --color-divider: #2c2c2c;
+  --color-primary: #e0e0e0;
+  --color-secondary: #a0a0a0;
+  --color-disabled: #555555;
+  --color-success: #4caf50;
+  --color-success-hover: #66bb6a;
+  --color-error: #f44336;
+  --color-error-hover: #e57373;
+  --color-accent: #ffc107;
+  --color-info: #2196f3;
+  --color-info-hover: #42a5f5;
+  --color-nav-active: #ffffff;
+  --color-nav-inactive: #888888;
+  --color-nav-hover: #cccccc;
+  --color-nav-indicator: #4caf50;
+}
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+}
+
+.logo {
+  font-family: "Montserrat", sans-serif; /* or Inter Black */
+}
+
+.code,
+.ticker {
+  font-family: "Fira Code", monospace; /* or 'JetBrains Mono' */
 }
