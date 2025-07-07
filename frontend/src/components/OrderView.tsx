@@ -1,48 +1,42 @@
-type OrderViewProps = {
-  orderVisible: boolean;
-}; /* use `interface` if exporting so that consumers can extend */
+import { useEffect } from "react";
+import { usePortfolioDataStore } from "../stores/portfolioDataStore";
 
-import { useEffect, useState } from "react";
-import type { Order } from "../types/domain";
-import { API_BASE } from "../config/api";
-
-const OrderView = ({ orderVisible }: OrderViewProps): React.JSX.Element => {
-  const [orders, setOrders] = useState<Order[] | null>(null);
+const OrderView = (): React.JSX.Element => {
+  const fetchPendingOrders = usePortfolioDataStore(
+    (state) => state.fetchPendingOrders
+  );
+  const pendingOrders = usePortfolioDataStore((state) => state.pendingOrders);
 
   useEffect(() => {
     (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/me/pending-orders`, {
-          method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json(); // 👈 this parses the error body
-          const errorMessage = errorData.detail || "Unknown error";
-          throw Error(errorMessage);
-        } else {
-          const pendingOrders: Order[] = await res.json();
-          setOrders(pendingOrders);
-        }
-      } catch (err: unknown) {
-        console.error(err);
-        throw err;
-      }
+      fetchPendingOrders();
     })();
-  }, [orderVisible]);
+  }, [fetchPendingOrders]);
 
   return (
     <div>
-      <h3>Your orders</h3>
-      {orders?.map((o) => (
-        <div className="flex gap-4" key={o.order_id}>
-          <span>{o.symbol}</span>
-          <span>{o.limit_price}$</span>
-          <span>{o.quantity}</span>
+      <h1 className="text-xl mb-2">Your pending orders</h1>
+      {pendingOrders.length !== 0 ? (
+        <div className="bg-panel border border-divider rounded-md">
+          {pendingOrders?.map((o, i) => (
+            <div
+              className={`flex gap-4 p-3 ${i !== pendingOrders.length - 1 ? "" : "border-b"} border-divider`}
+              key={o.order_id}
+            >
+              <span className="font-semibold ">
+                {o.order_type.toUpperCase()}
+              </span>
+              <span>{o.symbol}</span>
+              <span className="font-mono">${o.limit_price}</span>
+              <span>{o.quantity}</span>
+            </div>
+          ))}
         </div>
-      ))}
+      ) : (
+        <p className="flex items-center justify-center text-xl">
+          No orders at the moment.
+        </p>
+      )}
     </div>
   );
 };

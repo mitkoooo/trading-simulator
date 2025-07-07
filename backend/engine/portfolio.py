@@ -59,9 +59,11 @@ class Portfolio:
         # Ensure we have keys in _positions / _reserved_positions
         pos = self._positions.setdefault(
             symbol,
-            Position(0, price),
+            Position(symbol, 0, price),
         )
-        reserved_pos = self._reserved_positions.setdefault(symbol, Position(0, price))
+        reserved_pos = self._reserved_positions.setdefault(
+            symbol, Position(symbol, 0, price)
+        )
 
         # ===== BUY SIDE =====
         if trader_id == trade.buy_order.trader_id:
