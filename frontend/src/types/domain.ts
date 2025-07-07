@@ -1,5 +1,5 @@
 export interface Position {
-  ticket: string;
+  symbol: string;
   qty: number;
   avg_price: number;
 }

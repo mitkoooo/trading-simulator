@@ -13,7 +13,9 @@ export function mapToArray<T>(
 export function formatNumber(num: number): string {
   const [intPart, decimalPart] = num.toString().split(".");
   const formattedInt = formatNumberRecursive(parseInt(intPart));
-  return decimalPart ? `${formattedInt}.${decimalPart}` : formattedInt;
+  return decimalPart
+    ? `${formattedInt}.${decimalPart.substring(0, 2)}`
+    : formattedInt;
 }
 
 function formatNumberRecursive(num: number): string {

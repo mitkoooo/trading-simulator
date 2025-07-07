@@ -1,23 +1,17 @@
-import type { Stock } from "../../types/domain";
+import { useMarketDataStore } from "../../stores/marketDataStore";
 
-type MarketDataViewProps = {
-  marketData: Stock[] | null;
-}; /* use `interface` if exporting so that consumers can extend */
+const MarketDataView = (): React.JSX.Element => {
+  const marketData = useMarketDataStore((state) => state.marketData);
 
-const MarketDataView = ({
-  marketData,
-}: MarketDataViewProps): React.JSX.Element => {
   return (
-    <div>
-      {marketData?.map((stock) => (
+    <div className="border border-divider bg-panel w-[12rem] rounded-md">
+      {marketData?.map((stock, index) => (
         <div
           key={stock.symbol}
-          className="border flex justify-between w-40 p-2"
+          className={`flex justify-between w-full p-2 ${index === marketData.length - 1 ? "" : "border-b"} border-divider`}
         >
           <span className="font-semibold">{stock.symbol}</span>
-          <span className="font-mono">
-            {Math.round(stock.price * 10) / 10}$
-          </span>
+          <span className="font-mono">${stock.price.toFixed(2)}</span>
         </div>
       ))}
     </div>

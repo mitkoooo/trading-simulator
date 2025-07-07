@@ -54,7 +54,7 @@ exchange: Exchange = Exchange(MARKET_DATA)
 trader = Trader(trader_id=1, starting_balance=1000000)
 trader2 = Trader(trader_id=42, starting_balance=1000000)
 
-trader2.portfolio._positions["AAPL"] = Position(999, 150.0)
+trader2.portfolio._positions["AAPL"] = Position("AAPL", 999, 150.0)
 order = trader2.place_order("AAPL", "sell", 999, 150)
 exchange.add_order(order)
 exchange.register_trader(trader)
@@ -131,18 +131,6 @@ def match_orders():
         app_context.exchange.match_orders(symbol)
 
     return
-
-
-@app.get("/portfolio")
-def portfolio():
-    try:
-        trader = session.require_active()
-    except RuntimeError as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
-
-    safe: dict = jsonable_encoder(trader.portfolio)
-
-    return safe
 
 
 @app.get("/me")

@@ -19,7 +19,7 @@ type CardTotalProps = {
 const Card = ({ children, className }: CardProps): React.JSX.Element => {
   return (
     <div
-      className={`${className} bg-card border-2 border-divider px-2 py-3 rounded-md`}
+      className={`${className} bg-card border-2 border-divider px-3 py-4 rounded-md`}
     >
       {children}
     </div>

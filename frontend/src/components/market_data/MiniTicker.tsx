@@ -1,14 +1,12 @@
-import type { Stock } from "../../types/domain";
+import { useMarketDataStore } from "../../stores/marketDataStore";
 
 interface MiniTickerProps {
   className?: string;
-  marketData: Stock[] | null;
 }
 
-const MiniTicker = ({
-  className = "",
-  marketData,
-}: MiniTickerProps): React.JSX.Element => {
+const MiniTicker = ({ className = "" }: MiniTickerProps): React.JSX.Element => {
+  const marketData = useMarketDataStore((state) => state.marketData);
+
   const renderTickers = (keySuffix: string = "") => {
     return marketData?.map((stock, index) => {
       const percentageChange =
@@ -26,12 +24,12 @@ const MiniTicker = ({
       return (
         <div
           key={`${stock.symbol}-${keySuffix}`}
-          className="absolute top-[25%] h-full flex flex-col items-start px-4 animate-ticker-item"
+          className="absolute top-[15%] h-full flex flex-col items-start px-4 animate-ticker-item"
           style={{ animationDelay: `${index * 4}s` }}
         >
           <div className="flex items-baseline gap-1">
             <span className="font-semibold">{stock.symbol}</span>
-            <span className="font-mono">${stock.price.toFixed(1)}</span>
+            <span className="font-mono">${stock.price.toFixed(2)}</span>
           </div>
 
           <div className={`text-xs ${changeColor}`}>{formattedChange}</div>

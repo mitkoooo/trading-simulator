@@ -19,5 +19,6 @@ class Position:
         100.0
     """
 
+    symbol: str | None = None
     qty: int = 0
     avg_price: float = 0.0
