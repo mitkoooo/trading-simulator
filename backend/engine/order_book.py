@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Literal
 import heapq
 
 
@@ -81,9 +81,13 @@ class OrderBook:
         >>> ob.peek_best_buy() == o
         True
         """
+        
         if not self._buy_heap:
             return None
-        return self._buy_heap[0]
+
+        
+        return self._cancellation_mopper(heap_type="buy", func=lambda _ : self._buy_heap[0])
+        
 
     def peek_best_sell(self) -> Optional[Order]:
         """Return the lowest-price sell order without removing it.
@@ -102,7 +106,10 @@ class OrderBook:
         """
         if not self._sell_heap:
             return None
-        return self._sell_heap[0]
+
+        
+        return self._cancellation_mopper(heap_type="sell", func=lambda _ : self._sell_heap[0])
+        
 
     def pop_best_buy(self) -> Optional[Order]:
         """
@@ -247,3 +254,25 @@ class OrderBook:
         heap_copy = list(self._sell_heap)
 
         return sorted(heap_copy)
+
+    def _cancellation_mopper(self, heap_type: Literal["buy", "sell"], func=None):
+        """Clean-ups cancelled orders from the `OrderBook` heaps
+
+        Attributes:
+            heap_type (Literal["buy", "sell"]): Heap type to clean up 
+            func (Optional[Callable | None]): Function to execute upon clean up
+        """
+        operation_heap = self._buy_heap if heap_type == "buy" else self._sell_heap
+
+        while operation_heap:
+            if operation_heap[0].status == "cancelled":
+                heapq.heappop(operation_heap)
+                continue
+            break
+        
+        return func(operation_heap) if operation_heap and func else None
+
+
+
+
+

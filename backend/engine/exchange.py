@@ -20,6 +20,7 @@ class Exchange:
         market_data (Dict[str, Stock]): Current market price and history for each symbol.
         order_books (Dict[str, OrderBook]): Order book per symbol for managing open orders.
         current_time (datetime): Timestamp of the last processed tick.
+        order_lookup (Dict[str, Order]): Global order look-up by `order_id`
 
     Examples:
         >>> from engine.trader import Trader
@@ -47,6 +48,7 @@ class Exchange:
         self.order_books: Dict[str, OrderBook] = {
             symbol: OrderBook() for symbol in market_data.keys()
         }
+        self.order_lookup: Dict[str, Order] = {}
         self.current_time = datetime.now()
 
     def add_order(self, order: Order) -> None:
@@ -67,6 +69,30 @@ class Exchange:
             raise KeyError(f"The symbol does not exist")
 
         self.order_books[order.symbol].add_order(order)
+        self.order_lookup[order.order_id] = order
+
+    def cancel_order(self, order_id: str) -> bool:
+        """Mark `order` as cancelled.
+
+        The order will not be processed by the matching engine.
+
+        Attributes:
+            order_id (Order): `order_id` of `Order` to be cancelled
+        
+        Returns:
+            (bool): True if order has been cancelled, false if failed to cancel (already filled).
+        """
+        if order_id not in self.order_lookup:
+            raise KeyError(f"An order with this `order_id` does not exist. (got {order_id})")
+
+        order = self.order_lookup[order_id]
+
+        if order.status != "filled":
+            order.status = "cancelled"
+
+        return order.status == "cancelled"   
+
+    
 
     def register_trader(self, trader: Trader) -> None:
         """Register trader in a stock exchange"""
@@ -121,6 +147,10 @@ class Exchange:
                 order_book.peek_best_buy(),
                 order_book.peek_best_sell(),
             )
+            
+
+            print(f"Buy size: {order_book.buy_size()}")
+            print(f"Sell size: {order_book.sell_size()}")
 
             if not best_buy or not best_sell:
                 break
@@ -148,7 +178,7 @@ class Exchange:
                 maker_push = order_book.add_order
                 price_cross = lambda m: m.limit_price >= taker.limit_price
                 exec_price = lambda m: m.limit_price
-
+            
             # 2) Scan the maker heap for a valid counterparty
             skipped: List[Order] = []
             maker: Optional[Order] = None
@@ -171,6 +201,9 @@ class Exchange:
                 for o in skipped:
                     maker_push(o)
                 break
+
+            print(f"Buy size: {order_book.buy_size()}")
+            print(f"Sell size: {order_book.sell_size()}")
 
             # 4) Execute the trade
             if taker_side == "buy":
@@ -196,17 +229,19 @@ class Exchange:
             best_buy.quantity -= exec_qty
             best_sell.quantity -= exec_qty
 
-            # If the BUY side still has shares, re‐insert it
-            if best_buy.quantity > 0:
-                order_book.add_order(best_buy)
-            else:
-                order_book.pop_best_buy()
-
-            # If the SELL side still has shares, re‐insert it
-            if best_sell.quantity > 0:
-                order_book.add_order(best_sell)
-            else:
-                order_book.pop_best_sell()
+            # If any side has still shares, reinsert it
+            for order in [best_buy, best_sell]:
+                if order.quantity > 0:
+                    order.status = "partially_filled"
+                    if order == maker:
+                        order_book.add_order(order)
+                else:
+                    order.status = "filled"
+                    if order != maker:
+                        if order.order_type == "buy":
+                            order_book.pop_best_buy()
+                        else:
+                            order_book.pop_best_sell()
 
             seller_id, buyer_id = best_sell.trader_id, best_buy.trader_id
 
@@ -224,4 +259,4 @@ class Exchange:
 
     def verify_symbol(self, symbol) -> None:
         if symbol not in self.market_data:
-            raise KeyError(f"The symbol '{symbol}' does on exist")
+            raise KeyError(f"The symbol '{symbol}' does not exist")

@@ -47,20 +47,14 @@ def main():
     trader = Trader(trader_id=1, starting_balance=1000000)
     trader2 = Trader(trader_id=42, starting_balance=1000000)
 
-    trader2.portfolio._positions["AAPL"] = Position(0, 150.0)
-    trader2.portfolio._reserved_positions["AAPL"] = Position(999, 150.0)
-
-    exchange.add_order(
-        Order(
-            trader_id=42,
-            symbol="AAPL",
-            order_type="sell",
-            quantity=999,
-            limit_price=150,
-        )
-    )
     exchange.register_trader(trader)
     exchange.register_trader(trader2)
+
+    trader2.portfolio._positions["AAPL"] = Position("AAPL", 999, 150.0)
+
+    o = trader2.place_order("AAPL", "sell", 999, 150)
+
+    exchange.add_order(o)
 
     sim = MarketSimulator(exchange, tick_interval=timedelta(seconds=1))
 

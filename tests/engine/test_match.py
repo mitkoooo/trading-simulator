@@ -1,14 +1,13 @@
 from datetime import timedelta
 
 from engine.trader import Trader
-from engine.order import Order
 from engine.exchange import Exchange
 from engine.position import Position
 
 
 def test_match_exact_match(sample_market: Exchange, trader: Trader, trader2: Trader):
     SYMBOL = "AAPL"
-    trader.portfolio._positions[SYMBOL] = Position(qty=10, avg_price=150.0)
+    trader.portfolio._positions[SYMBOL] = Position(symbol=SYMBOL, qty=10, avg_price=150.0)
 
     o1, o2 = trader.place_order(SYMBOL, "sell", 10, 100), trader2.place_order(
         SYMBOL, "buy", 10, 100
@@ -28,7 +27,7 @@ def test_match_exact_match(sample_market: Exchange, trader: Trader, trader2: Tra
 
 def test_match_partial_fill(sample_market: Exchange, trader: Trader, trader2: Trader):
     SYMBOL = "AAPL"
-    trader.portfolio._positions[SYMBOL] = Position(qty=10)
+    trader.portfolio._positions[SYMBOL] = Position(symbol=SYMBOL, qty=10)
 
     qty_sell = 10
     qty_buy = 42
@@ -52,7 +51,7 @@ def test_match_multistep_match(
     sample_market: Exchange, trader: Trader, trader2: Trader
 ):
     SYMBOL = "AAPL"
-    trader.portfolio._positions[SYMBOL] = Position(10, 0)
+    trader.portfolio._positions[SYMBOL] = Position(symbol=SYMBOL, qty=10)
 
     qty_sell = 5
     qty_buy = 10
@@ -88,7 +87,7 @@ def test_match_multistep_match(
 
 def test_match_no_match(sample_market: Exchange, trader: Trader, trader2: Trader):
     SYMBOL = "AAPL"
-    trader.portfolio._positions[SYMBOL] = Position(qty=10)
+    trader.portfolio._positions[SYMBOL] = Position(symbol=SYMBOL, qty=10)
 
     qty_sell = 5
     qty_buy = 10
@@ -109,7 +108,7 @@ def test_match_no_match(sample_market: Exchange, trader: Trader, trader2: Trader
 
 def test_match_price_time(sample_market: Exchange, trader: Trader, trader2: Trader):
     SYMBOL = "AAPL"
-    trader.portfolio._positions[SYMBOL] = Position(qty=10)
+    trader.portfolio._positions[SYMBOL] = Position(symbol=SYMBOL, qty=10)
 
     qty_sell = 5
     qty_buy = 5

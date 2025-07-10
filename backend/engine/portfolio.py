@@ -116,13 +116,17 @@ class Portfolio:
             self._cash += proceeds
 
             # If partially filled, re-reserve the remaining shares
+
             if remaining_qty > 0:
                 reserved_pos.qty = reserved_pos.qty + remaining_qty
-            else:
-                self._positions.pop(symbol, None)
+            
+            if reserved_pos.qty == 0:
                 self._reserved_positions.pop(symbol, None)
 
-        return
+            if pos.qty == 0:
+                self._positions.pop(symbol, None)
+    
+            return
 
     def value(self, market_data: Dict[str, Stock]) -> float:
         """
@@ -155,7 +159,7 @@ class Portfolio:
         """Reserve required cash or shares for a new buy/sell order."""
         qty = order.quantity
         price = order.limit_price
-        sym = order.symbol
+        symbol = order.symbol
 
         if order.order_type == "buy":
             cost_estimate = qty * price
@@ -166,7 +170,7 @@ class Portfolio:
             self._reserved_cash += cost_estimate
 
         elif order.order_type == "sell":
-            pos = self._positions.setdefault(sym, Position())
+            pos = self._positions.setdefault(symbol, Position(symbol=symbol))
 
             held = pos.qty
 
@@ -174,11 +178,37 @@ class Portfolio:
                 raise ValueError("Insufficient shares to place sell order.")
             # Reserve shares
             pos.qty = held - qty
-            reserved_pos = self._reserved_positions.setdefault(sym, Position())
+            reserved_pos = self._reserved_positions.setdefault(symbol, Position(symbol=symbol))
             reserved_pos.qty = reserved_pos.qty + qty
 
         else:
             raise ValueError(f"Unknown order_type: {order.order_type}")
+
+    def unreserve_assets(self, order: Order) -> None:
+        """Unreserve freed cash or shares for a new but/sell order."""
+        quantity = order.quantity
+        limit_price = order.limit_price
+        symbol = order.symbol
+
+        if order.order_type == "buy":
+            cost_estimate = quantity * limit_price
+            self._cash += cost_estimate
+            self._reserved_cash -= cost_estimate
+        elif order.order_type == "sell":
+            reserved_pos = self._reserved_positions.get(symbol, None)
+            pos = self._positions.get(symbol, None)
+
+            if not reserved_pos or not pos:
+                raise KeyError(f"Unable to unreserve reserved shares with the symbol {symbol}. (No such key exist)")
+
+            reserved_pos.qty -= quantity
+            pos.qty += quantity
+            
+            if pos.qty == 0:
+                self._reserved_positions.pop(symbol, None)
+        else:
+            raise ValueError(f"Unknown order_type: {order.order_type}")
+
 
     def calculate_unrealized_pl(
         self, symbol: str, market_data: Dict[str, Stock]

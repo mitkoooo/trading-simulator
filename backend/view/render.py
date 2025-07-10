@@ -11,6 +11,7 @@ HELP_MENU = """
     status     — Show pending orders
     buy        — Place a buy order
     sell       — Place a sell order
+    cancel     - Cancel an order
     quit       — Exit the terminal
     """
 
@@ -105,14 +106,23 @@ def display_pending_orders(exchange: Exchange):
         >>> ex.add_order(o)
         >>> display_pending_orders(ex)  # doctest: +SKIP
     """
+    
+    message = ""
+
     for order_book in exchange.order_books.values():
         for order in order_book.get_buy_orders() + order_book.get_sell_orders():
-            message = (
+            if order.status == "cancelled":
+                continue
+
+            message += (
                 f"\n[{order.timestamp:%Y-%m-%d %H:%M:%S}] Pending {order.order_type.capitalize()} Order: "
                 f"{order.quantity} share{'s' if order.quantity != 1 else ''} of {order.symbol} "
                 f"@ ${order.limit_price:,.2f}."
             )
-            print(message)
+    if not message:
+        print ("\n Currently no active orders on the exchange.\n")
+        return
+    print(message)
     print()
 
 

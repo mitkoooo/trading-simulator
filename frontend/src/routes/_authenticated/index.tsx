@@ -17,29 +17,36 @@ export const Route = createFileRoute("/_authenticated/")({ component: Index });
 
 function Index() {
   const fetchPortfolioData = usePortfolioDataStore(
-    (state) => state.fetchPortfolioData
+    (state) => state.fetchPortfolioData,
   );
   const portfolio = usePortfolioDataStore((state) => state.portfolio);
 
+  const fetchMarketData = useMarketDataStore((state) => state.fetchMarketData);
+
   const fetchNextMarketData = useMarketDataStore(
-    (state) => state.fetchNextMarketData
+    (state) => state.fetchNextMarketData,
+  );
+
+  const fetchPendingOrders = usePortfolioDataStore(
+    (state) => state.fetchPendingOrders,
   );
 
   useEffect(() => {
     (async () => {
-      fetchNextMarketData();
-      fetchPortfolioData();
+      await fetchMarketData();
+      await fetchPortfolioData();
     })();
-  }, [fetchNextMarketData, fetchPortfolioData]);
+  }, [fetchMarketData, fetchPortfolioData]);
 
   const onNextPrice = async () => {
-    fetchNextMarketData();
-    fetchPortfolioData();
+    await fetchNextMarketData();
+    await fetchPortfolioData();
   };
 
   const onMatchOrders = async () => {
     await getMatchOrders();
-    fetchPortfolioData();
+    await fetchPendingOrders();
+    await fetchPortfolioData();
   };
 
   return (

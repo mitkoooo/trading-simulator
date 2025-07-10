@@ -10,6 +10,7 @@ class Order:
         trader_id (int): ID of the trader submitting the order.
         symbol (str): Stock ticker (e.g. "AAPL").
         order_type (Literal["buy", "sell"]): Direction of the order.
+        status (Literal["pending", "partially_filled", "filled", "cancelled"]
         quantity (int): Number of shares; must be > 0.
         limit_price (Optional[float]): Limit price; None for market orders.
         order_id (Optional[int]): Unique ID, auto-generated if omitted.
@@ -76,9 +77,10 @@ class Order:
         self.trader_id = trader_id
         self.symbol = symbol
         self.order_type = order_type
+        self.status = "pending"                         # All orders at first are initialized as pending
         self.quantity = quantity
         self.limit_price = limit_price
-        self.order_id = order_id or str(uuid.uuid4())  # or auto-generated
+        self.order_id = order_id or str(uuid.uuid4())   # or auto-generated
         self.timestamp = timestamp or datetime.now()
 
         self.sequence: Optional[int] = None  # Serialization number for OrderBook

@@ -12,7 +12,7 @@ class Position:
         avg_price (float): Average price of held positions.
 
     Examples:
-        >>> p = Position(qty=42, avg_price=100.0)
+        >>> p = Position(symbol="AAPL", qty=42, avg_price=100.0)
         >>> p.qty
         42
         >>> p.avg_price

@@ -22,13 +22,13 @@ const PlaceOrderForm = (): React.JSX.Element => {
   } = useForm<PlaceOrderFormData>();
 
   const fetchPortfolioData = usePortfolioDataStore(
-    (state) => state.fetchPortfolioData
+    (state) => state.fetchPortfolioData,
   );
   const fetchPendingOrders = usePortfolioDataStore(
-    (state) => state.fetchPendingOrders
+    (state) => state.fetchPendingOrders,
   );
 
-  const [error, setError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [orderType, setOrderType] = useState<string | null>(null);
 
   const onClick: MouseEventHandler<HTMLButtonElement> = (e) => {
@@ -37,8 +37,9 @@ const PlaceOrderForm = (): React.JSX.Element => {
   };
 
   const handlePlaceOrderSubmit: SubmitHandler<PlaceOrderFormData> = async (
-    data: PlaceOrderFormData
+    data: PlaceOrderFormData,
   ) => {
+    setApiError("");
     const res = await fetch(`${API_BASE}/order`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -49,18 +50,17 @@ const PlaceOrderForm = (): React.JSX.Element => {
       const errorData = await res.json(); // 👈 this parses the error body
       const errorMessage = errorData.detail || "Unknown error";
       console.error(errorMessage);
-      setError(errorData.detail);
+      setApiError(errorData.detail);
     } else {
-      setError("");
-      fetchPortfolioData();
-      fetchPendingOrders();
+      await fetchPortfolioData();
+      await fetchPendingOrders();
     }
     reset();
   };
 
   return (
     <div className="bg-panel border border-divider rounded-md p-6 min-w-60 max-w-96 h-80 relative">
-      <h1 className="mb-4 text-xl">Place Order</h1>
+      <h1 className="mb-2 text-xl">Place Order</h1>
 
       <form
         className="flex flex-col"
@@ -73,22 +73,23 @@ const PlaceOrderForm = (): React.JSX.Element => {
             type="text"
             {...register("symbol", {
               required: "Please enter symbol.",
+              onChange: () => setApiError(""),
             })}
             placeholder="Symbol"
           />
           <p className="text-error text-sm my-1 h-[1.25rem]">
-            {errors?.price?.message ?? "\u00A0"}
+            {errors?.symbol?.message ?? "\u00A0"}
           </p>
         </div>
         <div>
           <input
-            type="number"
             className={InputClass}
             {...register("quantity", {
               required: "Please enter quantity",
               valueAsNumber: true,
               validate: (q) =>
                 !(isNaN(q) || q <= 0) || "Must be a valid number",
+              onChange: () => setApiError(""),
             })}
             aria-invalid={errors.quantity ? "true" : "false"}
             placeholder="Quantity"
@@ -106,10 +107,14 @@ const PlaceOrderForm = (): React.JSX.Element => {
               required: "Please enter limit price",
               valueAsNumber: true,
               validate: (p) => !(isNaN(p) || p <= 0) || "Must be a valid price",
+              onChange: () => setApiError(""),
             })}
             placeholder="Limit price"
             aria-invalid={errors.price ? "true" : "false"}
           />
+          {apiError && (
+            <p className="text-error text-sm my-1 h-[1.25rem]">{apiError}</p>
+          )}
           <p className="text-error text-sm my-1 h-[1.25rem]">
             {errors?.price?.message ?? "\u00A0"}
           </p>
@@ -132,7 +137,6 @@ const PlaceOrderForm = (): React.JSX.Element => {
           </button>
         </div>
       </form>
-      {error && <p className="text-red-600 mt-4 text-sm">{error}</p>}
     </div>
   );
 };

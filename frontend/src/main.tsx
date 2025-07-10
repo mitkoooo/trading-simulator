@@ -16,6 +16,7 @@ import "@fontsource/montserrat/800.css";
 import "@fontsource/fira-code/400.css";
 
 import "./styles.css";
+import { Toaster } from "react-hot-toast";
 
 // Create router instance
 const router = createRouter({ routeTree });
@@ -29,6 +30,7 @@ declare module "@tanstack/react-router" {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    <Toaster />
     <RouterProvider router={router} />
-  </StrictMode>
+  </StrictMode>,
 );

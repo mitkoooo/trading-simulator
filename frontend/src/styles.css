@@ -27,6 +27,43 @@
   --font-logo: "Montserrat", "sans-serif";
   --font-mono: "Fira Code", "monospace";
 
+  --animate-enter: fade-in-scale 150ms ease-out forwards;
+  --animate-leave: fade-out-scale 150ms ease-in forwards;
+
+  @keyframes fade-out-scale {
+    0% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.95) translateY(10px);
+    }
+  }
+
+  @keyframes fade-in-scale {
+    0% {
+      opacity: 0;
+      transform: scale(0.95) translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+ 
+  @keyframes fade-out-scale {
+    0% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.95) translateY(10px);
+    }
+  }
+
   --color-canvas: #121212;
   --color-panel: #1e1e1e;
   --color-card: #2a2a2a;

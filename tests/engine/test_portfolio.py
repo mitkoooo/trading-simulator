@@ -15,7 +15,7 @@ def test_portfolio_value_pure_cash(trader: Trader, sample_market: Exchange):
 def test_portfolio_value_combined(trader: Trader, sample_market: Exchange):
     SHARE_NUM = 50
 
-    trader.portfolio._positions["AAPL"] = SHARE_NUM
+    trader.portfolio._positions["AAPL"] = Position(symbol="AAPL", qty=SHARE_NUM)
     assert trader.portfolio.value(sample_market.market_data) == (
         trader.portfolio.cash + trader.portfolio._reserved_cash
     ) + (sample_market.market_data["AAPL"].price * SHARE_NUM)
@@ -39,29 +39,29 @@ def test_portfolio_reserve_assets_sell(trader: Trader):
     POSITION_QTY = 50
     ORDER_QTY = 42
     ORDER_PRICE = 100.00
-    TICKET = "AAPL"
+    SYMBOL = "AAPL"
     ORDER_TYPE = "sell"
-    p = Position(POSITION_QTY, ORDER_PRICE)
+    p = Position(SYMBOL, POSITION_QTY, ORDER_PRICE)
     old_qty = POSITION_QTY
 
-    trader.portfolio._positions[TICKET] = p
+    trader.portfolio._positions[SYMBOL] = p
 
-    o = Order(trader.trader_id, TICKET, ORDER_TYPE, ORDER_QTY, ORDER_PRICE)
+    o = Order(trader.trader_id, SYMBOL, ORDER_TYPE, ORDER_QTY, ORDER_PRICE)
 
     trader.portfolio.reserve_assets(o)
 
-    assert trader.portfolio.positions[TICKET].qty == old_qty - ORDER_QTY
+    assert trader.portfolio.positions[SYMBOL].qty == old_qty - ORDER_QTY
 
 
 def test_portfolio_calculate_unrealized_pl_loss(trader: Trader):
     AVG_PRICE = 150.00
     POSITION_QTY = 50
-    TICKET = "AAPL"
-    MARKET_DATA = {"AAPL": Stock(TICKET, AVG_PRICE - 1)}
+    SYMBOL = "AAPL"
+    MARKET_DATA = {"AAPL": Stock(SYMBOL, AVG_PRICE - 1)}
 
-    trader.portfolio._positions[TICKET] = Position(POSITION_QTY, AVG_PRICE)
+    trader.portfolio._positions[SYMBOL] = Position(SYMBOL, POSITION_QTY, AVG_PRICE)
 
-    pl = trader.portfolio.calculate_unrealized_pl(TICKET, MARKET_DATA)
+    pl = trader.portfolio.calculate_unrealized_pl(SYMBOL, MARKET_DATA)
 
     assert pl == -(1 * POSITION_QTY)
 
@@ -69,12 +69,12 @@ def test_portfolio_calculate_unrealized_pl_loss(trader: Trader):
 def test_portfolio_calculate_unrealized_pl_profit(trader: Trader):
     AVG_PRICE = 150.00
     POSITION_QTY = 50
-    TICKET = "AAPL"
-    MARKET_DATA = {"AAPL": Stock(TICKET, AVG_PRICE + 1)}
+    SYMBOL = "AAPL"
+    MARKET_DATA = {"AAPL": Stock(SYMBOL, AVG_PRICE + 1)}
 
-    trader.portfolio._positions[TICKET] = Position(POSITION_QTY, AVG_PRICE)
+    trader.portfolio._positions[SYMBOL] = Position(SYMBOL, POSITION_QTY, AVG_PRICE)
 
-    pl = trader.portfolio.calculate_unrealized_pl(TICKET, MARKET_DATA)
+    pl = trader.portfolio.calculate_unrealized_pl(SYMBOL, MARKET_DATA)
 
     assert pl == +(1 * POSITION_QTY)
 

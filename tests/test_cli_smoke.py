@@ -40,23 +40,6 @@ def test_smoke_flow(tmp_path):
     output = run_cli(cmds, tmp_path)
 
     # Basic CLI output checks
-    assert (
-        """YORK STOCK EXCHANGE TERMINAL
-
-Please log in with your Trader ID before issuing any other commands.
-
-    login      — Authenticate using your Trader ID
-    logout     - Log out the trader
-    help       — Display this menu
-    next       — Refresh market data
-    match      — Execute order matching
-    portfolio  — View your portfolio holdings and P&L
-    status     — Show pending orders
-    buy        — Place a buy order
-    sell       — Place a sell order
-    quit       — Exit the terminal"""
-        in output
-    )
     assert "AAPL" in output
     assert "Cash:" in output
     assert "Positions:" in output

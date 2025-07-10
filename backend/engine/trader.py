@@ -74,14 +74,12 @@ class Trader:
         if order_type not in ("buy", "sell"):
             raise ValueError(f"order_type must be 'buy' or 'sell' (got {order_type})")
 
-        pos = self.portfolio.positions.get(symbol, Position())
+        pos = self.portfolio.positions.get(symbol, Position(symbol, 0, 0.0))
 
         positions_num = pos.qty
 
         if order_type == "sell" and positions_num < quantity:
-            raise ValueError(
-                f"Cannot sell quantity greater than the number of stocks owned (got {quantity}, but owns {positions_num})"
-            )
+            raise ValueError("Not enough shares to sell")
 
         o = Order(
             trader_id=self.trader_id,
@@ -94,6 +92,24 @@ class Trader:
         self._pending_orders[o.order_id] = o
 
         return o
+
+    def cancel_order(self, order_id: str) -> None:
+        """Cancels a pending order with `order_id`.
+        
+        Cancelled order will be removed from `pending_orders`. 
+
+        Attributes:
+            order_id (str): `order_id` of `Order` to be cancelled
+        """
+        if order_id not in self._pending_orders:
+            raise KeyError(f"An order with the provided `order_id` does not exist. (got {order_id})")
+
+        # Remove the pending order 
+        cancelled_order = self._pending_orders.pop(order_id)
+        cancelled_order.status = "cancelled"
+        self.portfolio.unreserve_assets(cancelled_order)
+
+
 
     def update_portfolio(self, trade: Trade) -> None:
         """Update portfolio based on a filled trade.
@@ -124,15 +140,6 @@ class Trader:
             else trade.sell_order
         )
 
-        print(
-            self.pending_orders,
-            o.order_id,
-            o.order_type,
-            o.trader_id,
-            o.quantity,
-            o.limit_price,
-        )
-
         if o.quantity == 0:
             self._pending_orders.pop(o.order_id)
             self.transaction_log.append(o)
@@ -144,4 +151,4 @@ class Trader:
     @property
     def pending_orders(self) -> List[Order]:
         """Returns trader's pending orders on the exchange."""
-        return set(self._pending_orders.values())
+        return list(self._pending_orders.values())

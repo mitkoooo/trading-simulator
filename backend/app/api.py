@@ -2,14 +2,13 @@ from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, WebSocket, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
-from typing import Dict, Optional, Literal
+from typing import Dict, Literal
 
 from logging_config import setup_logger
 
 from engine.stock import Stock
 from engine.exchange import Exchange
 from engine.trader import Trader
-from engine.order import Order
 from engine.position import Position
 
 from app.session import Session
@@ -25,6 +24,9 @@ class OrderRequest(BaseModel):
     symbol: str
     quantity: int
     price: float
+
+class OrderCancelRequest(BaseModel):
+    order_id: str
 
 
 app = FastAPI(title="York Stock Exchange")
@@ -114,11 +116,32 @@ def place_order(data: OrderRequest):
         app_context.exchange.verify_symbol(symbol)
         order = trader.place_order(symbol, order_type, quantity, price)
         app_context.exchange.add_order(order)
-    except KeyError as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(status_code=404, detail=str(e))
 
     return {"status": "order_placed", "order_id": order.order_id}
 
+@app.post("/order/cancel")
+def order_cancel(data: OrderCancelRequest):
+    if not app_context.session.active_trader:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
+
+    trader = app_context.session.active_trader
+    exchange = app_context.exchange
+    order_id = data.order_id
+
+    try:
+        trader.cancel_order(order_id)
+        status = exchange.cancel_order(order_id)
+        if not status:
+            raise RuntimeError("Unable to delete the order")
+
+    except (KeyError, RuntimeError) as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
+    return {"status": "order_cancelled", "order_id": order_id}
 
 @app.get("/match-orders")
 def match_orders():
@@ -199,4 +222,4 @@ async def market_ws(ws: WebSocket):
     await ws.accept()
     while True:
         exchange.process_tick()
-        await ws.send_json(exchange.market_data.dict())
+        await ws.send_json(exchange.market_data)

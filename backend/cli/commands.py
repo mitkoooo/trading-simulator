@@ -118,6 +118,65 @@ def do_place_order(context: AppContext, order_type: str, args: List[str]):
         )
 
 
+def do_cancel_order(context: AppContext):
+    logger = context.logger
+
+    try:
+        trader = context.session.require_active()
+
+    except:
+        print("\nYou must log in to use this command. Please use login <trader_id>.\n")
+        logger.warning(
+            "%s command usage error: %s",
+            "CANCEL",
+            "user not logged in",
+        )
+        return
+
+    trader = context.session.active_trader
+    exchange = context.exchange
+
+    pending_orders = list(trader._pending_orders.values())
+
+    if not pending_orders:
+        print("\n Currently you have no pending orders that you can cancel.\n")
+        return
+
+    print(
+        "\nTo cancel an order, please choose an order number to cancel from your pending orders:\n"
+    )
+
+    for index, order in enumerate(pending_orders):
+        print(
+            f"{index + 1}: Order for {order.quantity} {order.symbol} shares at ${order.limit_price}\n"
+        )
+
+    print("Alternatively, you can cancel the operation by writing 'q'\n")
+
+    while True:
+        try:
+            raw = input(">>> ")
+        except EOFError:
+            break
+
+        if raw.strip() == "q":
+            print("\nThe operation was cancelled.\n")
+            break
+
+        if not raw.strip() or not raw.isdigit() or int(raw) not in range(1, len(pending_orders) + 1):
+            print(
+                "\nPlease choose an order number to cancel or cancel the operation by writing 'q'\n"
+            )
+        else:
+            order_id = pending_orders[int(raw) - 1].order_id
+            exchange.cancel_order(order_id)
+            trader.cancel_order(order_id)
+            print("\nThe order has been successfully cancelled.\n")
+            break
+            
+
+
+
 def do_match(context: AppContext, args: List[str]):
     """
     Attempt to match orders for a given symbol and display results.
@@ -254,7 +313,7 @@ def do_logout(context: AppContext):
         )
 
 
-def do_help():
+def do_help(context: AppContext):
     display_help_menu()
 
 

@@ -3,6 +3,7 @@ from typing import List, Callable, Optional
 from .commands import (
     do_next,
     do_place_order,
+    do_cancel_order,
     do_match,
     do_status,
     log_quit,
@@ -116,6 +117,7 @@ class CLI:
             "next": _no_args(do_next),
             "buy": _with_side("buy"),
             "sell": _with_side("sell"),
+            "cancel": _no_args(do_cancel_order),
             "match": _with_args(do_match),
             "status": _no_args(do_status),
             "portfolio": _no_args(do_portfolio),
