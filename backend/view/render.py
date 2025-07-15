@@ -110,7 +110,7 @@ def display_pending_orders(exchange: Exchange):
     message = ""
 
     for order_book in exchange.order_books.values():
-        for order in order_book.get_buy_orders() + order_book.get_sell_orders():
+        for order in order_book.get_n_buy_orders() + order_book.get_n_sell_orders():
             if order.status == "cancelled":
                 continue
 

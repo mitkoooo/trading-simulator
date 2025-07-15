@@ -1,5 +1,6 @@
 import argparse
 from datetime import timedelta
+from engine.broker.broker import Broker
 from logging_config import setup_logger
 
 from engine.exchange import Exchange
@@ -44,17 +45,18 @@ def main():
 
     logger = setup_logger()
     exchange = Exchange(market_data=MARKET_DATA)
+    broker = Broker(exchange=exchange)
+
     trader = Trader(trader_id=1, starting_balance=1000000)
     trader2 = Trader(trader_id=42, starting_balance=1000000)
 
-    exchange.register_trader(trader)
-    exchange.register_trader(trader2)
+    broker.register_trader(trader)
+    broker.register_trader(trader2)
 
-    trader2.portfolio._positions["AAPL"] = Position("AAPL", 999, 150.0)
+    trader2.portfolio.positions["AAPL"] = Position("AAPL", 999, 150.0)
 
-    o = trader2.place_order("AAPL", "sell", 999, 150)
-
-    exchange.add_order(o)
+    o = trader2.create_order("AAPL", "sell", 999, 150)
+    broker.submit_order(o)
 
     sim = MarketSimulator(exchange, tick_interval=timedelta(seconds=1))
 
@@ -70,7 +72,7 @@ def main():
             steps = int(args.auto)  # the provided number
         sim.run(steps)
     else:
-        manual_loop(context=AppContext(Session(exchange.traders), exchange, logger))
+        manual_loop(context=AppContext(session=Session(broker.traders), broker=broker, exchange=exchange, logger=logger))
 
 
 if __name__ == "__main__":

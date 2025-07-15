@@ -1,45 +1,47 @@
 import pytest
-
 import logging
 
 from engine.exchange import Exchange
 from engine.trader import Trader
 from engine.stock import Stock
+from engine.broker.broker import Broker
 
 from app.session import Session
 from app.context import AppContext
 
 
 @pytest.fixture
-def sample_market():
+def sample_exchange():
     data = {sym: Stock(sym, 100.0) for sym in ("AAPL", "MSFT")}
     return Exchange(market_data=data)
 
-
 @pytest.fixture
-def trader(sample_market: Exchange):
-    tr = Trader(trader_id=1, starting_balance=1_000_000)
-    sample_market.register_trader(tr)
-    return tr
+def sample_broker(sample_exchange: Exchange):
+    broker = Broker(exchange=sample_exchange)
+    return broker
 
 
 @pytest.fixture
-def trader2(sample_market: Exchange):
-    tr = Trader(trader_id=2, starting_balance=1_000_000)
-    sample_market.register_trader(tr)
-    return tr
+def sample_trader(sample_broker: Broker):
+    trader = Trader(trader_id=1, starting_balance=1_000_000)
+    sample_broker.register_trader(trader)
+    return trader
 
 
 @pytest.fixture
-def test_context(sample_market: Exchange, trader: Trader, caplog):
-    session = Session(sample_market.traders)
-    session.login(trader.trader_id)
+def sample_trader2(sample_broker: Broker):
+    trader = Trader(trader_id=2, starting_balance=1_000_000)
+    sample_broker.register_trader(trader)
+    return trader
 
-    test_logger = logging.getLogger("test")
+
+@pytest.fixture
+def test_context(sample_exchange: Exchange, sample_broker: Broker, sample_trader: Trader):
+    session = Session(sample_broker.traders)
+    session.login(sample_trader.trader_id)
+
+    test_logger: logging.Logger = logging.getLogger("test")
     test_logger.propagate = True
     test_logger.setLevel(logging.INFO)
 
-    # 2) tell caplog to capture that logger at INFO
-    caplog.set_level(logging.INFO, logger="test")
-
-    return AppContext(exchange=sample_market, session=session, logger=test_logger)
+    return AppContext(exchange=sample_exchange, broker=sample_broker, session=session, logger=test_logger)

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 import uuid
 
 from .order import Order
@@ -25,8 +26,6 @@ class Trade:
         symbol: str,
         quantity: int,
         price: float,
-        orig_buy_qty: int,
-        orig_sell_qty: int,
     ):
         """
         Create a Trade. Used by Exchange.match_orders().
@@ -37,6 +36,7 @@ class Trade:
           symbol (str): Ticker symbol (e.g. "AAPL").
           quantity (int): Actual number of shares traded.
           price (float): Actual execution price.
+          status (Literal["pending", "fulfilled", "cancelled"]: Status of the trade.
 
         Example:
             >>> from engine.trade import Trade
@@ -53,6 +53,5 @@ class Trade:
         self.symbol = symbol
         self.quantity = quantity
         self.price = price
+        self.status: Literal["pending", "fulfilled", "cancelled"] = "pending"
         self.timestamp = datetime.now()
-        self.orig_buy_qty = orig_buy_qty
-        self.orig_sell_qty = orig_sell_qty

@@ -1,9 +1,11 @@
+from logging import Logger, warn
 from typing import List
 
 from app.context import AppContext
 
 from cli.validation import parse_order, validate_symbol
 
+from engine.trade import Trade
 from view.render import (
     display_prices,
     display_portfolio,
@@ -29,7 +31,7 @@ def handle_order(context: AppContext, order_type: str, args: list[str]):
         Cash balance: $1000.0
         Holdings: {}
     """
-    exchange, session, logger = context.exchange, context.session, context.logger
+    exchange, session, logger, broker = context.exchange, context.session, context.logger, context.broker
 
     try:
         trader = session.require_active()
@@ -59,10 +61,11 @@ def handle_order(context: AppContext, order_type: str, args: list[str]):
     if validate_symbol(symbol, exchange, order_type.upper(), args) == False:
         return
 
-    o = trader.place_order(
-        symbol=symbol, order_type=order_type, quantity=quantity, price=price
+    o = trader.create_order(
+        symbol=symbol, order_type=order_type, quantity=quantity, limit_price=price
     )
-    exchange.add_order(o)
+    broker.submit_order(o)
+
     print(f"\nOrder placed for {symbol}.\n")
 
 
@@ -134,9 +137,9 @@ def do_cancel_order(context: AppContext):
         return
 
     trader = context.session.active_trader
-    exchange = context.exchange
+    broker = context.broker
 
-    pending_orders = list(trader._pending_orders.values())
+    pending_orders = list(trader.pending_orders.values())
 
     if not pending_orders:
         print("\n Currently you have no pending orders that you can cancel.\n")
@@ -166,11 +169,10 @@ def do_cancel_order(context: AppContext):
         if not raw.strip() or not raw.isdigit() or int(raw) not in range(1, len(pending_orders) + 1):
             print(
                 "\nPlease choose an order number to cancel or cancel the operation by writing 'q'\n"
-            )
+                )
         else:
             order_id = pending_orders[int(raw) - 1].order_id
-            exchange.cancel_order(order_id)
-            trader.cancel_order(order_id)
+            broker.cancel_order(order_id)
             print("\nThe order has been successfully cancelled.\n")
             break
             
@@ -188,7 +190,9 @@ def do_match(context: AppContext, args: List[str]):
         >>> do_match(ex, ['AAPL'])
         No trades yet
     """
-    logger, exchange = context.logger, context.exchange
+    logger = context.logger
+    exchange = context.exchange
+    broker = context.broker
 
     if not args or len(args) != 1:
         print("\nUsage: match <SYMBOL>\n")
@@ -205,7 +209,15 @@ def do_match(context: AppContext, args: List[str]):
     if validate_symbol(symbol, exchange, "MATCH", args) == False:
         return
 
-    trades = exchange.match_orders(symbol)
+    trades: List[Trade] = []
+
+    while True:
+        trade = exchange.match_orders(symbol)
+        if not trade:
+            break
+        broker.settle_trade(trade)
+        trades.append(trade)
+    
 
     if not trades:
         print("\nNo trades yet\n")
@@ -223,7 +235,7 @@ def do_match(context: AppContext, args: List[str]):
 
 def do_portfolio(context: AppContext):
 
-    session, logger, exchange = context.session, context.logger, context.exchange
+    session, logger, exchange, broker = context.session, context.logger, context.exchange, context.broker
 
     try:
         trader = session.require_active()
@@ -237,7 +249,7 @@ def do_portfolio(context: AppContext):
         return
 
     logger.info("PORTFOLIO viewed")
-    display_portfolio(exchange, exchange.traders[trader.trader_id])
+    display_portfolio(exchange, broker.traders[trader.trader_id])
 
 
 def do_status(context: AppContext):

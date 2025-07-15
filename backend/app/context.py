@@ -1,6 +1,7 @@
 from logging import Logger
 
 from app.session import Session
+from engine.broker.broker import Broker
 from engine.exchange import Exchange
 
 
@@ -13,14 +14,21 @@ class AppContext:
       logger (Logger): The logger to log user's actions.
     """
 
-    def __init__(self, session: Session, exchange: Exchange, logger: Logger):
+    def __init__(
+                self, session: Session, 
+                broker: Broker,
+                exchange: Exchange,
+                logger: Logger | None = None,
+            ):
         """Instantiate AppContext class
 
         Args:
         session (Session): Currently active user session.
-        exchange (Exchange): The stock Exchange.
+        broker (Broker): The broker on the stock exchange.
+        exchange (Exchange): The stock exchange.
         logger (Logger): The logger to log user's actions.
         """
         self.session = session
+        self.broker = broker
         self.exchange = exchange
         self.logger = logger
