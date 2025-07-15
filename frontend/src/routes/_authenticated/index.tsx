@@ -52,13 +52,13 @@ function Index() {
   return (
     <div className="min-h-full">
       <MiniTicker />
-      <div className="px-6  grid grid-rows-[auto_auto]">
-        <div className="grid grid-cols-2 md:grid-cols-3 w-full justify-between text-nowrap gap-8 ">
-          <Card className="w-full ">
+      <div className="grid grid-rows-[auto_auto] px-6">
+        <div className="grid w-full grid-cols-2 justify-between gap-8 text-nowrap md:grid-cols-3">
+          <Card className="w-full">
             <Card.Title>Cash Available</Card.Title>
             <Card.Total currency="$">{portfolio?.cash}</Card.Total>
           </Card>
-          <Card className="w-full h-24">
+          <Card className="h-24 w-full">
             <Card.Title>Total Portfolio Value</Card.Title>
             <Card.Total currency="$">
               {portfolio?.value && Math.round(portfolio.value * 100) / 100}
@@ -74,15 +74,15 @@ function Index() {
           <PlaceOrderForm />
           <div>
             <OrderView />
-            <div className="inline-flex mt-3 w-full justify-between gap-4">
+            <div className="mt-3 inline-flex w-full justify-between gap-4">
               <button
-                className="py-1 h-8 px-4 bg-success border border-divider duration-150 rounded-md hover:bg-success-hover w-full focus:outline-1 focus:outline-accent"
+                className="bg-success border-divider hover:bg-success-hover focus:outline-accent h-8 w-full rounded-md border px-4 py-1 duration-150 focus:outline-1"
                 onClick={onMatchOrders}
               >
                 Match orders
               </button>
               <button
-                className="py-1 h-8 px-4 bg-info border border-divider duration-150 rounded-md hover:bg-info-hover w-full focus:outline-1 focus:outline-accent"
+                className="bg-info border-divider hover:bg-info-hover focus:outline-accent h-8 w-full rounded-md border px-4 py-1 duration-150 focus:outline-1"
                 onClick={onNextPrice}
               >
                 Next price
@@ -90,8 +90,8 @@ function Index() {
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-start justify-between bg-canvas mt-10">
-          <h1 className="text-xl mb-1">Your holdings</h1>
+        <div className="bg-canvas mt-10 flex flex-col items-start justify-between">
+          <h1 className="mb-1 text-xl">Your holdings</h1>
           {portfolio &&
             portfolio.positions.map((position) => (
               <PortfolioEntry

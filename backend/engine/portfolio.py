@@ -29,104 +29,11 @@ class Portfolio:
                 f"starting_balance must be nonnegative. Starting balance provided: {starting_balance}"
             )
 
-        self._cash: float = starting_balance
-        self._reserved_cash: float = 0.0
-        self._positions: Dict[str, Position] = {}  # e.g. {"AAPL": 100, "GOOG": 50}
-        self._reserved_positions: Dict[str, Position] = {}
+        self.cash: float = starting_balance
+        self.reserved_cash: float = 0.0
+        self.positions: Dict[str, Position] = {}  # e.g. {"AAPL": 100, "GOOG": 50}
+        self.reserved_positions: Dict[str, Position] = {}
 
-    @property
-    def cash(self) -> float:
-        """
-        Returns current cash balance.
-        """
-        return self._cash
-
-    @property
-    def positions(self) -> Dict[str, Position]:
-        """
-        Returns a copy of the current positions dictionary.
-        """
-        return dict(self._positions)
-
-    def apply_trade(self, trade: Trade, trader_id: int) -> None:
-        """Update cash and positions based on a filled trade.
-
-        Args:
-            trade (Trade): Filled trade
-        """
-        price, qty, symbol = trade.price, trade.quantity, trade.symbol
-
-        # Ensure we have keys in _positions / _reserved_positions
-        pos = self._positions.setdefault(
-            symbol,
-            Position(symbol, 0, price),
-        )
-        reserved_pos = self._reserved_positions.setdefault(
-            symbol, Position(symbol, 0, price)
-        )
-
-        # ===== BUY SIDE =====
-        if trader_id == trade.buy_order.trader_id:
-            # Grab original reservation details
-            original_qty = trade.orig_buy_qty
-            original_price = trade.buy_order.limit_price
-            # Total cash originally set aside:
-            old_reservation = original_qty * original_price
-
-            # Unreserve the cash
-            self._reserved_cash -= old_reservation
-
-            self._cash += old_reservation
-
-            # Calculate the actual cost
-            actual_cost = qty * price
-
-            # Deduct the actual cost
-            self._cash -= actual_cost
-
-            # Refund unused reserved cash
-            refund_amount = old_reservation - actual_cost
-            if refund_amount > 0:
-                self._cash += refund_amount
-
-            # Get old values to update the running avg
-            old_qty, old_avg = pos.qty, pos.avg_price
-            # Add the shares in
-            pos.qty += qty
-            # Calculate new avg
-            pos.avg_price = (old_avg * old_qty + qty * price) / pos.qty
-
-            remaining_qty = original_qty - qty
-            # If partially filled, re-reserve the remaining cash
-            if remaining_qty > 0:
-                new_reservation = remaining_qty * original_price
-                self._reserved_cash += new_reservation
-                self._cash -= new_reservation
-
-        # ===== SELL SIDE =====
-        if trader_id == trade.sell_order.trader_id:
-            # Needed to unreserve the holdings and refund unused ones
-            original_qty = trade.orig_sell_qty
-            remaining_qty = original_qty - qty
-
-            # Unreserve the shares
-            reserved_pos.qty -= original_qty
-
-            proceeds = qty * price
-            self._cash += proceeds
-
-            # If partially filled, re-reserve the remaining shares
-
-            if remaining_qty > 0:
-                reserved_pos.qty = reserved_pos.qty + remaining_qty
-            
-            if reserved_pos.qty == 0:
-                self._reserved_positions.pop(symbol, None)
-
-            if pos.qty == 0:
-                self._positions.pop(symbol, None)
-    
-            return
 
     def value(self, market_data: Dict[str, Stock]) -> float:
         """
@@ -139,7 +46,7 @@ class Portfolio:
             float: Total value of portfolio.
         """
 
-        total = self._cash + self._reserved_cash
+        total = self.cash + self.reserved_cash
 
         # Add value of free positions
         for symbol, position in self.positions.items():
@@ -148,66 +55,14 @@ class Portfolio:
             total += position.qty * price
 
         # Add value of reserved positions
-        for symbol, position in self._reserved_positions.items():
+        for symbol, position in self.reserved_positions.items():
             stock = market_data.get(symbol)
             price = stock.price if (stock is not None) else 0.0
             total += position.qty * price
 
         return total
 
-    def reserve_assets(self, order: Order) -> None:
-        """Reserve required cash or shares for a new buy/sell order."""
-        qty = order.quantity
-        price = order.limit_price
-        symbol = order.symbol
 
-        if order.order_type == "buy":
-            cost_estimate = qty * price
-            if self.cash < cost_estimate:
-                raise ValueError("Insufficient available cash to place buy order.")
-            # Reserve cash
-            self._cash -= cost_estimate
-            self._reserved_cash += cost_estimate
-
-        elif order.order_type == "sell":
-            pos = self._positions.setdefault(symbol, Position(symbol=symbol))
-
-            held = pos.qty
-
-            if held < qty:
-                raise ValueError("Insufficient shares to place sell order.")
-            # Reserve shares
-            pos.qty = held - qty
-            reserved_pos = self._reserved_positions.setdefault(symbol, Position(symbol=symbol))
-            reserved_pos.qty = reserved_pos.qty + qty
-
-        else:
-            raise ValueError(f"Unknown order_type: {order.order_type}")
-
-    def unreserve_assets(self, order: Order) -> None:
-        """Unreserve freed cash or shares for a new but/sell order."""
-        quantity = order.quantity
-        limit_price = order.limit_price
-        symbol = order.symbol
-
-        if order.order_type == "buy":
-            cost_estimate = quantity * limit_price
-            self._cash += cost_estimate
-            self._reserved_cash -= cost_estimate
-        elif order.order_type == "sell":
-            reserved_pos = self._reserved_positions.get(symbol, None)
-            pos = self._positions.get(symbol, None)
-
-            if not reserved_pos or not pos:
-                raise KeyError(f"Unable to unreserve reserved shares with the symbol {symbol}. (No such key exist)")
-
-            reserved_pos.qty -= quantity
-            pos.qty += quantity
-            
-            if pos.qty == 0:
-                self._reserved_positions.pop(symbol, None)
-        else:
-            raise ValueError(f"Unknown order_type: {order.order_type}")
 
 
     def calculate_unrealized_pl(
@@ -230,6 +85,6 @@ class Portfolio:
                 f"Cannot calculate unrealized P/L for a nonexistent symbol (Got {symbol})."
             )
 
-        pos = self._positions.get(symbol, Position())
+        pos = self.positions.get(symbol, Position())
 
         return (market_data[symbol].price - pos.avg_price) * pos.qty

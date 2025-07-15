@@ -5,7 +5,6 @@ from .order_book import OrderBook
 from .stock import Stock
 from .order import Order
 from .trade import Trade
-from .trader import Trader
 
 
 class Exchange:
@@ -43,7 +42,6 @@ class Exchange:
             >>> data = {sym: Stock(sym, 100.0) for sym in ("AAPL", "MSFT")}
             >>> exchange = Exchange(market_data=data)
         """
-        self.traders: Dict[int, Trader] = {}
         self.market_data = market_data
         self.order_books: Dict[str, OrderBook] = {
             symbol: OrderBook() for symbol in market_data.keys()
@@ -92,14 +90,7 @@ class Exchange:
 
         return order.status == "cancelled"   
 
-    
 
-    def register_trader(self, trader: Trader) -> None:
-        """Register trader in a stock exchange"""
-        if trader.trader_id in self.traders:
-            raise ValueError(f"Trader ID {trader.trader_id} already registered")
-
-        self.traders[trader.trader_id] = trader
 
     def process_tick(
         self,
@@ -121,7 +112,7 @@ class Exchange:
             nxt = stock.simulate_price_tick()
             stock.update_price(nxt)
 
-    def match_orders(self, symbol: str) -> List[Trade]:
+    def match_orders(self, symbol: str) -> Trade | None:
         """Match buy and sell orders in the specified symbol's order book.
 
         Args:
@@ -139,123 +130,105 @@ class Exchange:
             []
         """
 
-        order_book = self.order_books.get(symbol)
-        trades: List[Trade] = []
+        order_book = self.order_books.get(symbol, None)
 
-        while True:
-            best_buy, best_sell = (
-                order_book.peek_best_buy(),
-                order_book.peek_best_sell(),
-            )
-            
+        if not order_book:
+            raise KeyError(f"No existing order book for this symbol. (got {symbol})")
 
-            print(f"Buy size: {order_book.buy_size()}")
-            print(f"Sell size: {order_book.sell_size()}")
+        best_buy, best_sell = (
+            order_book.peek_best_buy(),
+            order_book.peek_best_sell(),
+        )
+        
+        if not best_buy or not best_sell:
+            return
 
-            if not best_buy or not best_sell:
+
+        if (
+            best_buy.limit_price is not None and 
+            best_sell.limit_price is not None and 
+            best_buy.limit_price < best_sell.limit_price
+        ):
+            return
+
+        buy_is_later = (best_buy.timestamp, best_buy.sequence) > (
+            best_sell.timestamp,
+            best_sell.sequence,
+        )    
+
+        # 1) Decide taker (the one that arrived later)
+        if buy_is_later or best_buy.limit_price == None:
+            taker_side = "buy"
+            taker = best_buy
+            maker_peek = order_book.peek_best_sell
+            maker_pop = order_book.pop_best_sell
+            maker_push = order_book.add_order
+            price_cross = lambda m: taker.limit_price >= m.limit_price if taker.limit_price else True
+        elif not buy_is_later or best_sell.limit_price == None:
+            taker_side = "sell"
+            taker = best_sell
+            maker_peek = order_book.peek_best_buy
+            maker_pop = order_book.pop_best_buy
+            maker_push = order_book.add_order
+            price_cross = lambda m: m.limit_price >= taker.limit_price if taker.limit_price else True
+        else:
+            raise RuntimeError("No valid taker could be determined")
+        
+        # 2) Scan the maker heap for a valid counterparty
+        skipped: List[Order] = []
+        maker: Optional[Order] = None
+
+        while taker.quantity > 0:
+            candidate = maker_peek()
+            if not candidate or not price_cross(candidate):
                 break
 
-            if best_buy.limit_price < best_sell.limit_price:
-                break
+            maker_pop()
+            if candidate.trader_id == taker.trader_id or not candidate.limit_price:
+                # same trader → buffer and keep scanning
+                skipped.append(candidate)
+                continue
 
-            # 1) Decide taker (the one that arrived later)
-            if (best_buy.timestamp, best_buy.sequence) > (
-                best_sell.timestamp,
-                best_sell.sequence,
-            ):
-                taker_side = "buy"
-                taker = best_buy
-                maker_peek = order_book.peek_best_sell
-                maker_pop = order_book.pop_best_sell
-                maker_push = order_book.add_order
-                price_cross = lambda m: taker.limit_price >= m.limit_price
-                exec_price = lambda m: m.limit_price
-            else:
-                taker_side = "sell"
-                taker = best_sell
-                maker_peek = order_book.peek_best_buy
-                maker_pop = order_book.pop_best_buy
-                maker_push = order_book.add_order
-                price_cross = lambda m: m.limit_price >= taker.limit_price
-                exec_price = lambda m: m.limit_price
-            
-            # 2) Scan the maker heap for a valid counterparty
-            skipped: List[Order] = []
-            maker: Optional[Order] = None
-            while taker.quantity > 0:
-                candidate = maker_peek()
-                if not candidate or not price_cross(candidate):
-                    break
+            maker = candidate
+            break
 
-                maker_pop()
-                if candidate.trader_id == taker.trader_id:
-                    # same trader → buffer and keep scanning
-                    skipped.append(candidate)
-                    continue
-
-                maker = candidate
-                break
-
-            # 3) No valid maker found → restore and exit
-            if maker is None:
-                for o in skipped:
-                    maker_push(o)
-                break
-
-            print(f"Buy size: {order_book.buy_size()}")
-            print(f"Sell size: {order_book.sell_size()}")
-
-            # 4) Execute the trade
-            if taker_side == "buy":
-                best_buy, best_sell = taker, maker
-            else:
-                best_buy, best_sell = maker, taker
-
-            orig_buy_qty = best_buy.quantity
-            orig_sell_qty = best_sell.quantity
-            exec_qty = min(orig_buy_qty, orig_sell_qty)
-            exec_price = best_sell.limit_price
-
-            new_trade = Trade(
-                best_buy,
-                best_sell,
-                symbol,
-                exec_qty,
-                exec_price,
-                orig_buy_qty,
-                orig_sell_qty,
-            )
-
-            best_buy.quantity -= exec_qty
-            best_sell.quantity -= exec_qty
-
-            # If any side has still shares, reinsert it
-            for order in [best_buy, best_sell]:
-                if order.quantity > 0:
-                    order.status = "partially_filled"
-                    if order == maker:
-                        order_book.add_order(order)
-                else:
-                    order.status = "filled"
-                    if order != maker:
-                        if order.order_type == "buy":
-                            order_book.pop_best_buy()
-                        else:
-                            order_book.pop_best_sell()
-
-            seller_id, buyer_id = best_sell.trader_id, best_buy.trader_id
-
-            seller, buyer = self.traders[seller_id], self.traders[buyer_id]
-
-            seller.update_portfolio(new_trade), buyer.update_portfolio(new_trade)
-
-            trades.append(new_trade)
-
-            # 6) Restore any skipped same‐trader orders
+        # 3) No valid maker found → restore and exit
+        if maker is None:
             for o in skipped:
-                order_book.add_order(o)
+                maker_push(o)
+            return
+        
+        # 4) Execute the trade
 
-        return trades
+        if taker_side == "buy":
+            best_buy, best_sell = taker, maker
+        else:
+            best_buy, best_sell = maker, taker
+
+        orig_buy_qty = best_buy.quantity
+        orig_sell_qty = best_sell.quantity
+        exec_qty = min(orig_buy_qty, orig_sell_qty)
+        exec_price = maker.limit_price
+
+        if not exec_price:
+            raise ValueError("Execution price unexpectedly None")
+
+        new_trade = Trade(
+            best_buy,
+            best_sell,
+            symbol,
+            exec_qty,
+            exec_price,
+        )
+
+        best_buy.quantity -= exec_qty
+        best_sell.quantity -= exec_qty
+
+        # 6) Restore any skipped orders
+        for o in skipped:
+            order_book.add_order(o)
+
+        return new_trade
 
     def verify_symbol(self, symbol) -> None:
         if symbol not in self.market_data:

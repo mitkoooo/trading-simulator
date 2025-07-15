@@ -86,7 +86,7 @@ class OrderBook:
             return None
 
         
-        return self._cancellation_mopper(heap_type="buy", func=lambda _ : self._buy_heap[0])
+        return self._cleanup_mopper(heap_type="buy", func=lambda _ : self._buy_heap[0])
         
 
     def peek_best_sell(self) -> Optional[Order]:
@@ -108,7 +108,7 @@ class OrderBook:
             return None
 
         
-        return self._cancellation_mopper(heap_type="sell", func=lambda _ : self._sell_heap[0])
+        return self._cleanup_mopper(heap_type="sell", func=lambda _ : self._sell_heap[0])
         
 
     def pop_best_buy(self) -> Optional[Order]:
@@ -216,7 +216,7 @@ class OrderBook:
         """
         return len(self._buy_heap) + len(self._sell_heap)
 
-    def get_buy_orders(self) -> List[Order]:
+    def get_n_buy_orders(self, n=None) -> List[Order]:
         """Return a list of all buy orders in descending priority (highest-price first).
 
         Examples:
@@ -231,11 +231,17 @@ class OrderBook:
             >>> [o.limit_price for o in buys]
             [55.0, 50.0]
         """
+        if n and n<=0:
+            raise KeyError("Cannot get 0 or less orders from the top of the heap")
+
         heap_copy = list(self._buy_heap)
 
-        return sorted(heap_copy, reverse=False)
+        if not n or n > self.buy_size():
+            return sorted(heap_copy, reverse=False)
+        else:
+            return sorted(heap_copy, reverse=False)[:n]
 
-    def get_sell_orders(self) -> List[Order]:
+    def get_n_sell_orders(self, n=None) -> List[Order]:
         """
         Return a list of all sell Orders currently in the book (lowest-priority first).
 
@@ -251,12 +257,19 @@ class OrderBook:
             >>> [o.limit_price for o in sells]
             [50.0, 55.0]
         """
+        if n and n<=0:
+            raise KeyError("Cannot get 0 or less orders from the top of the heap")
+        
         heap_copy = list(self._sell_heap)
 
-        return sorted(heap_copy)
+        if not n or n > self.sell_size():
+            return sorted(heap_copy)
+        else:
+            return sorted(heap_copy)[:n]
 
-    def _cancellation_mopper(self, heap_type: Literal["buy", "sell"], func=None):
-        """Clean-ups cancelled orders from the `OrderBook` heaps
+
+    def _cleanup_mopper(self, heap_type: Literal["buy", "sell"], func=None):
+        """Clean-ups cancelled and filled orders from the `OrderBook` heaps
 
         Attributes:
             heap_type (Literal["buy", "sell"]): Heap type to clean up 
@@ -265,12 +278,13 @@ class OrderBook:
         operation_heap = self._buy_heap if heap_type == "buy" else self._sell_heap
 
         while operation_heap:
-            if operation_heap[0].status == "cancelled":
+            if operation_heap[0].status in ["cancelled", "filled"]:
                 heapq.heappop(operation_heap)
                 continue
             break
         
         return func(operation_heap) if operation_heap and func else None
+
 
 
 

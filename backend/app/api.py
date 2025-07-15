@@ -10,6 +10,7 @@ from engine.stock import Stock
 from engine.exchange import Exchange
 from engine.trader import Trader
 from engine.position import Position
+from engine.broker.broker import Broker
 
 from app.session import Session
 from app.context import AppContext
@@ -53,18 +54,20 @@ MARKET_DATA: Dict[str, Stock] = {
 
 logger = setup_logger()
 exchange: Exchange = Exchange(MARKET_DATA)
+broker: Broker = Broker(exchange)
+
 trader = Trader(trader_id=1, starting_balance=1000000)
 trader2 = Trader(trader_id=42, starting_balance=1000000)
+broker.register_trader(trader)
+broker.register_trader(trader2)
 
-trader2.portfolio._positions["AAPL"] = Position("AAPL", 999, 150.0)
-order = trader2.place_order("AAPL", "sell", 999, 150)
-exchange.add_order(order)
-exchange.register_trader(trader)
-exchange.register_trader(trader2)
+trader2.portfolio.positions["AAPL"] = Position("AAPL", 999, 150.0)
+order = trader2.create_order("AAPL", "sell", 999, 150)
+broker.submit_order(order)
 
-session: Session = Session(exchange.traders)
+session: Session = Session(broker.traders)
 
-app_context = AppContext(session, exchange, logger)
+app_context = AppContext(session, broker, exchange, logger)
 
 # ——— HTTP Endpoints ———
 
@@ -76,7 +79,7 @@ def login(data: LoginRequest):
     id = int(trader_id)
 
     try:
-        session.login(id)
+        app_context.session.login(id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return {"status": "logged_in", "trader": id}
@@ -85,7 +88,7 @@ def login(data: LoginRequest):
 @app.post("/logout")
 def logout():
     try:
-        session.logout()
+        app_context.session.logout()
     except RuntimeError as e:
         raise HTTPException(status_code=204, detail=str(e))
     return {"status": "logged_out"}
@@ -93,7 +96,9 @@ def logout():
 
 @app.post("/next_tick")
 def next_tick():
+    exchange = app_context.exchange
     exchange.process_tick()
+
     return exchange.market_data
 
 
@@ -113,9 +118,13 @@ def place_order(data: OrderRequest):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
     try:
-        app_context.exchange.verify_symbol(symbol)
-        order = trader.place_order(symbol, order_type, quantity, price)
-        app_context.exchange.add_order(order)
+        exchange = app_context.exchange
+        broker = app_context.broker
+
+        exchange.verify_symbol(symbol)
+        order = trader.create_order(symbol, order_type, quantity, price)
+        
+        broker.submit_order(order)
     except (ValueError, KeyError) as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -125,16 +134,13 @@ def place_order(data: OrderRequest):
 def order_cancel(data: OrderCancelRequest):
     if not app_context.session.active_trader:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+            status_code=401, detail="Not authenticated"
         )
 
-    trader = app_context.session.active_trader
-    exchange = app_context.exchange
     order_id = data.order_id
 
     try:
-        trader.cancel_order(order_id)
-        status = exchange.cancel_order(order_id)
+        status = broker.cancel_order(order_id)
         if not status:
             raise RuntimeError("Unable to delete the order")
 
@@ -147,18 +153,20 @@ def order_cancel(data: OrderCancelRequest):
 def match_orders():
     order_books = app_context.exchange.order_books
 
-    if len(order_books) == 0:
-        return
-
     for symbol in order_books:
-        app_context.exchange.match_orders(symbol)
+        while True:
+            trade = app_context.exchange.match_orders(symbol)
+            
+            if not trade:
+                break
+            app_context.broker.settle_trade(trade) 
 
     return
 
 
 @app.get("/me")
 def me():
-    if not session.active_trader:
+    if not app_context.session.active_trader:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
@@ -167,17 +175,12 @@ def me():
 
 @app.get("/me/portfolio")
 def me_portfolio():
-    if not session.active_trader:
+    if not app_context.session.active_trader:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
 
-    trader_id = session.active_trader.trader_id
-
-    trader = exchange.traders.get(trader_id, None)
-
-    if not trader:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Trader not found")
+    trader = app_context.session.active_trader
 
     total_PnL = 0
 
@@ -194,12 +197,12 @@ def me_portfolio():
 
 @app.get("/me/pending-orders")
 def me_pending_orders():
-    if not session.active_trader:
+    if not app_context.session.active_trader:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
 
-    orders = session.active_trader.pending_orders
+    orders = list(app_context.session.active_trader.pending_orders.values())
 
     return jsonable_encoder(orders)
 
@@ -221,5 +224,5 @@ def market_data_next():
 async def market_ws(ws: WebSocket):
     await ws.accept()
     while True:
-        exchange.process_tick()
+        app_context.exchange.process_tick()
         await ws.send_json(exchange.market_data)
