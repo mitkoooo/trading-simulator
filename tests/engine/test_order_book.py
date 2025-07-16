@@ -1,5 +1,5 @@
-from engine.order_book import OrderBook
-from engine.order import Order
+from engine.order_book.order_book import OrderBook
+from engine.order_book.order import Order
 from datetime import datetime
 
 
@@ -36,11 +36,11 @@ def test_order_book_buy_priority():
 
     order_book.add_order(o3)
 
-    assert order_book.pop_best_buy() == o3
+    assert order_book.pop_best_buy() == o1
 
     order_book.add_order(o4)
 
-    assert order_book.pop_best_buy() == o1
+    assert order_book.pop_best_buy() == o3
     assert order_book.pop_best_buy() == o4
 
 
@@ -59,11 +59,11 @@ def test_order_book_sell_priority():
 
     order_book.add_order(o3)
 
-    assert order_book.pop_best_sell() == o3
+    assert order_book.pop_best_sell() == o2
 
     order_book.add_order(o4)
 
-    assert order_book.pop_best_sell() == o2
+    assert order_book.pop_best_sell() == o3
     assert order_book.pop_best_sell() == o4
 
 

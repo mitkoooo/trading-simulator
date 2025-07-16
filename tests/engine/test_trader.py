@@ -1,5 +1,4 @@
-from engine.trader import Trader
-from engine.order import Order
+from engine.order_book.order import Order
 
 from app.context import AppContext
 

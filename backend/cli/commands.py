@@ -1,4 +1,3 @@
-from logging import Logger, warn
 from typing import List
 
 from app.context import AppContext
@@ -270,7 +269,7 @@ def do_status(context: AppContext):
     logger, exchange = context.logger, context.exchange
 
     pending = sum(
-        len(book._buy_heap) + len(book._sell_heap)
+        book.total_size
         for book in exchange.order_books.values()
     )
     if pending > 0:

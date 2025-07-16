@@ -12,8 +12,8 @@ class Order:
         order_type (Literal["buy", "sell"]): Direction of the order.
         status (Literal["pending", "partially_filled", "filled", "cancelled"]
         quantity (int): Number of shares; must be > 0.
-        limit_price (Optional[float]): Limit price; None for market orders.
-        order_id (Optional[int]): Unique ID, auto-generated if omitted.
+        limit_price (float or None): Limit price; None for market orders.
+        order_id (str): Unique ID, auto-generated if omitted in the initializer.
         timestamp (datetime): Creation time of the order.
 
     Examples:
@@ -44,9 +44,9 @@ class Order:
             symbol (str): Stock ticker.
             order_type (Literal['buy','sell']): One of 'buy' or 'sell'.
             quantity (int): >0 shares to trade.
-            limit_price (Optional[float]): Limit price; None for market orders.
-            order_id (Optional[int]): Unique ID, auto-generated if None.
-            timestamp (Optional[datetime]): Creation time, auto-set if None.
+            limit_price (float or None): Limit price; None for market orders.
+            order_id (str or None): Unique ID, auto-generated if None.
+            timestamp (datetime or None): Creation time, auto-set if None.
 
         Raises:
             ValueError: If quantity <= 0 or order_type invalid.
@@ -76,7 +76,7 @@ class Order:
 
         self.trader_id = trader_id
         self.symbol = symbol
-        self.order_type = order_type
+        self.order_type: Literal["buy", "sell"] = order_type
         self.status = "pending"                         # All orders at first are initialized as pending
         self.quantity = quantity
         self.limit_price = limit_price
@@ -85,63 +85,26 @@ class Order:
 
         self.sequence: Optional[int] = None  # Serialization number for OrderBook
 
-    def __eq__(self, other: "Order") -> bool:
-        """Compare orders by order_id for equality.
-
-        Returns:
-        (bool): True if two orders have the same order_id, False otherwise.
-        """
-        if isinstance(other, Order) == False:
-            return False
-
+    def __eq__(self, other: object) -> bool:
+        """Orders compare equal if they share the same order_id."""
+        if not isinstance(other, Order):
+            return NotImplemented
         return self.order_id == other.order_id
 
-    def __hash__(self):
+    def __hash__(self) -> int:
+        """Hash based solely on order_id, to match __eq__ semantics."""
         return hash(self.order_id)
 
-    def __lt__(self, other: "Order") -> bool:
-        """Define ordering for heap operations: price priority then FIFO sequence.
-
-        Args:
-            other (Order): Another Order to compare against.
-
-        Returns:
-            bool: True if self has higher priority than other (i.e., “comes out first” in a min-heap).
-
-        Raises:
-            TypeError: If `other` is not an Order.
-            ValueError: If `self.order_type` and `other.order_type` differ.
-        """
-
-        if not isinstance(other, Order):
-            raise TypeError(f"Cannot compare Order with {type(other).__name__}")
-
-        if self.order_type not in ("buy", "sell") or other.order_type not in (
-            "buy",
-            "sell",
-        ):
-            raise ValueError("order_type must be 'buy' or 'sell'")
-
-        if self.order_type != other.order_type:
-            raise ValueError(
-                f"Cannot compare {self.order_type!r} order with {other.order_type!r} order"
-            )
-
-        if self.order_type == "buy":
-            # Higher price ⇒ “less” so it pops first in the min-heap
-            if self.limit_price != other.limit_price:
-                return self.limit_price > other.limit_price
-
-            if self.timestamp != other.timestamp:
-                return self.timestamp < other.timestamp
-
-            return self.sequence < other.sequence
-
-        # Lower price ⇒ “less” so it pops first
-        if self.limit_price != other.limit_price:
-            return self.limit_price < other.limit_price
-
-        if self.timestamp != other.timestamp:
-            return self.timestamp < other.timestamp
-
-        return self.sequence < other.sequence
+    def __repr__(self) -> str:
+        cls = self.__class__.__name__
+        lp = self.limit_price if self.limit_price is not None else "MARKET"
+        return (
+            f"{cls}("
+            f"id={self.order_id!r}, "
+            f"{self.order_type}@{self.symbol!r}, "
+            f"qty={self.quantity!r}, "
+            f"price={lp!r}, "
+            f"status={self.status!r}, "
+            f"time={self.timestamp.isoformat()!r}"
+            f")"
+        )

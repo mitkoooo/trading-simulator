@@ -7,7 +7,8 @@ This project implements a discrete-time stock trading simulator designed to mode
 ## Features
 
 - **Matching Engine**  
-  Custom-built order book using max- and min-heaps to simulate price-time priority matching of buy and sell orders.
+  A custom order book that maintains sorted maps of buy and sell prices each pointing to FIFO queues of limit orders,
+  alongside separate FIFO queues for market‐price buys and sells—fully enforcing price‐time priority.
 
 - **Market Simulation**  
   Time-stepped engine capable of replaying historical stock price data and processing market events deterministically.

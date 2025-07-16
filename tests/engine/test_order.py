@@ -1,4 +1,4 @@
-from engine.order import Order
+from engine.order_book.order import Order
 from app.context import AppContext
 
 
@@ -48,7 +48,7 @@ def test_cancel_order(test_context: AppContext):
     assert sample_exchange.order_books[SYMBOL].buy_size() == 1
 
     # Cancel an order
-    assert sample_broker.cancel_order(o.order_id)
+    sample_broker.cancel_order(o.order_id)
     assert sample_exchange.order_lookup[o.order_id].status == "cancelled"
 
     # On best_buy peek the order is effectively mopped out

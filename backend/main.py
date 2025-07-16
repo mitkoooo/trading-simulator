@@ -4,7 +4,6 @@ from engine.broker.broker import Broker
 from logging_config import setup_logger
 
 from engine.exchange import Exchange
-from engine.order import Order
 from engine.trader import Trader
 from engine.stock import Stock
 from engine.position import Position
