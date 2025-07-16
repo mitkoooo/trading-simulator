@@ -9,12 +9,7 @@ from cli.commands import (
 )
 
 from app.context import AppContext
-from app.session import Session
-
-from engine.exchange import Exchange
-from engine.order import Order
-from engine.trader import Trader
-from engine.stock import Stock
+from engine.order_book.order import Order
 
 def test_validate_symbol_known(test_context: AppContext, caplog):
     test_logger = test_context.logger
@@ -54,7 +49,7 @@ def test_handle_order_invalid_args_num(test_context: AppContext, caplog):
     )
 
     assert "BUY command usage error" in caplog.text
-    assert len(sample_exchange.order_books["AAPL"]._buy_heap) == 0
+    assert sample_exchange.order_books["AAPL"].buy_size() == 0
 
 
 def test_handle_order_adds_order(test_context: AppContext):
@@ -75,7 +70,7 @@ def test_handle_order_adds_order(test_context: AppContext):
         args=["AAPL", "42", "100.00"],
     )
 
-    assert len(test_context.exchange.order_books["AAPL"]._buy_heap) == 1
+    assert test_context.exchange.order_books["AAPL"].buy_size() == 1
 
 
 def test_do_next_updates_prices(test_context: AppContext):

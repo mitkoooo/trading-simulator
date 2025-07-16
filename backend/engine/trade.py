@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 import uuid
 
-from .order import Order
+from engine.order_book.order import Order
 
 
 class Trade:

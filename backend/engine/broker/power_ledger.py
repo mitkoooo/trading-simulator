@@ -1,13 +1,24 @@
-from typing import Dict
+from typing import Dict, Optional
 from math import log1p
 
 from engine.exchange import Exchange
 from engine.position import Position
 from engine.trader import Trader
-from engine.order import Order
+from engine.order_book.order import Order
 
 class PowerLedger:
-    """TODO"""
+    """Manage reservations of cash and shares for orders.
+
+    The PowerLedger tracks reserved cash for buy orders and reserved shares
+    for sell orders, ensuring that funds or holdings are set aside when orders
+    are submitted and released when orders are cancelled or filled.
+
+    Attributes:
+        exchange (Exchange): The matching engine providing order books and market data.
+        traders (Dict[int, Trader]): Mapping of trader IDs to `Trader` objects with portfolios.
+        _reserved_cash (Dict[str, float]): Maps order IDs to the amount of cash reserved for buy orders.
+        _reserved_shares (Dict[str, int]): Maps order IDs to the quantity of shares reserved for sell orders.
+    """
     def __init__(self, exchange: Exchange, traders: Dict[int, Trader]):
         self.exchange = exchange
         self.traders = traders
@@ -17,7 +28,19 @@ class PowerLedger:
 
 
     def reserve_cash(self, order: Order) -> None:
-        """Reserve required cash for a new buy order."""
+        """Reserve cash for a new buy order.
+
+        Deducts an estimated cost from the trader’s cash balance and reserves
+        it under the order ID.
+
+        Args:
+            order (Order): A buy order requiring cash reservation.
+
+        Raises:
+            KeyError: If the trader is not registered.
+            ValueError: If `order.order_type` is not 'buy' or if the trader’s
+                cash balance is insufficient.
+        """       
         tid = order.trader_id
         trader = self.traders.get(tid, None)
         if not trader:
@@ -42,7 +65,17 @@ class PowerLedger:
 
 
     def release_cash(self, order: Order) -> None:
-        """Unreserve unused cash for a buy order."""
+        """Release reserved cash back to the trader’s balance.
+
+        Returns the full reserved amount for the given buy order ID to the
+        trader’s cash, removing the reservation record.
+
+        Args:
+            order (Order): A previously reserved buy order.
+
+        Raises:
+            KeyError: If the trader is not registered
+        """
         tid = order.trader_id
         trader = self.traders.get(tid, None)
         if not trader:
@@ -56,7 +89,19 @@ class PowerLedger:
 
 
     def reserve_shares(self, order: Order) -> None:
-        """Reserve required shares for a new sell order"""
+        """Reserve shares for a new sell order.
+
+        Deducts the order’s quantity from the trader’s position and reserves
+        it under the order ID.
+
+        Args:
+            order (Order): A sell order requiring share reservation.
+
+        Raises:
+            KeyError: If the trader is not registered or does not hold the shares.
+            ValueError: If `order.order_type` is not 'sell' or the trader’s
+                position is insufficient.
+        """
         tid = order.trader_id
         trader = self.traders.get(tid, None)
         if not trader:
@@ -85,7 +130,17 @@ class PowerLedger:
 
 
     def release_shares(self, order: Order) -> None:
-        """Unreserve unused shares for a sell order."""
+        """Release reserved shares back to the trader’s position.
+
+        Returns the full reserved share quantity for the given sell order
+        back to the trader’s position, removing the reservation record.
+
+        Args:
+            order (Order): A previously reserved sell order.
+
+        Raises:
+            KeyError: If the trader is not registered.
+        """        
         tid = order.trader_id
         trader = self.traders.get(tid, None)
         if not trader:
@@ -104,8 +159,20 @@ class PowerLedger:
 
 
     def estimate_market_buy_cost(self, symbol: str, quantity: int):
-        """Estimates the total cost to buy `quantity` shares at market price,
-        walking down the ask (sell) side of the order book.
+        """Estimate the total cost of a market-price buy order.
+
+        Walks the sell-side order book until the requested quantity is covered,
+        summing limit prices, then applies a slippage buffer.
+
+        Args:
+            symbol (str): The stock symbol to buy.
+            quantity (int): The number of shares to estimate.
+
+        Returns:
+            float: Estimated cost including slippage buffer.
+
+        Raises:
+            ValueError: If book liquidity is insufficient to fill the request.
         """
         order_book = self.exchange.order_books.get(symbol, None)
         assert order_book
@@ -133,7 +200,17 @@ class PowerLedger:
         return expected_cost * (1 + self._compute_slippage_buffer(symbol))
 
     def _compute_slippage_buffer(self, symbol: str) -> float:
-        """Compute slippage buffer (safety margin) when estimating reservation amount for a market price buy."""
+        """Compute a safety margin for market‐buy cost estimates.
+
+        Calculates a slippage buffer based on baseline percentage, current
+        volatility, and book depth.
+
+        Args:
+            symbol (str): The stock symbol for which to compute slippage.
+
+        Returns:
+            float: A slippage factor (e.g. between 0.01 and 0.05).
+        """
         BASE_LINE = 0.01
 
         stock = self.exchange.market_data.get(symbol, None)
@@ -148,8 +225,24 @@ class PowerLedger:
 
         return min(slippage_buffer, 0.05) # cap at 5%
 
-    def get_reserved_shares(self, order_id: str) -> int | None:
+    def get_reserved_shares(self, order_id: str) -> Optional[int]:
+        """Get the quantity of shares reserved for a given order ID.
+
+        Args:
+            order_id (str): The identifier of the sell order.
+
+        Returns:
+            int or None: Reserved share count, or None if no reservation exists.
+        """
         return self._reserved_shares.get(order_id, None)
 
-    def get_reserved_cash(self, order_id: str) -> float | None:
+    def get_reserved_cash(self, order_id: str) -> Optional[float]:
+        """Get the amount of cash reserved for a given order ID.
+
+        Args:
+            order_id (str): The identifier of the buy order.
+
+        Returns:
+            float or None: Reserved cash amount, or None if no reservation exists.
+        """
         return self._reserved_cash.get(order_id, None)

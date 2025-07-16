@@ -1,23 +1,42 @@
 from typing import Dict
 
 from engine.broker.power_ledger import PowerLedger
-from engine.order import Order
+from engine.order_book.order import Order
 from engine.position import Position
 from engine.trade import Trade
 from engine.trader import Trader
 from engine.exchange import Exchange
 
 class Broker:
-    """TODO"""
+    """Orchestrates order submission, cancellation, and trade settlement between traders and the exchange.
+
+    The Broker maintains a registry of `Trader` instances and uses a `PowerLedger` to
+    reserve and release cash or shares as orders are submitted, cancelled, or filled.
+    It submits validated orders to the `Exchange` and finalizes both buy and sell sides
+    of each `Trade`, updating trader portfolios and pending‐order logs.
+
+    Attributes:
+        exchange (Exchange): The matching engine where orders are enqueued and trades are generated.
+        traders (Dict[int, Trader]): Maps trader IDs to their `Trader` objects, holding portfolios and logs.
+        power_ledger (PowerLedger): Manages reservations and releases of cash and shares for pending orders.
+    """
 
     def __init__(self, exchange: Exchange) -> None:
         self.exchange = exchange
-        self.traders: Dict[int, Trader] = {}
+        self.traders = {}
         self.power_ledger = PowerLedger(exchange, self.traders)
   
 
     def register_trader(self, trader: Trader) -> None:
-        """Register trader in a stock exchange"""
+        """Add a new trader to the broker’s registry.
+
+        Args:
+            trader (Trader): The trader to register.
+
+        Raises:
+            ValueError: If a trader with the same `trader_id` is already registered.
+        """
+
         if trader.trader_id in self.traders:
             raise ValueError(f"Trader ID {trader.trader_id} already registered")
 
@@ -25,16 +44,27 @@ class Broker:
 
 
     def submit_order(self, order: Order) -> None:
-        """Validates and submits a `Trader` order to `Exchange`."""
+        """Validate and submit a trader’s order to the exchange.
+
+        1. Verifies that the submitting trader is registered.
+        2. Reserves cash (for buy orders) or shares (for sell orders) via the PowerLedger.
+        3. Forwards the order to the Exchange.
+        4. Records the order in the trader’s `pending_orders`.
+
+        Args:
+            order (Order): The order to submit.
+
+        Raises:
+            KeyError: If the `order.trader_id` is not registered.
+            ValueError: If `order.order_type` is not 'buy' or 'sell'.
+        """
       
         tid = order.trader_id
         trader = self.traders.get(tid, None)
         if not trader:
             raise KeyError(f"Trader with this trader id does not exist. (got {tid}")
 
-
         if order.order_type == "buy":
-            # FLAG
             self.power_ledger.reserve_cash(order)
         elif order.order_type == "sell":
             self.power_ledger.reserve_shares(order)
@@ -47,13 +77,23 @@ class Broker:
         trader.pending_orders[order.order_id] = order
 
 
-    def cancel_order(self, order_id: str) -> bool:
-        """Cancels a pending order with `order_id`.
-        
-        Cancelled order will be removed from `pending_orders` of `Trader` who owns it. 
+    def cancel_order(self, order_id: str) -> None:
+        """Cancel a trader’s pending order and free reserved funds or shares.
 
-        Attributes:
-            order_id (str): `order_id` of `Order` to be cancelled
+        Calls the exchange to cancel the order, removes it from the trader’s
+        pending orders, marks it as 'cancelled', and releases any reserved
+        cash (for buys) or shares (for sells).
+
+        Args:
+            order_id (str): Identifier of the pending order to cancel.
+
+        Returns:
+            bool: True if cancellation succeeded, False otherwise.
+
+        Raises:
+            KeyError: If no such trader is registered or the order is not pending.
+            RuntimeError: If the exchange refuses to cancel (unexpected).
+            ValueError: If the order’s type is neither 'buy' nor 'sell'.
         """
 
         order = self.exchange.order_lookup[order_id]
@@ -66,12 +106,12 @@ class Broker:
         if order.order_id not in trader.pending_orders:
             raise KeyError(f"An order with the provided `order_id` does not exist. (got {order_id})")
 
+        # Remove the pending order 
         status = self.exchange.cancel_order(order_id)
 
         if not status:
-            return status
+           raise RuntimeError("Couldn't cancel the order") 
 
-        # Remove the pending order 
         cancelled_order = trader.pending_orders.pop(order_id)
         cancelled_order.status = "cancelled"
 
@@ -82,14 +122,28 @@ class Broker:
         else:
             raise ValueError("Unknown order type.")
 
-        return status
+        return
 
     def settle_trade(self, trade: Trade):
-        """TODO"""
+        """Settle a matched trade or cancel on buyer failure.
+
+        Attempts to finalize the buy side first. If the buyer cannot pay or reservation
+        is missing, the buy order is cancelled, quantities are restored, and the trade
+        is marked ‘cancelled’. Otherwise, finalizes the sell side, marks the trade
+        ‘fulfilled’, and re-queues or removes any partially or fully filled orders.
+
+        Args:
+            trade (Trade): The trade to settle, containing `buy_order`, `sell_order`,
+                `quantity`, and `price`.
+
+        Raises:
+            KeyError: If reserved cash for the buy order is missing.
+            RuntimeError: If the buyer’s available cash is insufficient.
+        """
 
         try:
             self.finalize_buy(trade)
-        except:    # In case market price order fails
+        except (KeyError, RuntimeError):    # In case market price order fails
             # Restore the order quantities
             trade.buy_order.quantity += trade.quantity
             trade.sell_order.quantity += trade.quantity
@@ -99,6 +153,7 @@ class Broker:
             self.cancel_order(trade.buy_order.order_id)
             
             # Cancel the finalization of the trade
+
             return           
             
         self.finalize_sell(trade)
@@ -108,13 +163,27 @@ class Broker:
         for order in [trade.buy_order, trade.sell_order]:
             if order.quantity > 0:
                 order.status = "partially_filled"
-                # Reinsert the maker back into order book
-                self.submit_order(order)
+                self.power_ledger.reserve_cash(order) if order.order_type == "buy" else self.power_ledger.reserve_shares(order)
             else:
                 order.status = "filled"
+                self.exchange.remove_order(order.order_id)
 
 
     def finalize_buy(self, trade: Trade):
+        """Apply the financial effects of the buy side of a trade.
+
+        Unreserves the cash reservation for the buy order, deducts the trade cost
+        from the trader’s cash balance, and updates or creates their position
+        at the executed price. Updates pending order quantity or logs a filled order.
+
+        Args:
+            trade (Trade): The trade whose `buy_order`, `quantity`, and `price`
+                determine the cash movement.
+
+        Raises:
+            KeyError: If no cash was reserved for this order.
+            RuntimeError: If the trader’s cash balance is insufficient to cover cost.
+        """
         order = trade.buy_order
         trader = self.traders[order.trader_id]
 
@@ -163,6 +232,20 @@ class Broker:
             trader.pending_orders[order.order_id].quantity = order.quantity
     
     def finalize_sell(self, trade: Trade):
+        """Apply the financial effects of the sell side of a trade.
+
+        Unreserves the share reservation for the sell order, deducts sold shares
+        from the trader’s position, credits proceeds to their cash balance, and
+        updates or removes the position if it becomes empty. Updates pending order
+        quantity or logs a filled order.
+
+        Args:
+            trade (Trade): The trade whose `sell_order`, `quantity`, and `price`
+                determine the share and cash movement.
+
+        Raises:
+            KeyError: If no share reservation exists for this order.
+        """
         order = trade.sell_order
 
         trader = self.traders[order.trader_id]
