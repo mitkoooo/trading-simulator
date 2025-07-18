@@ -24,7 +24,7 @@ class OrderRequest(BaseModel):
     order_type: Literal["buy", "sell"]
     symbol: str
     quantity: int
-    price: float
+    price: float | None
 
 class OrderCancelRequest(BaseModel):
     order_id: str
@@ -140,10 +140,7 @@ def order_cancel(data: OrderCancelRequest):
     order_id = data.order_id
 
     try:
-        status = broker.cancel_order(order_id)
-        if not status:
-            raise RuntimeError("Unable to delete the order")
-
+        broker.cancel_order(order_id)
     except (KeyError, RuntimeError) as e:
         raise HTTPException(status_code=404, detail=str(e))
     

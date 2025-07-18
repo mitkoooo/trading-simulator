@@ -1,0 +1,157 @@
+import { useForm, type SubmitHandler } from "react-hook-form";
+
+import { API_BASE } from "../config/api";
+import { useState, type MouseEventHandler } from "react";
+import { usePortfolioDataStore } from "../stores/portfolioDataStore";
+
+interface PlaceOrderFormData {
+	symbol: string;
+	quantity: number;
+	price: number;
+}
+
+const InputClass =
+	"px-2 py-1 bg-card border-2 rounded-md text-primary border-divider focus:bg-card focus:outline-1 focus:outline-accent";
+
+const PlaceOrderForm = (): React.JSX.Element => {
+	const {
+		register,
+		reset,
+		handleSubmit,
+		watch,
+		formState: { errors },
+	} = useForm<PlaceOrderFormData>();
+
+	const fetchPortfolioData = usePortfolioDataStore(
+		(state) => state.fetchPortfolioData,
+	);
+	const fetchPendingOrders = usePortfolioDataStore(
+		(state) => state.fetchPendingOrders,
+	);
+
+	const [apiError, setApiError] = useState<string | null>(null);
+	const [orderType, setOrderType] = useState<string>("buy");
+
+	const handlePlaceOrderSubmit: SubmitHandler<PlaceOrderFormData> = async (
+		data: PlaceOrderFormData,
+	) => {
+		setApiError("");
+		const res = await fetch(`${API_BASE}/order`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ order_type: orderType?.toLowerCase(), ...data }),
+		});
+
+		if (!res.ok) {
+			const errorData = await res.json(); // 👈 this parses the error body
+			const errorMessage = errorData.detail || "Unknown error";
+			console.error(errorMessage);
+			setApiError(errorData.detail);
+		} else {
+			await fetchPortfolioData();
+			await fetchPendingOrders();
+		}
+		reset();
+	};
+
+	return (
+		<div className="bg-panel border-divider relative max-w-96 min-w-80 rounded-md border p-8">
+			<div className="mb-2 inline-flex w-full">
+				<button
+					className={`w-full rounded-l-md p-1 transition-colors duration-100 ${orderType === "sell" ? "bg-disabled hover:bg-gray-700" : "bg-green-600"}`}
+					onClick={() => setOrderType("buy")}
+				>
+					Buy
+				</button>
+				<button
+					className={`w-full rounded-r-md p-1 transition-all duration-100 ${orderType === "buy" ? "bg-disabled hover:bg-gray-700" : "bg-red-600"}`}
+					onClick={() => setOrderType("sell")}
+				>
+					Sell
+				</button>
+			</div>
+			<form
+				className="flex flex-col"
+				onSubmit={handleSubmit(handlePlaceOrderSubmit)}
+			>
+				<div>
+					<input
+						autoComplete="off"
+						className={`${InputClass} w-full`}
+						type="text"
+						{...register("symbol", {
+							required: "Please enter symbol.",
+							onChange: () => setApiError(""),
+						})}
+						placeholder="Symbol"
+					/>
+					<p className="text-error my-1 h-[1.25rem] text-sm">
+						{errors?.symbol?.message ?? "\u00A0"}
+					</p>
+				</div>
+				<div>
+					<input
+						className={`${InputClass} w-full`}
+						{...register("quantity", {
+							required: "Please enter quantity",
+							valueAsNumber: true,
+							validate: (q) =>
+								!(isNaN(q) || q <= 0) || "Must be a valid number",
+							onChange: () => setApiError(""),
+						})}
+						aria-invalid={errors.quantity ? "true" : "false"}
+						placeholder="Quantity"
+					/>
+					<p className="text-error my-1 h-[1.25rem] text-sm">
+						{errors?.quantity?.message ?? "\u00A0"}
+					</p>
+				</div>
+				<div>
+					<div className="inline-flex w-full justify-between gap-4">
+						<input
+							type="number"
+							step="0.01"
+							className={InputClass}
+							{...register("price", {
+								required: "Please enter limit price",
+								valueAsNumber: true,
+								validate: (p) =>
+									!(isNaN(p) || p <= 0) || "Must be a valid price",
+								onChange: () => setApiError(""),
+							})}
+							placeholder="Limit price"
+							aria-invalid={errors.price ? "true" : "false"}
+						/>
+						<div className="inline-flex w-full justify-between">
+							<button className="bg-card border-divider focus:outline-accent px-2 text-sm hover:bg-gray-700 focus:outline-1">
+								+1%
+							</button>
+							<button className="bg-card border-divider focus:outline-accent px-2 text-sm focus:outline-1">
+								-1%
+							</button>
+						</div>
+					</div>
+					{apiError && (
+						<p className="text-error my-1 h-[1.25rem] text-sm">{apiError}</p>
+					)}
+					<p className="text-error my-1 h-[1.25rem] text-sm">
+						{errors?.price?.message ?? "\u00A0"}
+					</p>
+				</div>
+				<div className="absolute right-0 bottom-0 inline-flex w-full justify-between gap-4 px-6 pb-3">
+					<button
+						className={`p-3 ${orderType === "sell" ? "bg-error hover:bg-error-hover" : "bg-green-600 hover:bg-green-700"} focus:outline-accent w-full rounded-md duration-150 focus:outline-1`}
+						type="submit"
+					>
+						{orderType?.slice(0, 1).toUpperCase() + orderType?.slice(1)}{" "}
+						{watch("quantity") ? watch("quantity") + " " : "... "}
+						{watch("symbol") ? watch("symbol") : "SYMB"}@$
+						{watch("price") ? watch("price") : ""}
+					</button>
+				</div>
+			</form>
+		</div>
+	);
+};
+
+export default PlaceOrderForm;

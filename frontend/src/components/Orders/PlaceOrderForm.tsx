@@ -5,10 +5,14 @@ import { useState } from "react";
 import { usePortfolioDataStore } from "../../stores/portfolioDataStore";
 import { useMarketDataStore } from "../../stores/marketDataStore";
 
+import PlaceOrderButton from "./PlaceOrderButton.tsx";
+
 interface PlaceOrderFormData {
+	orderSide: "buy" | "sell";
+	orderType: "market" | "limit";
 	symbol: string;
-	quantity: number;
-	price: number;
+	quantity: number | null;
+	price: number | null;
 }
 
 const InputClass =
@@ -25,9 +29,11 @@ const PlaceOrderForm = (): React.JSX.Element => {
 		formState: { errors },
 	} = useForm<PlaceOrderFormData>({
 		defaultValues: {
+			orderSide: "buy",
+			orderType: "market",
 			symbol: "",
-			quantity: undefined,
-			price: undefined,
+			quantity: null,
+			price: null,
 		},
 	});
 
@@ -38,17 +44,21 @@ const PlaceOrderForm = (): React.JSX.Element => {
 		(state) => state.fetchPendingOrders,
 	);
 
-	const marketData = useMarketDataStore((state) => state.marketData);
+	const getMarketPrice = useMarketDataStore((state) => state.getMarketPrice);
 
 	const [apiError, setApiError] = useState<string | null>(null);
-	const [orderSide, setOrderSide] = useState<string>("buy");
-	const [orderType, setOrderType] = useState<string>("limit");
-
 	// watch keeps the latest value of price in sync
-	//
-	const currentPrice = parseFloat(`${watch("price")}` || "0");
+	const currentSide = watch("orderSide");
+	const currentType = watch("orderType");
+	const currentPrice =
+		currentType === "market"
+			? getMarketPrice(watch("symbol"))?.price || null
+			: watch("price") || null;
+	const currentSymbol = watch("symbol");
+	const currentQuantity = watch("quantity");
 
 	const changeOnePercent = (direction: "+" | "-") => {
+		if (!currentPrice) return;
 		if (!direction || (direction !== "+" && direction !== "-")) return;
 		const percentageChange = direction === "+" ? 1.01 : 0.99;
 
@@ -63,18 +73,25 @@ const PlaceOrderForm = (): React.JSX.Element => {
 	const handlePlaceOrderSubmit: SubmitHandler<PlaceOrderFormData> = async (
 		data: PlaceOrderFormData,
 	) => {
+		const body = {
+			order_type: data.orderSide.toLowerCase(),
+			symbol: data.symbol,
+			quantity: data.quantity,
+			price: data.price,
+		};
+
 		setApiError("");
 		const res = await fetch(`${API_BASE}/order`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ order_type: orderSide?.toLowerCase(), ...data }),
+			body: JSON.stringify(body),
 		});
 
 		if (!res.ok) {
 			const errorData = await res.json(); // 👈 this parses the error body
 			const errorMessage = errorData.detail || "Unknown error";
 			console.error(errorMessage);
-			setApiError(errorData.detail);
+			setApiError(errorMessage);
 		} else {
 			await fetchPortfolioData();
 			await fetchPendingOrders();
@@ -84,43 +101,44 @@ const PlaceOrderForm = (): React.JSX.Element => {
 
 	return (
 		<div className="bg-panel border-divider relative max-w-96 min-w-80 rounded-sm border p-8">
-			<div className="mb-4 inline-flex w-full">
-				<button
-					className={`w-full rounded-l-sm p-1 transition-colors duration-100 ${orderSide === "sell" ? "bg-disabled hover:bg-gray-700" : "bg-green-600"}`}
-					onClick={() => setOrderSide("buy")}
-				>
-					Buy
-				</button>
-				<button
-					className={`w-full rounded-r-sm p-1 transition-all duration-100 ${orderSide === "buy" ? "bg-disabled hover:bg-gray-700" : "bg-red-600"}`}
-					onClick={() => setOrderSide("sell")}
-				>
-					Sell
-				</button>
-			</div>
-			<div className="infline-flex mb-2 w-full items-center justify-start">
-				<button
-					className={`border-divider mr-4 w-16 p-2 text-sm focus:outline-none ${orderType === "market" ? "bg-zinc-800" : "bg-card"}`}
-					onClick={() => setOrderType("market")}
-				>
-					Market
-				</button>
-				<button
-					className={`bg-card border-divider w-16 p-2 text-sm focus:outline-none ${orderType === "limit" ? "bg-zinc-800" : "bg-card"}`}
-					onClick={() => setOrderType("limit")}
-				>
-					Limit
-				</button>
-			</div>
-			<p
-				className={`text-secondary mb-2 text-xs ${orderType === "market" ? "" : "opacity-0"}`}
-			>
-				Executes immediately at best price.
-			</p>
 			<form
 				className="flex flex-col"
 				onSubmit={handleSubmit(handlePlaceOrderSubmit)}
 			>
+				<div className="mb-4 inline-flex w-full">
+					<input
+						type="button"
+						value={"Buy"}
+						className={`w-full rounded-l-sm p-1 transition-colors duration-100 ${currentSide === "sell" ? "bg-disabled hover:bg-gray-700" : "bg-green-600"}`}
+						onClick={() => setValue("orderSide", "buy")}
+					/>
+					<input
+						type="button"
+						value={"Sell"}
+						className={`w-full rounded-r-sm p-1 transition-all duration-100 ${currentSide === "buy" ? "bg-disabled hover:bg-gray-700" : "bg-error"}`}
+						onClick={() => setValue("orderSide", "sell")}
+					/>
+				</div>
+				<div className="infline-flex mb-2 w-full items-center justify-start">
+					<input
+						type="button"
+						value={"Market"}
+						className={`border-divider mr-4 w-16 p-2 text-sm focus:outline-none ${currentType === "market" ? "bg-zinc-800" : "bg-card"}`}
+						onClick={() => setValue("orderType", "market")}
+					/>
+					<input
+						type="button"
+						value={"Limit"}
+						className={`bg-card border-divider w-16 p-2 text-sm focus:outline-none ${currentType === "limit" ? "bg-zinc-800" : "bg-card"}`}
+						onClick={() => setValue("orderType", "limit")}
+					/>
+				</div>
+				<p
+					className={`text-secondary mb-2 text-xs ${currentType === "market" ? "" : "opacity-0"}`}
+				>
+					Executes immediately at best price.
+				</p>
+
 				{/* ── Symbol ── */}
 				<div>
 					<input
@@ -140,6 +158,7 @@ const PlaceOrderForm = (): React.JSX.Element => {
 				{/* ── Quantity ── */}
 				<div>
 					<input
+						autoComplete="off"
 						className={`${InputClass} w-full`}
 						{...register("quantity", {
 							required: "Please enter quantity",
@@ -157,18 +176,18 @@ const PlaceOrderForm = (): React.JSX.Element => {
 				</div>
 				{/* ── Price ── */}
 				<div
-					className={`transition‐all duration‐200 overflow‐hidden ${orderType === "market" ? "h-0 opacity-0" : "h-auto"}`}
+					className={`transition‐all duration‐200 overflow‐hidden ${currentType === "market" ? "h-0 opacity-0" : "h-auto"}`}
 				>
-					<div className="inline-flex w-full justify-between gap-4">
+					<div className="inline-flex justify-between gap-4">
 						<Controller
 							name="price"
 							control={control}
 							rules={{
 								// only required when it's a limit order
 								required:
-									orderType === "limit" ? "Please enter limit price" : false,
+									currentType === "limit" ? "Please enter limit price" : false,
 								validate: (v) =>
-									orderType === "limit"
+									currentType === "limit"
 										? (v !== null && v > 0) || "Please enter valid limit price"
 										: true,
 							}}
@@ -176,19 +195,20 @@ const PlaceOrderForm = (): React.JSX.Element => {
 								const safeValue = field.value ?? "";
 								return (
 									<input
+										autoComplete="off"
 										type="number"
 										step="0.01"
-										className={InputClass}
+										className={`w-full min-w-12 ${InputClass}`}
 										{...field}
 										value={safeValue}
-										disabled={orderType === "market"}
+										disabled={currentType === "market"}
 										placeholder="Limit price"
 										aria-invalid={errors.price ? "true" : "false"}
 									/>
 								);
 							}}
 						/>
-						<div className="inline-flex w-full justify-between">
+						<div className="inline-flex w-auto justify-between gap-2">
 							<button
 								type="button"
 								className="bg-card border-divider focus:outline-accent px-2 text-sm focus:outline-1"
@@ -205,23 +225,23 @@ const PlaceOrderForm = (): React.JSX.Element => {
 							</button>
 						</div>
 					</div>
-					{apiError && (
-						<p className="text-error my-1 h-[1.25rem] text-sm">{apiError}</p>
-					)}
+
 					<p className="text-error my-1 h-[1.25rem] text-sm">
 						{errors?.price?.message ?? "\u00A0"}
 					</p>
 				</div>
-				<div className="absolute right-0 bottom-6 left-0 mx-12 inline-flex">
-					<button
-						className={`w-full p-3 ${orderSide === "sell" ? "bg-error hover:bg-error-hover" : "bg-green-600 hover:bg-green-700"} focus:outline-accent w-full rounded-md duration-150 focus:outline-1`}
-						type="submit"
-					>
-						{orderSide?.slice(0, 1).toUpperCase() + orderSide?.slice(1)}{" "}
-						{watch("quantity") ? watch("quantity") + " " : ""}
-						{watch("symbol") ? watch("symbol") : "..."}@$
-						{watch("price") ? watch("price") : ""}
-					</button>
+				{apiError && (
+					<p className="text-error h-[1.25rem] text-sm">{apiError}</p>
+				)}
+				<div className="absolute right-0 bottom-10 left-0 mx-12 inline-flex">
+					<PlaceOrderButton
+						currentState={{
+							currentSide: currentSide,
+							currentQuantity: currentQuantity,
+							currentSymbol: currentSymbol,
+							currentPrice: currentPrice,
+						}}
+					/>
 				</div>
 			</form>
 		</div>
