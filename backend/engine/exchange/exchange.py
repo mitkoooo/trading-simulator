@@ -1,11 +1,13 @@
 from datetime import datetime
-from typing import Callable, Dict, Iterable, List, Literal, Optional
+from typing import Callable, Dict, Iterable, List, Optional
 
+from engine.exchange.participant_info import ParticipantInfo
+from engine.exchange.risk_gateway import RiskGateway
 from engine.order_book.order_book import OrderBook
 from engine.order_book.price_level import PriceLevel
-from .stock import Stock
+from engine.stock import Stock
 from engine.order_book.order import Order
-from .trade import Trade
+from engine.trade import Trade
 
 
 class Exchange:
@@ -47,8 +49,21 @@ class Exchange:
         self.order_books: Dict[str, OrderBook] = {
             symbol: OrderBook() for symbol in market_data.keys()
         }
+        self.market_participants: Dict[str, ParticipantInfo] = {}
+        self.risk_gateaway = RiskGateway() 
+
         self.order_lookup: Dict[str, Order] = {}
+        self._subscriptions: Dict[str, List[Callable]] = {}
         self.current_time = datetime.now()
+
+    def register_participant(self, mpid:str, info:ParticipantInfo):
+        """SOME DOCSTRING""" #TODO
+
+        mp = self.market_participants.get(mpid, None)
+        if mp:
+            raise ValueError(f"The market participant with this ID is already registered on the exchange. (got {mpid})")
+        else:
+            self.market_participants[mpid] = info
 
     def add_order(self, order: Order) -> None:
         """Enqueue an Order in its respective order book for later matching.
@@ -69,6 +84,7 @@ class Exchange:
         
         self.order_books[order.symbol].add_order(order)
         self.order_lookup[order.order_id] = order
+        self.emit_book_update(order.symbol, self.order_books[order.symbol])
 
     def cancel_order(self, order_id: str) -> bool:
         """Mark `order` as cancelled.
@@ -96,6 +112,7 @@ class Exchange:
     def remove_order(self, order_id: str) -> None:
         order = self.order_lookup[order_id]
         self.order_books[order.symbol].remove_order(order)
+        self.emit_book_update(order.symbol, self.order_books[order.symbol])
 
     def process_tick(
         self,
@@ -114,8 +131,37 @@ class Exchange:
         self.current_time = datetime.now()
 
         for stock in self.market_data.values():
-            nxt = stock.simulate_price_tick()
-            stock.update_price(nxt)
+            nxt = self.order_books[stock.symbol].peek_best_sell()
+            if nxt is None or nxt.limit_price is None:
+                return
+            stock.price = nxt.limit_price
+
+
+    def subscribe(self, topic: str, handler: Callable):
+        """SOME DOCSTRING""" #TODO
+
+        self._subscriptions.setdefault(topic, []).append(handler)
+
+    def _dispatch(self, topic: str, event_payload):
+        """SOME DOCSTRING""" #TODO
+
+        for handler in self._subscriptions.get(topic, []):
+            handler(event_payload)
+        
+        # For topic wide channel subscriptions e.g. "trade:*"
+        base, _, _ = topic.partition(":")
+        wildcard = f"{base}:*"
+        for handler in self._subscriptions.get(wildcard, []):
+            handler(event_payload)
+
+    def emit_book_update(self, symbol, order_book: OrderBook):
+        topic = f"book_update:{symbol}"
+        self._dispatch(topic, order_book)
+
+    def emit_trade(self, symbol, trade: Trade):
+        topic = f"trade:{symbol}"
+        self._dispatch(topic, trade)
+
 
     def match_orders(self, symbol: str) -> Optional[Trade]:
         """Match buy and sell orders in the specified symbol's order book.
@@ -151,7 +197,7 @@ class Exchange:
         # No valid maker found → restore and exit
         if maker is None:
             return None
-        
+
         # Build the trade
         return self._build_trade(taker, maker, symbol)
 
@@ -167,6 +213,7 @@ class Exchange:
         """
         mb = order_book.market_buys.peek()
         ms = order_book.market_sells.peek()
+
         if mb or ms:
             if not ms or (mb and ms and (mb.timestamp, mb.sequence) < (ms.timestamp, ms.sequence)):
                 taker = mb
@@ -224,8 +271,8 @@ class Exchange:
                 if not price_cross(candidate):
                     break
 
-                if candidate.trader_id == taker.trader_id:
-                    # same trader → buffer and keep scanning
+                if candidate.mpid == taker.mpid:
+                    # same market participant → keep scanning
                     continue
 
                 maker = candidate
@@ -247,6 +294,7 @@ class Exchange:
 
         orig_buy_qty = best_buy.quantity
         orig_sell_qty = best_sell.quantity
+
         exec_qty = min(orig_buy_qty, orig_sell_qty)
         exec_price = maker.limit_price
 
@@ -263,6 +311,8 @@ class Exchange:
 
         best_buy.quantity -= exec_qty
         best_sell.quantity -= exec_qty
+        
+        self.emit_trade(symbol=new_trade.symbol, trade=new_trade)
 
         return new_trade
 

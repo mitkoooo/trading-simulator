@@ -1,11 +1,11 @@
-from typing import Dict
+from typing import Dict, Literal
 
 from engine.broker.power_ledger import PowerLedger
 from engine.order_book.order import Order
 from engine.position import Position
 from engine.trade import Trade
 from engine.trader import Trader
-from engine.exchange import Exchange
+from engine.exchange.exchange import Exchange
 
 class Broker:
     """Orchestrates order submission, cancellation, and trade settlement between traders and the exchange.
@@ -21,10 +21,14 @@ class Broker:
         power_ledger (PowerLedger): Manages reservations and releases of cash and shares for pending orders.
     """
 
-    def __init__(self, exchange: Exchange) -> None:
+    def __init__(self, exchange: Exchange, mpid: str) -> None:
+        self.mpid = mpid 
         self.exchange = exchange
-        self.traders = {}
+        self.traders: Dict[str, Trader] = {}
+        self.active_orders: Dict[str, str] = {} # order.mpid -> trader_id
         self.power_ledger = PowerLedger(exchange, self.traders)
+
+        self.exchange.subscribe(f"proposed_trade:*:{self.mpid}", self.settle_trade)
   
 
     def register_trader(self, trader: Trader) -> None:
@@ -43,8 +47,8 @@ class Broker:
         self.traders[trader.trader_id] = trader
 
 
-    def submit_order(self, order: Order) -> None:
-        """Validate and submit a trader’s order to the exchange.
+    def submit_order(self, trader_id: str, symbol: str, order_type: Literal["buy", "sell"], quantity: int, limit_price: float | None) -> None:
+        """Validate and submit a  order to the exchange.
 
         1. Verifies that the submitting trader is registered.
         2. Reserves cash (for buy orders) or shares (for sell orders) via the PowerLedger.
@@ -59,15 +63,18 @@ class Broker:
             ValueError: If `order.order_type` is not 'buy' or 'sell'.
         """
       
-        tid = order.trader_id
-        trader = self.traders.get(tid, None)
+        trader = self.traders.get(trader_id, None)
         if not trader:
-            raise KeyError(f"Trader with this trader id does not exist. (got {tid}")
+            raise KeyError(f"Trader with this trader id does not exist. (got {trader_id}")
+        
+        order = Order(self.mpid, symbol, order_type, quantity, limit_price)  
+
+        self.active_orders[order.order_id] = trader_id
 
         if order.order_type == "buy":
-            self.power_ledger.reserve_cash(order)
+            self.power_ledger.reserve_cash(trader_id, order)
         elif order.order_type == "sell":
-            self.power_ledger.reserve_shares(order)
+            self.power_ledger.reserve_shares(trader_id, order)
         else:
             raise ValueError("Unknown order type.")
 
@@ -98,11 +105,12 @@ class Broker:
 
         order = self.exchange.order_lookup[order_id]
 
-        tid: int = order.trader_id
-        trader: Trader | None = self.traders.get(tid, None)
+        trader_id = self.active_orders[order_id]
+
+        trader: Trader | None = self.traders.get(trader_id, None)
 
         if not trader:
-            raise KeyError(f"Trader with this trader id does not exist. (got {tid}")
+            raise KeyError(f"Trader with this trader id does not exist. (got {trader_id}")
         if order.order_id not in trader.pending_orders:
             raise KeyError(f"An order with the provided `order_id` does not exist. (got {order_id})")
 
@@ -115,10 +123,12 @@ class Broker:
         cancelled_order = trader.pending_orders.pop(order_id)
         cancelled_order.status = "cancelled"
 
+        del self.active_orders[order_id]
+
         if order.order_type == "buy":
-            self.power_ledger.release_cash(cancelled_order)
+            self.power_ledger.release_cash(trader_id, cancelled_order)
         elif order.order_type == "sell":
-            self.power_ledger.release_shares(cancelled_order)
+            self.power_ledger.release_shares(trader_id, cancelled_order)
         else:
             raise ValueError("Unknown order type.")
 
@@ -140,33 +150,37 @@ class Broker:
             KeyError: If reserved cash for the buy order is missing.
             RuntimeError: If the buyer’s available cash is insufficient.
         """
-
         try:
-            self.finalize_buy(trade)
+            if trade.buy_order.mpid in self.traders:
+                self.finalize_buy(trade)
         except (KeyError, RuntimeError):    # In case market price order fails
             # Restore the order quantities
             trade.buy_order.quantity += trade.quantity
             trade.sell_order.quantity += trade.quantity
 
-            # Cancel the trade and the buy order(?)
+            # Cancel the trade and the buy order
             trade.status = "cancelled"
             self.cancel_order(trade.buy_order.order_id)
             
             # Cancel the finalization of the trade
 
-            return           
-            
-        self.finalize_sell(trade)
+            return      
+
+        if trade.buy_order.mpid in self.traders:
+            self.finalize_sell(trade)
         trade.status = "fulfilled"
 
         # If any side has still shares, reinsert it
         for order in [trade.buy_order, trade.sell_order]:
+            trader_id = self.active_orders[order.order_id]
+
             if order.quantity > 0:
                 order.status = "partially_filled"
-                self.power_ledger.reserve_cash(order) if order.order_type == "buy" else self.power_ledger.reserve_shares(order)
+                self.power_ledger.reserve_cash(trader_id, order) if order.order_type == "buy" else self.power_ledger.reserve_shares(trader_id, order)
             else:
                 order.status = "filled"
                 self.exchange.remove_order(order.order_id)
+                del self.active_orders[order.order_id]
 
 
     def finalize_buy(self, trade: Trade):
@@ -185,7 +199,8 @@ class Broker:
             RuntimeError: If the trader’s cash balance is insufficient to cover cost.
         """
         order = trade.buy_order
-        trader = self.traders[order.trader_id]
+        trader_id = self.active_orders[order.order_id]
+        trader = self.traders[trader_id]
 
         price  = trade.price
         qty    = trade.quantity
@@ -213,7 +228,7 @@ class Broker:
             raise RuntimeError("Buyer does not have enough cash to fulfill the order.")
 
         # Unreserve the cash
-        self.power_ledger.release_cash(order)
+        self.power_ledger.release_cash(trader_id, order)
 
         trader.portfolio.cash -= actual_cost
 
@@ -248,7 +263,8 @@ class Broker:
         """
         order = trade.sell_order
 
-        trader = self.traders[order.trader_id]
+        trader_id = self.active_orders[order.order_id]
+        trader = self.traders[trader_id]
 
         price  = trade.price
         qty    = trade.quantity
@@ -261,7 +277,7 @@ class Broker:
         )
 
         # Unreserve the shares
-        self.power_ledger.release_shares(order)
+        self.power_ledger.release_shares(trader_id, order)
         
         proceeds = qty * price
 

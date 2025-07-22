@@ -5,13 +5,13 @@ import { getMatchOrders } from "../../api/exchange";
 
 import { useMarketDataStore } from "../../stores/marketDataStore";
 
-import PortfolioEntry from "../../components/Portfolio/PortfolioEntry";
 import MarketDataView from "../../components/MarketData/MarketDataView";
 import PlaceOrderForm from "../../components/Orders/PlaceOrderForm";
 import OrderView from "../../components/Orders/OrderView";
 import MiniTicker from "../../components/MarketData/MiniTicker";
 import Card from "../../components/UI/Card";
 import { usePortfolioDataStore } from "../../stores/portfolioDataStore";
+import PortfolioView from "../../components/Portfolio/PortfolioView";
 
 export const Route = createFileRoute("/_authenticated/")({ component: Index });
 
@@ -90,16 +90,7 @@ function Index() {
 						</div>
 					</div>
 				</div>
-				<div className="bg-canvas mt-10 flex flex-col items-start justify-between">
-					<h1 className="mb-1 text-xl">Your holdings</h1>
-					{portfolio &&
-						portfolio.positions.map((position) => (
-							<PortfolioEntry
-								entry={position}
-								key={position.symbol}
-							></PortfolioEntry>
-						))}
-				</div>
+				<PortfolioView />
 			</div>
 		</div>
 	);

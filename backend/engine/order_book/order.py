@@ -7,7 +7,7 @@ class Order:
     """A client order to buy or sell shares on the exchange.
 
     Attributes:
-        trader_id (int): ID of the trader submitting the order.
+        mpid (str): ID of the market participant (e.g. Broker company or Market maker) submitting the order.
         symbol (str): Stock ticker (e.g. "AAPL").
         order_type (Literal["buy", "sell"]): Direction of the order.
         status (Literal["pending", "partially_filled", "filled", "cancelled"]
@@ -18,7 +18,7 @@ class Order:
 
     Examples:
         >>> o = Order(
-        ...     trader_id=1,
+        ...     mpid=1,
         ...     symbol="MTKO",
         ...     order_type="buy",
         ...     quantity=2,
@@ -28,7 +28,7 @@ class Order:
 
     def __init__(
         self,
-        trader_id: int,
+        mpid: str,
         symbol: str,
         order_type: Literal["buy", "sell"],
         quantity: int,
@@ -74,7 +74,7 @@ class Order:
         if order_type not in ["buy", "sell"]:
             raise ValueError("Invalid order type. Must be of type: 'buy' or 'sell'.")
 
-        self.trader_id = trader_id
+        self.mpid = mpid
         self.symbol = symbol
         self.order_type: Literal["buy", "sell"] = order_type
         self.status = "pending"                         # All orders at first are initialized as pending
@@ -100,6 +100,7 @@ class Order:
         lp = self.limit_price if self.limit_price is not None else "MARKET"
         return (
             f"{cls}("
+            f"mpid={self.mpid},"
             f"id={self.order_id!r}, "
             f"{self.order_type}@{self.symbol!r}, "
             f"qty={self.quantity!r}, "

@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 from math import log1p
 
-from engine.exchange import Exchange
+from engine.exchange.exchange import Exchange
 from engine.position import Position
 from engine.trader import Trader
 from engine.order_book.order import Order
@@ -19,7 +19,7 @@ class PowerLedger:
         _reserved_cash (Dict[str, float]): Maps order IDs to the amount of cash reserved for buy orders.
         _reserved_shares (Dict[str, int]): Maps order IDs to the quantity of shares reserved for sell orders.
     """
-    def __init__(self, exchange: Exchange, traders: Dict[int, Trader]):
+    def __init__(self, exchange: Exchange, traders: Dict[str, Trader]):
         self.exchange = exchange
         self.traders = traders
 
@@ -27,7 +27,7 @@ class PowerLedger:
         self._reserved_shares: Dict[str, int] = {}    # order_id -> share number
 
 
-    def reserve_cash(self, order: Order) -> None:
+    def reserve_cash(self, trader_id: str, order: Order) -> None:
         """Reserve cash for a new buy order.
 
         Deducts an estimated cost from the trader’s cash balance and reserves
@@ -41,10 +41,9 @@ class PowerLedger:
             ValueError: If `order.order_type` is not 'buy' or if the trader’s
                 cash balance is insufficient.
         """       
-        tid = order.trader_id
-        trader = self.traders.get(tid, None)
+        trader = self.traders.get(trader_id, None)
         if not trader:
-            raise KeyError(f"Trader with this trader id does not exist. (got {tid}")
+            raise KeyError(f"Trader with this trader id does not exist. (got {trader_id}")
 
         if order.order_type != "buy":
             raise ValueError("Cannot reserve cash for a sell order.")
@@ -64,7 +63,7 @@ class PowerLedger:
         return
 
 
-    def release_cash(self, order: Order) -> None:
+    def release_cash(self, trader_id:str,  order: Order) -> None:
         """Release reserved cash back to the trader’s balance.
 
         Returns the full reserved amount for the given buy order ID to the
@@ -76,10 +75,9 @@ class PowerLedger:
         Raises:
             KeyError: If the trader is not registered
         """
-        tid = order.trader_id
-        trader = self.traders.get(tid, None)
+        trader = self.traders.get(trader_id, None)
         if not trader:
-            raise KeyError(f"Trader with this trader id does not exist. (got {tid}")
+            raise KeyError(f"Trader with this trader id does not exist. (got {trader_id}")
 
         
         reserved_amount = self._reserved_cash.pop(order.order_id)
@@ -88,7 +86,7 @@ class PowerLedger:
         return
 
 
-    def reserve_shares(self, order: Order) -> None:
+    def reserve_shares(self, trader_id: str, order: Order) -> None:
         """Reserve shares for a new sell order.
 
         Deducts the order’s quantity from the trader’s position and reserves
@@ -102,10 +100,9 @@ class PowerLedger:
             ValueError: If `order.order_type` is not 'sell' or the trader’s
                 position is insufficient.
         """
-        tid = order.trader_id
-        trader = self.traders.get(tid, None)
+        trader = self.traders.get(trader_id, None)
         if not trader:
-            raise KeyError(f"Trader with this trader id does not exist. (got {tid}")
+            raise KeyError(f"Trader with this trader id does not exist. (got {trader_id}")
 
         if order.order_type != "sell":
             raise ValueError("Cannot reserve shares for a buy order.")
@@ -129,7 +126,7 @@ class PowerLedger:
         return
 
 
-    def release_shares(self, order: Order) -> None:
+    def release_shares(self, trader_id:str, order: Order) -> None:
         """Release reserved shares back to the trader’s position.
 
         Returns the full reserved share quantity for the given sell order
@@ -141,10 +138,9 @@ class PowerLedger:
         Raises:
             KeyError: If the trader is not registered.
         """        
-        tid = order.trader_id
-        trader = self.traders.get(tid, None)
+        trader = self.traders.get(trader_id, None)
         if not trader:
-            raise KeyError(f"Trader with this trader id does not exist. (got {tid}")
+            raise KeyError(f"Trader with this trader id does not exist. (got {trader_id}")
 
         symbol = order.symbol
         position: Position | None = trader.portfolio.positions.get(symbol)

@@ -1,9 +1,9 @@
-from engine.exchange import Exchange
+from engine.exchange.exchange import Exchange
 from engine.trader import Trader
 
 from typing import List, Tuple
 import logging
-from logging_config import LOG_NAME
+from config.logging_config import LOG_NAME
 
 logger = logging.getLogger(LOG_NAME)
 

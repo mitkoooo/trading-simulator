@@ -1,20 +1,9 @@
-from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, WebSocket, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.encoders import jsonable_encoder
-from typing import Dict, Literal
-
-from logging_config import setup_logger
-
-from engine.stock import Stock
-from engine.exchange import Exchange
-from engine.trader import Trader
-from engine.position import Position
-from engine.broker.broker import Broker
-
-from app.session import Session
 from app.context import AppContext
-
+from engine.order_book.order import Order
+from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, WebSocket, status, Depends, Request
+from fastapi.encoders import jsonable_encoder
+from typing import Literal
 
 class LoginRequest(BaseModel):
     trader_id: int
@@ -30,80 +19,49 @@ class OrderCancelRequest(BaseModel):
     order_id: str
 
 
-app = FastAPI(title="York Stock Exchange")
+router = APIRouter(prefix="/v1", tags=["core"])
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # my front-end origin
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],  # or ["*"]
-    allow_headers=["*"],
-)
+# ---- Dependency to pull your context/service off the FastAPI app ----
+def get_ctx(request: Request) -> AppContext:
+    return request.app.state.context
 
-MARKET_DATA: Dict[str, Stock] = {
-    "AAPL": Stock("AAPL", 150.00),
-    "MSFT": Stock("MSFT", 295.50),
-    "GOOG": Stock("GOOG", 2830.75),
-    "AMZN": Stock("AMZN", 3505.20),
-    "TSLA": Stock("TSLA", 720.25),
-    "NFLX": Stock("NFLX", 505.60),
-    "FB": Stock("FB", 355.45),
-    "NVDA": Stock("NVDA", 670.15),
-    "INTC": Stock("INTC", 42.30),
-}
-
-logger = setup_logger()
-exchange: Exchange = Exchange(MARKET_DATA)
-broker: Broker = Broker(exchange)
-
-trader = Trader(trader_id=1, starting_balance=1000000)
-trader2 = Trader(trader_id=42, starting_balance=1000000)
-broker.register_trader(trader)
-broker.register_trader(trader2)
-
-trader2.portfolio.positions["AAPL"] = Position("AAPL", 999, 150.0)
-order = trader2.create_order("AAPL", "sell", 999, 150)
-broker.submit_order(order)
-
-session: Session = Session(broker.traders)
-
-app_context = AppContext(session, broker, exchange, logger)
 
 # ——— HTTP Endpoints ———
 
-
-@app.post("/login")
-def login(data: LoginRequest):
+@router.post("/login")
+def login(data: LoginRequest, ctx: AppContext = Depends(get_ctx)):
     trader_id = data.trader_id
 
-    id = int(trader_id)
+    id = str(trader_id)
+
+    print(id)
 
     try:
-        app_context.session.login(id)
+        ctx.session.login(id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return {"status": "logged_in", "trader": id}
 
 
-@app.post("/logout")
-def logout():
+@router.post("/logout")
+def logout(ctx: AppContext = Depends(get_ctx)):
     try:
-        app_context.session.logout()
+        ctx.session.logout()
     except RuntimeError as e:
         raise HTTPException(status_code=204, detail=str(e))
     return {"status": "logged_out"}
 
 
-@app.post("/next_tick")
-def next_tick():
-    exchange = app_context.exchange
+@router.post("/next_tick")
+def next_tick(ctx: AppContext = Depends(get_ctx)):
+    exchange = ctx.exchange
     exchange.process_tick()
 
     return exchange.market_data
 
 
-@app.post("/order")
-def place_order(data: OrderRequest):
+@router.post("/order")
+def place_order(data: OrderRequest, ctx: AppContext = Depends(get_ctx)):
 
     order_type, symbol, quantity, price = (
         data.order_type,
@@ -113,16 +71,16 @@ def place_order(data: OrderRequest):
     )
 
     try:
-        trader = app_context.session.require_active()
+        trader = ctx.session.require_active()
     except RuntimeError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
     try:
-        exchange = app_context.exchange
-        broker = app_context.broker
+        exchange = ctx.exchange
+        broker = ctx.broker
 
         exchange.verify_symbol(symbol)
-        order = trader.create_order(symbol, order_type, quantity, price)
+        order = Order(trader.trader_id, symbol, order_type, quantity, price)
         
         broker.submit_order(order)
     except (ValueError, KeyError) as e:
@@ -130,14 +88,15 @@ def place_order(data: OrderRequest):
 
     return {"status": "order_placed", "order_id": order.order_id}
 
-@app.post("/order/cancel")
-def order_cancel(data: OrderCancelRequest):
-    if not app_context.session.active_trader:
+@router.post("/order/cancel")
+def order_cancel(data: OrderCancelRequest, ctx: AppContext = Depends(get_ctx)):
+    if not ctx.session.active_trader:
         raise HTTPException(
             status_code=401, detail="Not authenticated"
         )
 
     order_id = data.order_id
+    broker = ctx.broker
 
     try:
         broker.cancel_order(order_id)
@@ -146,80 +105,80 @@ def order_cancel(data: OrderCancelRequest):
     
     return {"status": "order_cancelled", "order_id": order_id}
 
-@app.get("/match-orders")
-def match_orders():
-    order_books = app_context.exchange.order_books
+@router.get("/match-orders")
+def match_orders(ctx: AppContext = Depends(get_ctx)):
+    order_books = ctx.exchange.order_books
 
     for symbol in order_books:
         while True:
-            trade = app_context.exchange.match_orders(symbol)
-            
+            trade = ctx.exchange.match_orders(symbol)
+            print(trade) 
             if not trade:
                 break
-            app_context.broker.settle_trade(trade) 
 
     return
 
 
-@app.get("/me")
-def me():
-    if not app_context.session.active_trader:
+@router.get("/me")
+def me(ctx: AppContext = Depends(get_ctx)):
+    if not ctx.session.active_trader:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
-    return {"trader_id": session.active_trader.trader_id}
+    return {"trader_id": ctx.session.active_trader.trader_id}
 
 
-@app.get("/me/portfolio")
-def me_portfolio():
-    if not app_context.session.active_trader:
+@router.get("/me/portfolio")
+def me_portfolio(ctx: AppContext = Depends(get_ctx)):
+    if not ctx.session.active_trader:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
 
-    trader = app_context.session.active_trader
+    trader = ctx.session.active_trader
+    market_data = ctx.exchange.market_data
 
     total_PnL = 0
 
     for symbol in trader.portfolio.positions:
-        total_PnL += trader.portfolio.calculate_unrealized_pl(symbol, MARKET_DATA)
+        total_PnL += trader.portfolio.calculate_unrealized_pl(symbol, market_data)
 
     return {
         "positions": list(trader.portfolio.positions.values()),
         "cash": trader.portfolio.cash,
-        "value": trader.portfolio.value(app_context.exchange.market_data),
+        "value": trader.portfolio.value(ctx.exchange.market_data),
         "totalPnL": total_PnL,
     }
 
 
-@app.get("/me/pending-orders")
-def me_pending_orders():
-    if not app_context.session.active_trader:
+@router.get("/me/pending-orders")
+def me_pending_orders(ctx: AppContext = Depends(get_ctx)):
+    if not ctx.session.active_trader:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
 
-    orders = list(app_context.session.active_trader.pending_orders.values())
+    orders = list(ctx.session.active_trader.pending_orders.values())
 
     return jsonable_encoder(orders)
 
 
-@app.get("/market-data")
-def market_data():
-    return {"market_data": app_context.exchange.market_data}
+@router.get("/market-data")
+def market_data(ctx: AppContext = Depends(get_ctx)):
+    return {"market_data": ctx.exchange.market_data}
 
 
-@app.get("/market-data/next")
-def market_data_next():
+@router.get("/market-data/next")
+def market_data_next(ctx: AppContext = Depends(get_ctx)):
 
-    app_context.exchange.process_tick()
+    ctx.exchange.process_tick()
 
-    return market_data()
+    return {"market_data": ctx.exchange.market_data}
 
 
 # ——— WebSocket for real-time ticks ———
-async def market_ws(ws: WebSocket):
+async def market_ws(ws: WebSocket, ctx: AppContext = Depends(get_ctx)):
     await ws.accept()
     while True:
-        app_context.exchange.process_tick()
-        await ws.send_json(exchange.market_data)
+        ctx.exchange.process_tick()
+        await ws.send_json(ctx.exchange.market_data)

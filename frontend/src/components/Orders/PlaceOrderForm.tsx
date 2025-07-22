@@ -96,7 +96,13 @@ const PlaceOrderForm = (): React.JSX.Element => {
 			await fetchPortfolioData();
 			await fetchPendingOrders();
 		}
-		reset();
+		reset({
+			orderType: "market",
+			orderSide: "buy",
+			symbol: "",
+			quantity: null,
+			price: null,
+		});
 	};
 
 	return (
@@ -124,7 +130,10 @@ const PlaceOrderForm = (): React.JSX.Element => {
 						type="button"
 						value={"Market"}
 						className={`border-divider mr-4 w-16 p-2 text-sm focus:outline-none ${currentType === "market" ? "bg-zinc-800" : "bg-card"}`}
-						onClick={() => setValue("orderType", "market")}
+						onClick={() => {
+							setValue("price", null);
+							setValue("orderType", "market");
+						}}
 					/>
 					<input
 						type="button"

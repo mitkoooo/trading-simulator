@@ -2,7 +2,7 @@ from logging import Logger
 
 from app.session import Session
 from engine.broker.broker import Broker
-from engine.exchange import Exchange
+from engine.exchange.exchange import Exchange
 
 
 class AppContext:

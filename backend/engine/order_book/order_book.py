@@ -309,7 +309,6 @@ class OrderBook:
         for price_level in self._buy_levels.values():
             total += len(price_level)
         
-        total += len(self.market_buys)
 
         return total
 
@@ -333,7 +332,6 @@ class OrderBook:
         for price_level in self._sell_levels.values():
             total += len(price_level)
 
-        total += len(self.market_sells)
 
         return total
 

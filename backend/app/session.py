@@ -6,11 +6,11 @@ from engine.trader import Trader
 class Session:
     """Keeps track of the active trader on the exchange."""
 
-    def __init__(self, traders: Dict[int, Trader]):
-        self._traders: Dict[int, Trader] = traders
+    def __init__(self, traders: Dict[str, Trader]):
+        self._traders: Dict[str, Trader] = traders
         self._active_trader: Trader | None = None
 
-    def login(self, trader_id: int) -> None:
+    def login(self, trader_id: str) -> None:
         """Login into the session with `trader_id`
 
         Args:

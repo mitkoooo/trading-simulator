@@ -55,3 +55,14 @@ class Trade:
         self.price = price
         self.status: Literal["pending", "fulfilled", "cancelled"] = "pending"
         self.timestamp = datetime.now()
+
+    def __repr__(self):
+        return (
+            f"<Trade id={self.trade_id!r} "
+            f"symbol={self.symbol!r} "
+            f"qty={self.quantity} "
+            f"price={self.price:.2f} "
+            f"buy={self.buy_order!r} "
+            f"sell={self.sell_order!r} "
+            f"time={self.timestamp.isoformat()}>"
+            )
