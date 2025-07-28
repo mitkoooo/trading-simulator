@@ -32,3 +32,18 @@ class AppContext:
         self.broker = broker
         self.exchange = exchange
         self.logger = logger
+
+    def __repr__(self):
+        def n(x):  # helper for None-safe len
+            return 0 if x is None else len(x)
+
+        exch_name = getattr(self.exchange, "name", "Exchange")
+        symbols   = getattr(self.exchange, "order_books", {})
+        parts     = getattr(self.exchange, "market_participants", {})
+
+        return (f"<AppContext exch='{exch_name}' "
+                f"symbols={n(symbols)} participants={n(parts)}")
+               #f"brokers={n(self.brokers)} bots={n(self.bots)} "
+               #f"risk_gateway={'on' if self.risk_gateway else 'off'} "
+               #f"clearing={'on' if self.clearing_house else 'off'} "
+               #f"configs={list(self.config_paths.keys())}>")

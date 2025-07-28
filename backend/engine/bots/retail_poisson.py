@@ -2,6 +2,8 @@ import asyncio
 import random
 from typing import Literal, Tuple
 
+from engine.exchange.exchange import Exchange
+from engine.market_data.quote import MarketQuote
 from engine.order_book.order import Order
 from engine.order_book.order_book import OrderBook
 
@@ -10,7 +12,7 @@ class RetailPoisson:
     """SOME DOCSTRING""" #TODO
 
 
-    def __init__(self, exchange, symbol: str, mpid: str, limit_rate: float = 1.0, market_rate: float = 0.2, quantity_range: Tuple[int, int] = (1, 5),
+    def __init__(self, exchange: Exchange, symbol: str, mpid: str, limit_rate: float = 1.0, market_rate: float = 0.2, quantity_range: Tuple[int, int] = (1, 5),
                  tick_size: float = 0.01, market_probability: float = 0.3, ):
 
         self.current_mid = None
@@ -26,16 +28,22 @@ class RetailPoisson:
 
         self.exchange.subscribe(f"book_update{symbol}", self._update_mid)
 
-    def _update_mid(self, order_book: OrderBook):
-        if order_book.buy_size() == 0 or order_book.sell_size() == 0:
+    def _update_mid(self, market_quote: MarketQuote):
+        if market_quote.bid_size == 0 or market_quote.ask_size == 0:
             return
 
-        best_buy = order_book.peek_best_buy()
-        best_sell = order_book.peek_best_sell()
-        assert best_buy and best_sell, ValueError("Order book is unexpectedly empty") 
-        assert best_buy.limit_price and best_sell.limit_price, ValueError("Price levels unexpectedly contain a market order")
+        bid_price = market_quote.bid_price
+        ask_price = market_quote.ask_price
+        
+        if not bid_price or not ask_price:
+            if not market_quote.last_price:
+                return
+            reference_bid = reference_ask = market_quote.last_price
+        else:
+            reference_bid = bid_price
+            reference_ask = ask_price
 
-        self.current_mid = (best_buy.limit_price + best_sell.limit_price) / 2 
+        self.current_mid = (reference_bid + reference_ask) / 2 
 
     async def run(self):
         self._running = True
@@ -68,7 +76,7 @@ class RetailPoisson:
                 price = round(self.current_mid + offset, 2)
                 order = Order(mpid=self.mpid, order_type=side, symbol=self.symbol, quantity=quantity, limit_price=price)
             try:
-                self.exchange.add_order(order)
+                await self.exchange.add_order(order)
             except Exception:
                 continue
 

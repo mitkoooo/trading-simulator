@@ -1,5 +1,5 @@
 
-from typing import Tuple
+from typing import List, Tuple
 
 
 class QuoteEngine:
@@ -14,7 +14,7 @@ class QuoteEngine:
         self.alpha, self.beta, self.gamma = alpha, beta, gamma
         self.base_size = base_size
 
-    def compute(self, mid, vol, depth_imb, inventory) -> Tuple[float, float]:
+    def compute(self, mid: float, vol: float, depth_imb: float, inventory: int) -> Tuple[float, float]:
         """SOME DOCSTRING""" #TODO
 
         # Calculate base spread.
@@ -36,10 +36,10 @@ class QuoteEngine:
         # You carve your spread equally around the midpoint, then shift both sides by the skew. 
         # Rounding to two decimals pins you to standard price ticks.
         half_spread = s / 2
-        buy = round(mid - half_spread - skew, 2)
-        sell = round(mid + half_spread - skew, 2)
+        bid = round(mid - half_spread - skew, 2)
+        ask = round(mid + half_spread - skew, 2)
 
-        return buy, sell
+        return bid, ask
 
 
 

@@ -1,6 +1,6 @@
-from typing import Dict
+from typing import Dict, Optional
 
-from .stock import Stock
+from engine.market_data.quote import MarketQuote
 from .position import Position
 
 
@@ -33,7 +33,7 @@ class Portfolio:
         self.reserved_positions: Dict[str, Position] = {}
 
 
-    def value(self, market_data: Dict[str, Stock]) -> float:
+    def value(self, quotes: Dict[str, MarketQuote]) -> float:
         """
         Compute total portfolio value: cash + Σ(position_qty x current_price).
 
@@ -48,14 +48,14 @@ class Portfolio:
 
         # Add value of free positions
         for symbol, position in self.positions.items():
-            stock = market_data.get(symbol)
-            price = stock.price if (stock is not None) else 0.0
+            quote = quotes.get(symbol)
+            price = quote.last_price if (quote is not None and quote.last_price is not None) else 0.0
             total += position.qty * price
 
         # Add value of reserved positions
         for symbol, position in self.reserved_positions.items():
-            stock = market_data.get(symbol)
-            price = stock.price if (stock is not None) else 0.0
+            quote = quotes.get(symbol)
+            price = quote.last_price if (quote is not None and quote.last_price is not None) else 0.0
             total += position.qty * price
 
         return total
@@ -64,8 +64,8 @@ class Portfolio:
 
 
     def calculate_unrealized_pl(
-        self, symbol: str, market_data: Dict[str, Stock]
-    ) -> float:
+        self, symbol: str, quotes: Dict[str, MarketQuote]
+    ) -> Optional[float]:
         """
         Compute unrealized P/L for the given symbol.
 
@@ -78,11 +78,16 @@ class Portfolio:
                    zero if you hold no position in symbol
         """
 
-        if symbol not in market_data:
+        if symbol not in quotes:
             raise ValueError(
                 f"Cannot calculate unrealized P/L for a nonexistent symbol (Got {symbol})."
             )
 
         pos = self.positions.get(symbol, Position())
 
-        return (market_data[symbol].price - pos.avg_price) * pos.qty
+        last = quotes[symbol].last_price 
+        
+        if not last:
+            return None
+
+        return (last - pos.avg_price) * pos.qty

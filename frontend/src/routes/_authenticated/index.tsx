@@ -3,8 +3,6 @@ import { useEffect } from "react";
 
 import { getMatchOrders } from "../../api/exchange";
 
-import { useMarketDataStore } from "../../stores/marketDataStore";
-
 import MarketDataView from "../../components/MarketData/MarketDataView";
 import PlaceOrderForm from "../../components/Orders/PlaceOrderForm";
 import OrderView from "../../components/Orders/OrderView";
@@ -20,12 +18,7 @@ function Index() {
 		(state) => state.fetchPortfolioData,
 	);
 	const portfolio = usePortfolioDataStore((state) => state.portfolio);
-
-	const fetchMarketData = useMarketDataStore((state) => state.fetchMarketData);
-
-	const fetchNextMarketData = useMarketDataStore(
-		(state) => state.fetchNextMarketData,
-	);
+	console.log(portfolio);
 
 	const fetchPendingOrders = usePortfolioDataStore(
 		(state) => state.fetchPendingOrders,
@@ -33,21 +26,10 @@ function Index() {
 
 	useEffect(() => {
 		(async () => {
-			await fetchMarketData();
 			await fetchPortfolioData();
+			await fetchPendingOrders();
 		})();
-	}, [fetchMarketData, fetchPortfolioData]);
-
-	const onNextPrice = async () => {
-		await fetchNextMarketData();
-		await fetchPortfolioData();
-	};
-
-	const onMatchOrders = async () => {
-		await getMatchOrders();
-		await fetchPendingOrders();
-		await fetchPortfolioData();
-	};
+	}, [fetchPortfolioData]);
 
 	return (
 		<div className="min-h-full">
@@ -74,20 +56,6 @@ function Index() {
 					<PlaceOrderForm />
 					<div>
 						<OrderView />
-						<div className="mt-3 inline-flex w-full justify-between gap-4">
-							<button
-								className="bg-success border-divider hover:bg-success-hover focus:outline-accent h-8 w-full rounded-md border px-4 py-1 duration-150 focus:outline-1"
-								onClick={onMatchOrders}
-							>
-								Match orders
-							</button>
-							<button
-								className="bg-info border-divider hover:bg-info-hover focus:outline-accent h-8 w-full rounded-md border px-4 py-1 duration-150 focus:outline-1"
-								onClick={onNextPrice}
-							>
-								Next price
-							</button>
-						</div>
 					</div>
 				</div>
 				<PortfolioView />

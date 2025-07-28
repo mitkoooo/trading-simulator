@@ -1,8 +1,11 @@
-from typing import Dict, Optional
+from collections import deque
+from typing import Deque, Dict, Optional
 from math import log1p
 
 from engine.exchange.exchange import Exchange
+from engine.market_data.quote import MarketQuote
 from engine.position import Position
+from engine.risk.volatility_estimator import VolatilityEstimator
 from engine.trader import Trader
 from engine.order_book.order import Order
 
@@ -19,9 +22,13 @@ class PowerLedger:
         _reserved_cash (Dict[str, float]): Maps order IDs to the amount of cash reserved for buy orders.
         _reserved_shares (Dict[str, int]): Maps order IDs to the quantity of shares reserved for sell orders.
     """
-    def __init__(self, exchange: Exchange, traders: Dict[str, Trader]):
+    def __init__(self, exchange: Exchange, traders: Dict[str, Trader], volatility_window: int = 100):
         self.exchange = exchange
         self.traders = traders
+
+        self.volatility_window = volatility_window
+        self.volatility_estimator = VolatilityEstimator()
+        self.mid_histories: Dict[str, Deque[float]] = { symbol: deque(maxlen=volatility_window) for symbol in self.exchange.instruments}
 
         self._reserved_cash: Dict[str, float] = {}    # order_id -> cash amount
         self._reserved_shares: Dict[str, int] = {}    # order_id -> share number
@@ -53,7 +60,7 @@ class PowerLedger:
         symbol = order.symbol
 
         cost_estimate = quantity * limit_price if limit_price else self.estimate_market_buy_cost(symbol, quantity)
-        
+
         if trader.portfolio.cash < cost_estimate:
             raise ValueError("Insufficient cash to place buy order.")
         # Reserve cash
@@ -153,6 +160,25 @@ class PowerLedger:
 
         return 
 
+    def consume_quote(self, quote: MarketQuote) -> None:
+        """SOME DOCSTRING""" #TODO
+        symbol = quote.symbol
+        bid_price = quote.bid_price
+        ask_price = quote.ask_price
+
+        if not bid_price or not ask_price:
+            return
+
+        # Calculate mid price
+        mid_price = (bid_price + ask_price) / 2
+
+        if self.mid_histories.get(symbol, None) is None:
+            self.mid_histories[symbol] = deque(maxlen=self.volatility_window)
+        self.mid_histories[symbol].append(mid_price)  
+
+        return
+
+
 
     def estimate_market_buy_cost(self, symbol: str, quantity: int):
         """Estimate the total cost of a market-price buy order.
@@ -178,7 +204,7 @@ class PowerLedger:
 
         remaining = quantity
         expected_cost = 0.0
-        
+       
         for sell in sell_orders:
             if sell.limit_price is None: # Market price sells dont contribute information
                 continue
@@ -209,19 +235,18 @@ class PowerLedger:
         """
         BASE_LINE = 0.01
 
-        stock = self.exchange.market_data.get(symbol, None)
-        assert stock
         order_book = self.exchange.order_books.get(symbol, None)
         assert order_book
+        vol = self.volatility_estimator.realized_vol(self.mid_histories[symbol])
 
         # Scale depth to [0, 1]-ish range using log
         liquidity_penalty = 1 / (1 + log1p(order_book.sell_size())) # shrinks fast
         
-        slippage_buffer = BASE_LINE + stock.volatility * liquidity_penalty
+        slippage_buffer = BASE_LINE + vol * liquidity_penalty
 
         return min(slippage_buffer, 0.05) # cap at 5%
 
-    def get_reserved_shares(self, order_id: str) -> Optional[int]:
+    def get_reserved_shares(self, order_id: str) -> int:
         """Get the quantity of shares reserved for a given order ID.
 
         Args:
@@ -230,7 +255,7 @@ class PowerLedger:
         Returns:
             int or None: Reserved share count, or None if no reservation exists.
         """
-        return self._reserved_shares.get(order_id, None)
+        return self._reserved_shares.get(order_id, 0)
 
     def get_reserved_cash(self, order_id: str) -> Optional[float]:
         """Get the amount of cash reserved for a given order ID.
@@ -241,4 +266,17 @@ class PowerLedger:
         Returns:
             float or None: Reserved cash amount, or None if no reservation exists.
         """
-        return self._reserved_cash.get(order_id, None)
+        return self._reserved_cash.get(order_id, None)   
+
+    def __repr__(self) -> str:
+        cash_n   = len(self._reserved_cash)
+        share_n  = len(self._reserved_shares)
+        cash_sum = sum(self._reserved_cash.values())
+        share_sum = sum(self._reserved_shares.values())
+
+        return (
+            f"<PowerLedger traders={len(self.traders)} "
+            f"cash_orders={cash_n} cash_reserved={cash_sum:.2f} "
+            f"share_orders={share_n} shares_reserved={share_sum} "
+            f"exchange={getattr(self.exchange, 'name', 'Exchange')}>"
+        )

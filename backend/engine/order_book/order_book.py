@@ -64,6 +64,7 @@ class OrderBook:
         self.market_sells = MarketOrderQueue() 
 
         self._global_sequence = 0
+        self.last_trade_price: Optional[float] = None
 
 
     def _get_market_order_queue(self, side: Literal["buy", "sell"]) -> MarketOrderQueue:
@@ -310,7 +311,7 @@ class OrderBook:
             total += len(price_level)
         
 
-        return total
+        return total + len(self.market_buys)
 
 
     def sell_size(self) -> int:
@@ -333,7 +334,7 @@ class OrderBook:
             total += len(price_level)
 
 
-        return total
+        return total + len(self.market_sells)
 
 
     @property

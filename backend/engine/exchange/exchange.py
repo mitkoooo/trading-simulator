@@ -1,11 +1,13 @@
 from datetime import datetime
-from typing import Callable, Dict, Iterable, List, Optional
+import asyncio
+from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 from engine.exchange.participant_info import ParticipantInfo
 from engine.exchange.risk_gateway import RiskGateway
+from engine.market_data.quote import MarketQuote
 from engine.order_book.order_book import OrderBook
 from engine.order_book.price_level import PriceLevel
-from engine.stock import Stock
+from engine.instruments.stock import Stock
 from engine.order_book.order import Order
 from engine.trade import Trade
 
@@ -35,26 +37,41 @@ class Exchange:
         >>> trades = exchange.match_orders("MTKO")
     """
 
-    def __init__(
-        self,
-        market_data: Dict[str, Stock],
-    ):
+    def __init__(self):
         """Initialize the Exchange with market data and prepare order books.
 
         Examples:
             >>> data = {sym: Stock(sym, 100.0) for sym in ("AAPL", "MSFT")}
             >>> exchange = Exchange(market_data=data)
         """
-        self.market_data = market_data
-        self.order_books: Dict[str, OrderBook] = {
-            symbol: OrderBook() for symbol in market_data.keys()
-        }
+        self.name: str = "GhostSwap" 
+        self.instruments : Dict[str, Stock] = {}
+        self.order_books: Dict[str, OrderBook] = {}
         self.market_participants: Dict[str, ParticipantInfo] = {}
+
+        self._book_queues: Dict[str, asyncio.Queue[Tuple[str, Order]]] = {}
+        self._book_tasks: List[asyncio.Task] = []
+
+        self.trade_num: Tuple = (0, datetime.now())
+        self.avg_service_time = 0
+
         self.risk_gateaway = RiskGateway() 
 
         self.order_lookup: Dict[str, Order] = {}
+        self.quotes: Dict[str, MarketQuote] = {}
         self._subscriptions: Dict[str, List[Callable]] = {}
+
         self.current_time = datetime.now()
+
+
+    def register_instrument(self, stock: Stock):
+        if stock.symbol in self.instruments:
+            raise KeyError(f"This instrument is already registered. got ({stock.symbol})")
+
+        self.instruments[stock.symbol] = stock
+        self.order_books[stock.symbol] = OrderBook()
+        self._book_queues[stock.symbol] = asyncio.Queue()
+        
 
     def register_participant(self, mpid:str, info:ParticipantInfo):
         """SOME DOCSTRING""" #TODO
@@ -65,7 +82,50 @@ class Exchange:
         else:
             self.market_participants[mpid] = info
 
-    def add_order(self, order: Order) -> None:
+    async def start(self):
+        for symbol, queue in self._book_queues.items():
+            task = asyncio.create_task(self._book_worker(symbol, queue))
+            self._book_tasks.append(task)
+
+    async def stop(self):
+        for t in self._book_tasks:
+            t.cancel()
+        await asyncio.gather(*self._book_tasks, return_exceptions=True)
+
+
+    async def _book_worker(self, symbol, queue: asyncio.Queue):
+        order_book: OrderBook = self.order_books[symbol]
+
+        while True:
+            try:
+                cmd, order = await queue.get()
+                if cmd == "add":
+                    order_book.add_order(order)
+                    self.emit_book_update(order.symbol, self.order_books[order.symbol])
+                elif cmd == "remove":
+                    order_book.remove_order(order)
+                    self.emit_book_update(order.symbol, self.order_books[order.symbol])
+            except:
+                raise RuntimeError("Couldn't remove the order")
+            
+            queue.task_done()
+            # after each mutation, run matching and publish quotes
+            while True:
+                trade = self.match_orders(symbol)         # If any side has still shares, reinsert it
+
+                if not trade:
+                    break
+
+                for order in [trade.buy_order, trade.sell_order]:
+                    if order.quantity > 0:
+                        order.status = "partially_filled"
+                    else:
+                        order_book.remove_order(order)
+                        order.status = "filled"  # sync method, no await
+
+
+
+    async def add_order(self, order: Order) -> None:
         """Enqueue an Order in its respective order book for later matching.
 
         Args:
@@ -79,14 +139,14 @@ class Exchange:
             >>> exchange.order_books["AAPL"].buy_size()
             1
         """
-        if order.symbol not in self.market_data:
+        if order.symbol not in self.instruments:
             raise KeyError(f"The symbol does not exist")
-        
-        self.order_books[order.symbol].add_order(order)
+       
+        await self._book_queues[order.symbol].put(("add", order))
         self.order_lookup[order.order_id] = order
-        self.emit_book_update(order.symbol, self.order_books[order.symbol])
+        
 
-    def cancel_order(self, order_id: str) -> bool:
+    async def cancel_order(self, order_id: str) -> bool:
         """Mark `order` as cancelled.
 
         The order will not be processed by the matching engine.
@@ -104,37 +164,15 @@ class Exchange:
 
         if order.status != "filled":
             order.status = "cancelled"
-            self.remove_order(order_id)
+            await self.remove_order(order_id)
             
 
         return order.status == "cancelled"   
 
-    def remove_order(self, order_id: str) -> None:
+    async def remove_order(self, order_id: str) -> None:
         order = self.order_lookup[order_id]
-        self.order_books[order.symbol].remove_order(order)
+        await self._book_queues[order.symbol].put(("remove", order))
         self.emit_book_update(order.symbol, self.order_books[order.symbol])
-
-    def process_tick(
-        self,
-    ) -> None:
-        """Advance the exchange clock and update market prices based on stocks.
-
-        Examples:
-        >>> data = {sym: Stock(sym, 100.0) for sym in ("AAPL", "MSFT")}
-        >>> exchange = Exchange(market_data=data)
-        >>> before = [s.price for s in exchange.market_data.values()]
-        >>> exchange.process_tick()
-        >>> after = [s.price for s in exchange.market_data.values()]
-        >>> any(b != a for b, a in zip(before, after))
-        True
-        """
-        self.current_time = datetime.now()
-
-        for stock in self.market_data.values():
-            nxt = self.order_books[stock.symbol].peek_best_sell()
-            if nxt is None or nxt.limit_price is None:
-                return
-            stock.price = nxt.limit_price
 
 
     def subscribe(self, topic: str, handler: Callable):
@@ -149,17 +187,59 @@ class Exchange:
             handler(event_payload)
         
         # For topic wide channel subscriptions e.g. "trade:*"
-        base, _, _ = topic.partition(":")
+        base, _, spec = topic.partition(":")
+        
+        if spec != "*" and ":" in spec:
+            ticker, _, mpid = spec.partition(":")
+
+            for subwildcard in [f"{base}:*:{mpid}", f"{base}:{ticker}"]:
+                for handler in self._subscriptions.get(subwildcard, []):
+                    handler(event_payload)
+        
         wildcard = f"{base}:*"
         for handler in self._subscriptions.get(wildcard, []):
             handler(event_payload)
 
-    def emit_book_update(self, symbol, order_book: OrderBook):
+    def emit_book_update(self, symbol, order_book: OrderBook) -> None:
         topic = f"book_update:{symbol}"
-        self._dispatch(topic, order_book)
 
-    def emit_trade(self, symbol, trade: Trade):
+        # Construct MarketQuote to emit
+        
+        bid = order_book.peek_best_buy()
+        bid_size = order_book.buy_size()
+        ask = order_book.peek_best_sell()
+        ask_size = order_book.sell_size()
+        last_price = order_book.last_trade_price
+        
+        bid_price = bid.limit_price if bid else 0
+        ask_price = ask.limit_price if ask else 0
+
+        quote = MarketQuote(symbol, bid_price, bid_size, ask_price, ask_size, last_price, timestamp=datetime.now())
+
+        event_payload = quote
+        self.quotes[symbol] = quote
+
+        self._dispatch(topic, event_payload)
+
+    def emit_trade(self, symbol, trade: Trade, mpid:Optional[str] = None):
         topic = f"trade:{symbol}"
+    
+        if mpid:
+            topic += f":{mpid}"
+        
+        order_book = self.order_books[symbol]
+        bid = order_book.peek_best_buy()
+        bid_size = order_book.buy_size()
+        ask = order_book.peek_best_sell()
+        ask_size = order_book.sell_size()
+        last_price = trade.price
+        
+        bid_price = bid.limit_price if bid else 0
+        ask_price = ask.limit_price if ask else 0
+
+        quote = MarketQuote(symbol, bid_price, bid_size, ask_price, ask_size, last_price, timestamp=datetime.now())
+        self.quotes[symbol] = quote
+
         self._dispatch(topic, trade)
 
 
@@ -180,7 +260,6 @@ class Exchange:
             >>> exchange.match_orders("AAPL")
             []
         """
-
         order_book = self.order_books.get(symbol, None)
         
         if not order_book:
@@ -192,14 +271,35 @@ class Exchange:
             return None
         taker, maker_levels, price_cross = t_n_p
     
-        maker = self._find_maker(taker, maker_levels, price_cross)
+        maker = self._find_maker(maker_levels, price_cross)
 
         # No valid maker found → restore and exit
         if maker is None:
             return None
 
         # Build the trade
-        return self._build_trade(taker, maker, symbol)
+        trade = self._build_trade(taker, maker, symbol)
+
+        self.trade_num = (self.trade_num[0] + 1, self.trade_num[1])
+        
+        delta = int((datetime.now() - self.trade_num[1]).total_seconds() * 1000)
+
+        self.avg_service_time = (self.avg_service_time * (self.trade_num[0] - 1) + delta) / self.trade_num[0]
+
+        if self.trade_num[0] % 100 == 0:
+            print(f"Trades handled so far: {self.trade_num[0]}. Time passed since last 100: {delta} ms. Avg service time for 100 orders: {self.avg_service_time} ms.")
+
+        self.trade_num = (self.trade_num[0], datetime.now())
+
+        self.emit_trade(symbol=trade.symbol, trade=trade, mpid=taker.mpid)
+        self.emit_trade(symbol=trade.symbol, trade=trade, mpid=maker.mpid)
+
+        # Store last trade price in the order book
+        self.order_books[symbol].last_trade_price = trade.price
+
+
+
+        return trade
 
 
     def _select_taker_and_predicate(self, order_book: OrderBook) -> Optional[
@@ -258,7 +358,7 @@ class Exchange:
 
             return (taker, maker_levels, price_cross)
 
-    def _find_maker(self, taker: Order, maker_levels: Iterable[PriceLevel], price_cross: Callable[[Order], bool]) -> Optional[Order]:
+    def _find_maker(self, maker_levels: Iterable[PriceLevel], price_cross: Callable[[Order], bool]) -> Optional[Order]:
         """
         Walk price levels in priority order, then within each level walk FIFO,
         skipping same‐trader and non‐crossing orders.  Returns the first valid maker
@@ -270,10 +370,6 @@ class Exchange:
             for candidate in lvl:
                 if not price_cross(candidate):
                     break
-
-                if candidate.mpid == taker.mpid:
-                    # same market participant → keep scanning
-                    continue
 
                 maker = candidate
                 break
@@ -301,6 +397,9 @@ class Exchange:
         if not exec_price:
             raise ValueError("Execution price unexpectedly None")
 
+        best_buy.quantity -= exec_qty
+        best_sell.quantity -= exec_qty
+
         new_trade = Trade(
             best_buy,
             best_sell,
@@ -308,16 +407,11 @@ class Exchange:
             exec_qty,
             exec_price,
         )
-
-        best_buy.quantity -= exec_qty
-        best_sell.quantity -= exec_qty
         
-        self.emit_trade(symbol=new_trade.symbol, trade=new_trade)
-
         return new_trade
 
         
 
     def verify_symbol(self, symbol) -> None:
-        if symbol not in self.market_data:
+        if symbol not in self.instruments:
             raise KeyError(f"The symbol '{symbol}' does not exist")

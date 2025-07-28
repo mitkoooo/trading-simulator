@@ -1,4 +1,5 @@
-from typing import List, Callable, Optional
+import inspect
+import asyncio
 
 from .commands import (
     do_next,
@@ -15,7 +16,7 @@ from .commands import (
 
 from app.context import AppContext
 
-from view.render import display_welcome
+from cli.render import display_welcome
 
 import functools
 
@@ -111,11 +112,11 @@ class CLI:
 
         # map command strings to handler callables
         # --- build the dispatch table ---
-        self.commands: dict[str, Callable] = {
+        self.commands = {
             "login": _with_args(do_login),
             "logout": _no_args(do_logout),
             "next": _no_args(do_next),
-            "buy": _with_side("buy"),
+            "buy":  _with_side("buy"),
             "sell": _with_side("sell"),
             "cancel": _no_args(do_cancel_order),
             "match": _with_args(do_match),
@@ -124,7 +125,7 @@ class CLI:
             "help": _no_args(do_help),
         }
 
-    def run(self):
+    async def run(self):
         """
         Start the interactive loop, reading user input and dispatching commands.
 
@@ -148,7 +149,8 @@ class CLI:
         display_welcome()
         while True:
             try:
-                raw = input(">>> ")
+                loop = asyncio.get_event_loop()
+                raw = await loop.run_in_executor(None, input, ">>> ")
             except EOFError:
                 log_quit()
                 break
@@ -162,9 +164,14 @@ class CLI:
                 log_quit(self.context)
                 break
 
+
             handler = self.commands.get(cmd)
-            if handler:
-                # for buy/sell/match, args is non-empty list; for next/status, it’s None
-                handler(args if args else None)
-            else:
+            if not handler:
                 print("Unknown command. Please try again.")
+                continue
+
+            result = handler(args if args else None)
+            if inspect.iscoroutine(result):
+                await result
+
+                

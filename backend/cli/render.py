@@ -36,8 +36,8 @@ def display_prices(exchange: Exchange):
     >>> display_prices(ex)  # doctest: +NORMALIZE_WHITESPACE
     AAPL  | $101.00
     """
-    for stock in exchange.market_data.values():
-        print(f"{stock.symbol:<5} | ${stock.price:.2f}")
+    for symbol, order_book in exchange.order_books.items():
+        print(f"{symbol:<5} | ${order_book.last_trade_price:.2f}")
 
 
 def display_portfolio(exchange: Exchange, trader: Trader):

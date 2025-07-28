@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Deque, List, Optional
 
-from engine.order_book.order_book import OrderBook
+from engine.market_data.quote import MarketQuote
 
 
 class MarketDataHandler:
@@ -9,25 +9,29 @@ class MarketDataHandler:
 
     def __init__(self, hist_len=200) -> None:
         self.mid_history: Deque[float] = deque(maxlen=hist_len) 
-        self.buy_size = self.sell_size = 0
+        self.bid_size = self.ask_size = 0
 
 
-    def on_book_update(self, order_book: OrderBook) -> None:
+    def on_book_update(self, market_quote: MarketQuote) -> None:
         # Guard clause for when either side is empty
-        if order_book.buy_size() == 0 or order_book.sell_size() == 0:
+        if market_quote.bid_size == 0 or market_quote.ask_size == 0:
             return
 
+        if not market_quote.bid_price or not market_quote.ask_price:
+            if not market_quote.last_price:
+                return
+            reference_bid = reference_ask = market_quote.last_price
+        else:
+            reference_bid = market_quote.bid_price
+            reference_ask = market_quote.ask_price
+
         # Get order book depth for calculating depth imbalance later on.
-        self.buy_size = order_book.buy_size()
-        self.sell_size = order_book.sell_size()
+        self.bid_size = market_quote.bid_size
+        self.ask_size = market_quote.ask_size
 
         # Compute mid-price so you can estimate volatility and center your quotes.
-        best_buy = order_book.peek_best_buy()
-        best_sell = order_book.peek_best_sell()
-        assert best_buy and best_sell, ValueError("The order book is unexpectedly empty")
-        assert best_buy.limit_price and best_sell.limit_price, ValueError("The market order is unexpectedly in PriceLevel map")
 
-        m_t = (best_buy.limit_price + best_sell.limit_price) / 2
+        m_t = (reference_bid + reference_ask) / 2
 
         self.mid_history.append(m_t)
 
@@ -39,8 +43,8 @@ class MarketDataHandler:
 
 
     def get_depth_imbalance(self) -> float:
-        total = self.buy_size + self.sell_size or 1
-        return (self.buy_size - self.sell_size) / total
+        total = self.bid_size + self.ask_size or 1
+        return (self.bid_size - self.ask_size) / total
    
 
     def get_mid_history(self) -> List[float]:

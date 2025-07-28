@@ -46,7 +46,7 @@ class ParticipantInfo:
     # - PRETRADE RISK SETTINGS - 
     margin_category: MarginCategory = MarginCategory.STANDARD_EQUITY
     # e.g. ±5% around reference price
-    price_band_limit: float = 0.05      
+    price_band_limit: float | None = 0.05      
 
 
     # - CLEARING & SETTLEMENT - 

@@ -59,8 +59,8 @@ def validate_symbol(symbol: str, exchange: Exchange, cmd: str, args: List[str]) 
         >>> validate_symbol("FOO", ex, "BUY", ["FOO","1","1"])  # doctest: +SKIP
         False
     """
-    if symbol not in exchange.market_data:
-        valid = ", ".join(sorted(exchange.market_data.keys()))
+    if symbol not in exchange.instruments:
+        valid = ", ".join(sorted(exchange.instruments.keys()))
 
         print(f"Unknown symbol. Please enter one of: {valid}")
 

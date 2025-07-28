@@ -1,4 +1,4 @@
-from cli.validation import validate_symbol, parse_order
+from cli.validation import parse_order
 
 
 def test_parse_order_valid():

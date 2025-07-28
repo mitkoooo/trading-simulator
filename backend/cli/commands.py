@@ -1,11 +1,11 @@
-from typing import List
+from typing import List, Literal, LiteralString
 
 from app.context import AppContext
 
 from cli.validation import parse_order, validate_symbol
 
 from engine.trade import Trade
-from view.render import (
+from cli.render import (
     display_prices,
     display_portfolio,
     display_pending_orders,
@@ -13,7 +13,7 @@ from view.render import (
 )
 
 
-def handle_order(context: AppContext, order_type: str, args: list[str]):
+async def handle_order(context: AppContext, order_type: Literal["buy", "sell"], args: list[str]):
     """
     Handle a buy or sell order: parse args, validate and enqueue the order, then show portfolio.
 
@@ -60,10 +60,7 @@ def handle_order(context: AppContext, order_type: str, args: list[str]):
     if validate_symbol(symbol, exchange, order_type.upper(), args) == False:
         return
 
-    o = trader.create_order(
-        symbol=symbol, order_type=order_type, quantity=quantity, limit_price=price
-    )
-    broker.submit_order(o)
+    await broker.submit_order(trader.trader_id, symbol, order_type, quantity, price) 
 
     print(f"\nOrder placed for {symbol}.\n")
 
@@ -83,13 +80,12 @@ def do_next(context: AppContext):
     """
     exchange = context.exchange
 
-    exchange.process_tick()
     print()
     display_prices(exchange)
     print()
 
 
-def do_place_order(context: AppContext, order_type: str, args: List[str]):
+async def do_place_order(context: AppContext, order_type: Literal["buy", "sell"], args: List[str]):
     """
     Enqueue a buy/sell order and log details if valid.
 
@@ -107,7 +103,7 @@ def do_place_order(context: AppContext, order_type: str, args: List[str]):
 
     symbol, qty, price = parse_order(args)
 
-    handle_order(context, order_type, args)
+    await handle_order(context, order_type, args)
 
     # only log if parsing succeeded
     if None not in (symbol, qty, price):
@@ -120,7 +116,7 @@ def do_place_order(context: AppContext, order_type: str, args: List[str]):
         )
 
 
-def do_cancel_order(context: AppContext):
+async def do_cancel_order(context: AppContext):
     logger = context.logger
 
     try:
@@ -171,7 +167,7 @@ def do_cancel_order(context: AppContext):
                 )
         else:
             order_id = pending_orders[int(raw) - 1].order_id
-            broker.cancel_order(order_id)
+            await broker.cancel_order(order_id)
             print("\nThe order has been successfully cancelled.\n")
             break
             
@@ -277,6 +273,7 @@ def do_status(context: AppContext):
     else:
         print("\nCurrently there are no pending orders on the exchange.\n")
 
+
     logger.info("STATUS viewed: %d pending orders", pending)
 
 
@@ -293,7 +290,7 @@ def do_login(context: AppContext, args):
         )
         return
 
-    trader_id = int(args[0])
+    trader_id = str(args[0])
 
     try:
         session.login(trader_id)

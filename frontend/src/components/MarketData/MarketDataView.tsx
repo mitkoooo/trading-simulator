@@ -1,19 +1,18 @@
-import { useMarketDataStore } from "../../stores/marketDataStore";
+import { useQuotes } from "../../hooks/useQuotes";
+import { useQuotesStore, type Quote } from "../../stores/useQuotesStore";
 
 const MarketDataView = (): React.JSX.Element => {
-	const marketData = useMarketDataStore((state) => state.marketData);
-
-	const stocks = marketData ? Array.from(marketData.values()) : [];
-
+	useQuotes();
+	const quotes: Quote[] = useQuotesStore((s) => s.quotes);
 	return (
 		<div className="border-divider bg-panel flex h-auto w-[12rem] flex-col rounded-md border">
-			{stocks.map((stock, index) => (
+			{quotes.map((quote, index) => (
 				<div
-					key={stock.symbol}
-					className={`flex h-full w-full items-center justify-between px-2 ${index === stocks.length - 1 ? "" : "border-b"} border-divider`}
+					key={quote.symbol}
+					className={`flex h-full w-full items-center justify-between px-2 ${index === quotes.length - 1 ? "" : "border-b"} border-divider`}
 				>
-					<span className="font-semibold">{stock.symbol}</span>
-					<span className="font-mono">${stock.price.toFixed(2)}</span>
+					<span className="font-semibold">{quote.symbol}</span>
+					<span className="font-mono">${quote?.last?.toFixed(2)}</span>
 				</div>
 			))}
 		</div>

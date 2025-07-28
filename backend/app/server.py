@@ -7,13 +7,17 @@ from scripts.bootstrap import bootstrap
 from app.api import router            
 
 
-async def lifespan(app: FastAPI):
-    # runs before the server starts accepting requests
-    app.state.context = await bootstrap()
-    yield
-    # optional: cleanup on shutdown
+app = FastAPI(title="GhostSwap API")
 
-app = FastAPI(title="GhostSwap API", lifespan=lifespan)
+@app.on_event("startup")
+async def on_startup():
+    ctx = await bootstrap()
+    app.state.context = ctx
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    await app.state.context.exchange.stop()
+
 
 app.add_middleware(
     CORSMiddleware,

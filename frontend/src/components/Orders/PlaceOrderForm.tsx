@@ -3,9 +3,8 @@ import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { API_BASE } from "../../config/api";
 import { useState } from "react";
 import { usePortfolioDataStore } from "../../stores/portfolioDataStore";
-import { useMarketDataStore } from "../../stores/marketDataStore";
-
 import PlaceOrderButton from "./PlaceOrderButton.tsx";
+import { useQuotesStore } from "../../stores/useQuotesStore.ts";
 
 interface PlaceOrderFormData {
 	orderSide: "buy" | "sell";
@@ -44,7 +43,7 @@ const PlaceOrderForm = (): React.JSX.Element => {
 		(state) => state.fetchPendingOrders,
 	);
 
-	const getMarketPrice = useMarketDataStore((state) => state.getMarketPrice);
+	const quotes = useQuotesStore((s) => s.quotes);
 
 	const [apiError, setApiError] = useState<string | null>(null);
 	// watch keeps the latest value of price in sync
@@ -52,7 +51,7 @@ const PlaceOrderForm = (): React.JSX.Element => {
 	const currentType = watch("orderType");
 	const currentPrice =
 		currentType === "market"
-			? getMarketPrice(watch("symbol"))?.price || null
+			? quotes.find((q) => q.symbol == watch("symbol"))?.last || null
 			: watch("price") || null;
 	const currentSymbol = watch("symbol");
 	const currentQuantity = watch("quantity");

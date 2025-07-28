@@ -1,6 +1,63 @@
+from engine.order_book.market_order_queue import MarketOrderQueue
 from engine.order_book.order_book import OrderBook
 from engine.order_book.order import Order
 from datetime import datetime
+
+
+def test_market_order_queue_adds_order():
+    market_o_queue = MarketOrderQueue() 
+    
+    o = Order(mpid="BR01", symbol="AAPL", order_type="buy", quantity=40)
+
+    market_o_queue.enqueue(o)
+
+    assert len(market_o_queue) == 1
+
+
+def test_market_order_queue_remove_order():
+    market_o_queue = MarketOrderQueue() 
+    
+    o = Order(mpid="BR01", symbol="AAPL", order_type="buy", quantity=40)
+
+    market_o_queue.enqueue(o)
+
+    assert len(market_o_queue) == 1
+
+    market_o_queue.remove(o)
+
+    assert len(market_o_queue) == 0
+
+
+def test_market_order_queue_is_empty():
+    market_o_queue = MarketOrderQueue() 
+   
+    assert market_o_queue.is_empty()
+
+    o = Order(mpid="BR01", symbol="AAPL", order_type="buy", quantity=40)
+
+    market_o_queue.enqueue(o)
+
+    assert not market_o_queue.is_empty()
+
+def test_market_order_queue_get_item():
+    market_o_queue = MarketOrderQueue() 
+    
+    o1 = Order(mpid="BR01", symbol="AAPL", order_type="buy", quantity=40) 
+    o2 = Order(mpid="BR02", symbol="AAPL", order_type="buy", quantity=40)
+    o3 = Order(mpid="BR03", symbol="AAPL", order_type="buy", quantity=40)
+
+    market_o_queue.enqueue(o1)
+    market_o_queue.enqueue(o2)
+    market_o_queue.enqueue(o3)
+
+    assert market_o_queue[0] == o1
+    assert market_o_queue[-1] == o3
+    assert market_o_queue[1] == o2
+
+    try:
+        market_o_queue[40]
+    except IndexError:
+        assert True
 
 
 def test_order_book_empty_pop():
