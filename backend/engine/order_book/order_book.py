@@ -10,21 +10,25 @@ from engine.order_book.price_level import PriceLevel
 class OrderBook:
     """Maintain buy‐side and sell‐side priority queues for order matching.
 
-    Hold two sorted maps of price levels to FIFO queues for limit orders
-    and two FIFO queues for market orders, ensuring that the highest buy order and lowest sell order
-    are always considered first.
+    Hold two sorted maps of price levels to FIFO queues for limit orders and
+    two FIFO queues for market orders, ensuring that the highest buy order and
+    lowest sell order are always considered first.
 
     Attributes:
         _buy_levels (SortedDict[float, PriceLevel]):
             Maps buy prices (highest first) to their FIFO `PriceLevel` queues.
+
         _sell_levels (SortedDict[float, PriceLevel]):
             Maps sell prices (lowest first) to their FIFO `PriceLevel` queues.
+
         market_buys (MarketOrderQueue):
             FIFO queue of market‐buy orders in arrival order.
+
         market_sells (MarketOrderQueue):
             FIFO queue of market‐sell orders in arrival order.
+
         _global_sequence (int):
-            Monotonic counter assigned to each order on enqueue to break timestamp ties.
+            Sequential counter given to `Order` on enqueue.
 
     Example:
         >>> from engine.order_book import OrderBook
@@ -38,11 +42,12 @@ class OrderBook:
     """
 
     def __init__(self):
-        """Initialize the order book with empty limit‐order maps and market queues.
+        """Initialize `OrderBook` with limit order maps and market queues.
 
-        Sets up two `SortedDict` instances for buy and sell limit orders, each mapping
-        price levels to `PriceLevel` queues, and two FIFO `MarketOrderQueue`s for market
-        orders. Also initializes the global sequence counter for tie‐breaking.
+        Sets up two `SortedDict` instances for buy and sell limit orders,
+        each mapping price levels to `PriceLevel` queues,
+        and two FIFO `MarketOrderQueue`s for market orders.
+        Also initializes the global sequence counter for tie‐breaking.
 
         Attributes:
             _buy_levels (SortedDict[float, PriceLevel]):
@@ -56,32 +61,40 @@ class OrderBook:
             _global_sequence (int):
                 Monotonic counter assigned to each enqueued order.
         """
+        buy_dict = SortedDict(lambda p: -p)
+        sell_dict = SortedDict()
 
-        self._buy_levels: SortedDict[float, PriceLevel] = SortedDict(lambda p: -p)
-        self._sell_levels: SortedDict[float, PriceLevel] = SortedDict()
-
-        self.market_buys  = MarketOrderQueue()  
-        self.market_sells = MarketOrderQueue() 
+        self._buy_levels: SortedDict[float, PriceLevel] = buy_dict
+        self._sell_levels: SortedDict[float, PriceLevel] = sell_dict
+        self.market_buys = MarketOrderQueue()
+        self.market_sells = MarketOrderQueue()
 
         self._global_sequence = 0
         self.last_trade_price: Optional[float] = None
 
-
-    def _get_market_order_queue(self, side: Literal["buy", "sell"]) -> MarketOrderQueue:
+    def _get_market_order_queue(self,
+                                side: Literal["buy", "sell"]
+                                ) -> MarketOrderQueue:
         """Retrieve the FIFO queue for market orders on the specified side."""
         return self.market_buys if side == "buy" else self.market_sells
 
-
-    def _get_level(self, side: Literal["buy", "sell"], price: float, create: bool=False) -> Optional[PriceLevel]:
-        """Fetch or optionally create the `PriceLevel` for a given side and price.
+    def _get_level(self, side: Literal["buy", "sell"], price: float,
+                   create: bool = False) -> Optional[PriceLevel]:
+        """Fetch or optionally create the `PriceLevel` at `price` from `side`.
 
         Args:
-            side ("buy" or "sell"): Indicates which side’s limit‐order map to query.
-            price (float): The limit price level to look up.
-            create (bool): If `True`, create and insert a new `PriceLevel` when none exists.
+            side ("buy" or "sell"):
+                Indicates which side’s limit‐order map to query.
+
+            price (float):
+                The limit price level to look up.
+
+            create (bool):
+                If `True`, create and insert `PriceLevel` if none exists.
 
         Returns:
-            PriceLevel or None: The existing (or newly created, if `create` is `True`)
+            PriceLevel or None:
+                The existing (or newly created, if `create` is `True`)
         """
         levels = self._buy_levels if side == "buy" else self._sell_levels
         lvl: PriceLevel | None = levels.get(price, None)
@@ -90,22 +103,23 @@ class OrderBook:
         # create price level on demand
         lvl = PriceLevel()
         levels[price] = lvl
-        
-        return lvl
 
+        return lvl
 
     def add_order(self, order: Order) -> None:
         """Enqueue an order into the appropriate market or limit queue.
 
         Assigns a global sequence number to the order for tie‐breaking, then:
-        - If `order.limit_price` is `None`, adds to the market queue for its side.
+        - If `order.limit_price` is `None`, adds to its market queue.
         - Otherwise, adds to the `PriceLevel` queue for its limit price.
 
         Args:
-            order (Order): The order to enqueue. Its `sequence` attribute will be set.
+            order (Order):
+                The order to enqueue. Its `sequence` attribute will be set.
 
         Raises:
-            ValueError: If a new PriceLevel cannot be created (should never occur).
+            ValueError:
+                If a new PriceLevel cannot be created (should never occur).
 
         Example:
             >>> ob = OrderBook()
@@ -130,7 +144,7 @@ class OrderBook:
         assert lvl is not None, "PriceLevel creation failed unexpectedly"
 
         lvl.enqueue(order)
-        
+
         return
 
     def remove_order(self, order: Order) -> None:
@@ -158,7 +172,7 @@ class OrderBook:
 
         if not price:
             market_order_queue = self._get_market_order_queue(side)
-            
+
             if order == market_order_queue.peek():
                 market_order_queue.dequeue()
             else:
@@ -167,7 +181,7 @@ class OrderBook:
 
         lvl = self._get_level(side, price)
         assert lvl is not None, "PriceLevel creation failed unexpectedly"
-        
+
         if order == lvl.peek():
             lvl.dequeue()
         else:
@@ -180,8 +194,6 @@ class OrderBook:
                 del self._sell_levels[price]
 
         return
-        
-
 
     def peek_best_buy(self) -> Optional[Order]:
         """Return the highest-price sell order without removing it.
@@ -193,12 +205,13 @@ class OrderBook:
         >>> from engine.order import Order
         >>> from engine.order_book import OrderBook
         >>> ob = OrderBook()
-        >>> o = Order(trader_id=1, symbol="AAPL", order_type="buy", quantity=10, limit_price=150.0)
+        >>> o = Order(trader_id=1, symbol="AAPL", order_type="buy",
+        >>>           quantity=10, limit_price=150.0)
         >>> ob.add_order(o)
         >>> ob.peek_best_buy() == o
         True
         """
-        
+
         if not self._buy_levels:
             return None
 
@@ -206,7 +219,6 @@ class OrderBook:
 
         return lvl[0]
 
-        
     def peek_best_sell(self) -> Optional[Order]:
         """Return the lowest-price sell order without removing it.
 
@@ -217,7 +229,8 @@ class OrderBook:
         >>> from engine.order import Order
         >>> from engine.order_book import OrderBook
         >>> ob = OrderBook()
-        >>> o = Order(trader_id=1, symbol="AAPL", order_type="sell", quantity=10, limit_price=150.0)
+        >>> o = Order(trader_id=1, symbol="AAPL", order_type="sell",
+        >>>           quantity=10, limit_price=150.0)
         >>> ob.add_order(o)
         >>> ob.peek_best_sell() == o
         True
@@ -228,7 +241,6 @@ class OrderBook:
         _, lvl = self._sell_levels.peekitem(0)
 
         return lvl[0]
-
 
     def pop_best_buy(self) -> Optional[Order]:
         """
@@ -241,7 +253,8 @@ class OrderBook:
         >>> from engine.order import Order
         >>> from engine.order_book import OrderBook
         >>> ob = OrderBook()
-        >>> o = Order(trader_id=1, symbol="AAPL", order_type="buy", quantity=10, limit_price=150.0)
+        >>> o = Order(trader_id=1, symbol="AAPL", order_type="buy",
+        >>>           quantity=10, limit_price=150.0)
         >>> ob.add_order(o)
         >>> ob.pop_best_buy() == o
         True
@@ -250,7 +263,7 @@ class OrderBook:
         """
         if not self._buy_levels:
             return None
-        
+
         price, lvl = self._buy_levels.peekitem(0)
 
         order = lvl.dequeue()
@@ -259,7 +272,6 @@ class OrderBook:
             del self._buy_levels[price]
 
         return order
-        
 
     def pop_best_sell(self) -> Optional[Order]:
         """Remove and return the lowest-price sell order.
@@ -271,7 +283,8 @@ class OrderBook:
         >>> from engine.order import Order
         >>> from engine.order_book import OrderBook
         >>> ob = OrderBook()
-        >>> o = Order(trader_id=1, symbol="AAPL", order_type="sell", quantity=10, limit_price=150.0)
+        >>> o = Order(trader_id=1, symbol="AAPL", order_type="sell",
+        >>>           quantity=10, limit_price=150.0)
         >>> ob.add_order(o)
         >>> ob.pop_best_sell() == o
         True
@@ -290,87 +303,50 @@ class OrderBook:
 
         return order
 
-
     def buy_size(self) -> int:
-        """Return the number of buy orders currently in the book.
-
-        Examples:
-        >>> from engine.order_book import OrderBook
-        >>> from engine.order import Order
-        >>> ob = OrderBook()
-        >>> ob.buy_size()
-        0
-        >>> o = Order(trader_id=1, symbol="AAPL", order_type="buy", quantity=5, limit_price=50.0)
-        >>> ob.add_order(o)
-        >>> ob.buy_size()
-        1
-        """
+        """Return the number of buy orders currently in the book."""
         total = 0
 
         for price_level in self._buy_levels.values():
             total += len(price_level)
-        
 
         return total + len(self.market_buys)
 
-
     def sell_size(self) -> int:
-        """Return the number of sell orders currently in the book.
-
-        Examples:
-        >>> from engine.order_book import OrderBook
-        >>> from engine.order import Order
-        >>> ob = OrderBook()
-        >>> ob.sell_size()
-        0
-        >>> o = Order(trader_id=2, symbol="AAPL", order_type="sell", quantity=3, limit_price=75.0)
-        >>> ob.add_order(o)
-        >>> ob.sell_size()
-        1
-        """
+        """Return the number of sell orders currently in the book."""
         total = 0
 
         for price_level in self._sell_levels.values():
             total += len(price_level)
 
-
         return total + len(self.market_sells)
-
 
     @property
     def total_size(self) -> int:
-        """Return the total number of orders (buy + sell).
-
-        Examples:
-            >>> from engine.order_book import OrderBook
-            >>> from engine.order import Order
-            >>> ob = OrderBook()
-            >>> ob.total_size
-            0
-            >>> ob.add_order(Order(trader_id=1, symbol="AAPL", order_type="buy", quantity=1, limit_price=10.0))
-            >>> ob.add_order(Order(trader_id=2, symbol="AAPL", order_type="sell", quantity=2, limit_price=20.0))
-            >>> ob.total_size
-            2
-        """
+        """Return the total number of orders (buy + sell)."""
         return self.buy_size() + self.sell_size()
 
     def get_n_buy_orders(self, n=None) -> List[Order]:
-        """Return a list of first `n` limit price buy orders in descending priority (highest-price first).
+        """Return a list of highest `n` limit buy orders.
 
         Examples:
             >>> from engine.order_book import OrderBook
             >>> from engine.order import Order
             >>> ob = OrderBook()
-            >>> o1 = Order(trader_id=1, symbol="AAPL", order_type="buy", quantity=5, limit_price=50.0)
-            >>> o2 = Order(trader_id=2, symbol="AAPL", order_type="buy", quantity=1, limit_price=55.0)
+            >>> o1 = Order(trader_id=1, symbol="AAPL", order_type="buy",
+            >>>            quantity=5, limit_price=50.0)
+            >>> o2 = Order(trader_id=2, symbol="AAPL", order_type="buy",
+            >>>            quantity=1, limit_price=55.0)
             >>> ob.add_order(o1)
             >>> ob.add_order(o2)
             >>> buys = ob.get_buy_orders()
             >>> [o.limit_price for o in buys]
             [55.0, 50.0]
         """
-        if n and n<=0:
-            raise KeyError("Cannot get 0 or less orders from the top of the order book")
+        if n and n <= 0:
+            msg = """Cannot get 0 or less orders
+                     from the top of the order book"""
+            raise KeyError(msg)
 
         out = []
 
@@ -384,22 +360,26 @@ class OrderBook:
 
     def get_n_sell_orders(self, n=None) -> List[Order]:
         """
-        Return a list of first `n` limit price sell orders currently in the book (lowest-priority first).
+        Return list of lowest `n` limit sell orders currently in the book.
 
         Examples:
             >>> from engine.order_book import OrderBook
             >>> from engine.order import Order
             >>> ob = OrderBook()
-            >>> o1 = Order(trader_id=1, symbol="AAPL", order_type="sell", quantity=5, limit_price=50.0)
-            >>> o2 = Order(trader_id=2, symbol="AAPL", order_type="sell", quantity=1, limit_price=55.0)
+            >>> o1 = Order(mpid="BR01", symbol="AAPL", order_type="sell",
+            >>>            quantity=5, limit_price=50.0)
+            >>> o2 = Order(mpid="BR01", symbol="AAPL", order_type="sell",
+            >>>            quantity=1, limit_price=55.0)
             >>> ob.add_order(o1)
             >>> ob.add_order(o2)
-            >>> sells = ob.get_sell_orders()
+            >>> sells = ob.get_n_sell_orders()
             >>> [o.limit_price for o in sells]
             [50.0, 55.0]
         """
-        if n and n<=0:
-            raise KeyError("Cannot get 0 or less orders from the top of the order book")
+        if n and n <= 0:
+            msg = """Cannot get 0 or less orders
+                     from the top of the order book"""
+            raise KeyError(msg)
 
         out = []
 
@@ -417,8 +397,18 @@ class OrderBook:
         # Show head of book
         bid = self.peek_best_buy()
         ask = self.peek_best_sell()
-        parts.append(f"  best_buy={bid.limit_price!r}@{bid.quantity!r}" if bid else "  best_buy=None")
-        parts.append(f"  best_sell={ask.limit_price!r}@{ask.quantity!r}" if ask else "  best_sell=None")
+
+        if bid:
+            detail = f"""  best_buy={bid.limit_price!r}@{bid.quantity!r}"""
+        else:
+            detail = "best_buy=None"
+        parts.append(detail)
+
+        if ask:
+            detail = f"""  best_sell={ask.limit_price!r}@{ask.quantity!r}"""
+        else:
+            detail = "best_sell=None"
+        parts.append(detail)
 
         # Show queue depths (optional)
         mb_len = len(self.market_buys)

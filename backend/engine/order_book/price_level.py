@@ -4,6 +4,7 @@ from typing import Iterator, Optional
 from engine.order_book.order import Order
 from engine.order_book.queue import OrderQueue
 
+
 class PriceLevel(OrderQueue):
     """A FIFO bucket of orders all at a single price.
 
@@ -12,13 +13,15 @@ class PriceLevel(OrderQueue):
     FIFO enqueue/dequeue and tracks the aggregate share count.
 
     Attributes:
-        _queue (collections.deque[Order]): Underlying deque storing orders at the same price in FIFO sequence.
-        total_shares (int): Sum of `order.quantity` for all orders currently in the queue.
-    """ 
+        _queue (collections.deque[Order]):
+            Deque storing orders at the same price in FIFO sequence.
+        total_shares (int):
+            Sum of `order.quantity` for all orders currently in the queue.
+    """
 
     def __init__(self) -> None:
-        self._queue = deque[Order]()        
-        self.total_shares = 0               
+        self._queue = deque[Order]()
+        self.total_shares = 0
 
     def enqueue(self, order: Order) -> None:
         """Add an order to the back of the queue.
@@ -36,7 +39,8 @@ class PriceLevel(OrderQueue):
         """Remove and return the order at the front of the queue.
 
         Returns:
-            Order or None: The oldest order in the queue, or `None` if the queue is empty.
+            Order or None:
+                The oldest order in queue, `None` if queue is empty.
 
         Side Effects:
             - Decrements `total_shares` by the returned order's quantity.
@@ -105,7 +109,7 @@ class PriceLevel(OrderQueue):
         try:
             return self._queue[index]
         except IndexError:
-            return None 
+            return None
 
     def __bool__(self) -> bool:
         return bool(self._queue)
@@ -114,4 +118,6 @@ class PriceLevel(OrderQueue):
         yield from self._queue
 
     def __repr__(self) -> str:
-        return f"<PriceLevel orders={len(self)} total_shares={self.total_shares}>"
+        return f"""<PriceLevel
+                    orders={len(self)}
+                    total_shares={self.total_shares}>"""

@@ -8,9 +8,9 @@ def test_parse_order_valid():
 
 def test_parse_order_invalid_qty_price():
     sym, q, p = parse_order(["MTKO", "MTKO", "MTKO"])
-    assert sym == "MTKO" and q == None and p == None
+    assert sym == "MTKO" and q is None and p is None
 
 
 def test_parse_order_invalid_args_num():
     sym, q, p = parse_order(["AAPL", "10", "150", "42"])
-    assert sym == None and q == None and p == None
+    assert sym is None and q is None and p is None

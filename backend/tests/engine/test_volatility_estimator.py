@@ -2,6 +2,7 @@ import pytest
 from collections import deque
 from engine.risk.volatility_estimator import VolatilityEstimator
 
+
 @pytest.mark.parametrize("history, expected", [
     (deque(), 0.0),                  # empty → 0 * 1e-4
     (deque([100.0]), 100.0 * 1e-4),  # single → price * 1e-4

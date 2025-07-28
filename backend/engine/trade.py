@@ -31,12 +31,23 @@ class Trade:
         Create a Trade. Used by Exchange.match_orders().
 
         Args:
-          buy_order (Order): The buy order involved in the trade.
-          sell_order (Order): The sell order involved in the trade.
-          symbol (str): Ticker symbol (e.g. "AAPL").
-          quantity (int): Actual number of shares traded.
-          price (float): Actual execution price.
-          status (Literal["pending", "fulfilled", "cancelled"]: Status of the trade.
+          buy_order (Order):
+            The buy order involved in the trade.
+
+          sell_order (Order):
+            The sell order involved in the trade.
+
+          symbol (str):
+            Ticker symbol (e.g. "AAPL").
+
+          quantity (int):
+            Actual number of shares traded.
+
+          price (float):
+            Actual execution price.
+
+          status (Literal["pending", "fulfilled", "cancelled"]:
+            Status of the trade.
 
         Example:
             >>> from engine.trade import Trade

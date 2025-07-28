@@ -1,14 +1,14 @@
 from datetime import datetime
-from os import wait
 from app.context import AppContext
-from engine.order_book.order import Order
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException, WebSocket, status, Depends, Request
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from fastapi.encoders import jsonable_encoder
 from typing import List, Literal
 
+
 class LoginRequest(BaseModel):
     trader_id: int
+
 
 class QuoteSchema(BaseModel):
     symbol: str
@@ -19,11 +19,13 @@ class QuoteSchema(BaseModel):
     last: float | None
     timestamp: datetime
 
+
 class OrderRequest(BaseModel):
     order_type: Literal["buy", "sell"]
     symbol: str
     quantity: int
     price: float | None
+
 
 class OrderCancelRequest(BaseModel):
     order_id: str

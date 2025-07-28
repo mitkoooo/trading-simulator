@@ -1,5 +1,6 @@
-from typing import Dict, Optional
-import yaml, asyncio
+from typing import Dict, Optional, Literal
+import yaml
+import asyncio
 from pathlib import Path
 
 from app.context import AppContext
@@ -16,29 +17,38 @@ from engine.trader import Trader
 from config.logging_config import setup_logger
 
 # backend/bootstrap.py lives under backend/
-BASE_DIR   = Path(__file__).resolve().parents[1]   # -> <repo>/backend
+BASE_DIR = Path(__file__).resolve().parents[1]   # -> <repo>/backend
 CONFIG_DIR = (BASE_DIR / "config").resolve()
 
 
 def register_bots_from_yaml(exchange: Exchange, bot: Dict):
-        kwargs = {k: bot[k] for k in [
-            "mpid","display_name","ptype","margin_category",
-            "allowed_symbols","price_band_limit", "max_order_size","max_notional_per_minute",
-            "max_msgs_per_second","clearing_member_id","settlement_account",
-            "initial_cash","initial_positions"
-        ]}
+    categories = ["mpid", "display_name", "ptype", "margin_category",
+                  "allowed_symbols", "price_band_limit", "max_order_size",
+                  "max_notional_per_minute", "max_msgs_per_second",
+                  "clearing_member_id", "settlement_account", "initial_cash",
+                  "initial_positions"]
 
-        info = ParticipantInfo(**kwargs)
+    kwargs = {k: bot[k] for k in categories}
 
-        exchange.register_participant(bot["mpid"], info)
+    info = ParticipantInfo(**kwargs)
+
+    exchange.register_participant(bot["mpid"], info)
 
 
-async def bootstrap(participants_path: Optional[str | Path] = None, market_data_path: Optional[str | Path] = None):
-    
-    participants_path = Path(participants_path or CONFIG_DIR / "participants.yml")
-    market_data_path  = Path(market_data_path  or CONFIG_DIR / "market_data.yml")
+async def bootstrap(participants_path: Optional[str | Path] = None,
+                    market_data_path: Optional[str | Path] = None):
+
+    participants_path = Path(participants_path or
+                             CONFIG_DIR / "participants.yml")
+
+    market_data_path = Path(market_data_path or
+                            CONFIG_DIR / "market_data.yml")
 
     market_data_yml = yaml.safe_load(open(market_data_path))
+
+    def _get_seed_price(i, side: Literal["buy", "sell"]) -> float:
+        sign = 1 if side == "sell" else -1
+        return market_data_yml[symbol] + sign*i*tick
 
     # 1. Core systems
     exchange = Exchange()
@@ -50,7 +60,6 @@ async def bootstrap(participants_path: Optional[str | Path] = None, market_data_
         exchange.register_instrument(stock)
         exchange.order_books[symbol].last_trade_price = market_data_yml[symbol]
 
-
     # 2. Register traders
     trader1 = Trader(trader_id="1", starting_balance=1_000_000)
     trader2 = Trader(trader_id="2", starting_balance=1_000_000)
@@ -59,37 +68,50 @@ async def bootstrap(participants_path: Optional[str | Path] = None, market_data_
 
     # 2. Load participants
     config = yaml.safe_load(open(participants_path))
-    
+
     for ss in config["system_seed"]:
         register_bots_from_yaml(exchange, ss)
 
     for mm in config["market_makers"]:
         register_bots_from_yaml(exchange, mm)
 
-        bot_kwargs = {k: mm[k] for k in [
-            "symbol","base_size","alpha","beta","gamma"
-        ]}
+        categories = ["symbol", "base_size", "alpha", "beta", "gamma"]
+
+        bot_kwargs = {k: mm[k] for k in categories}
+
         mm = PassiveMM(exchange, mpid=mm["mpid"], **bot_kwargs)
+
         asyncio.create_task(mm.run())
 
     for rp in config["retail_bots"]:
         register_bots_from_yaml(exchange, rp)
 
-        bot_kwargs = {k: rp[k] for k in ["symbol", "limit_rate", "market_rate", "quantity_range", "tick_size", "market_probability"]}
+        categories = ["symbol", "limit_rate", "market_rate", "quantity_range",
+                      "tick_size", "market_probability"]
+
+        bot_kwargs = {k: rp[k] for k in categories}
+
         rp = RetailPoisson(exchange, mpid=rp["mpid"], **bot_kwargs)
+
         asyncio.create_task(rp.run())
 
     # SEED THE ORDER BOOKS WITH INITIAL ORDERS
     tick = 0.02
-    for stock in list(exchange.instruments):
+    for symbol in list(exchange.instruments):
         for i in range(1, 6):
-             buy_order = Order(mpid="SEED", order_type="buy", symbol=stock, quantity=100, limit_price=market_data_yml[stock] - i*tick)
-             sell_order = Order(mpid="SEED", order_type="sell", symbol=stock, quantity=100, limit_price=market_data_yml[stock] + i*tick)
-             await exchange.add_order(buy_order)
-             await exchange.add_order(sell_order)
+            bid_price = _get_seed_price(i, "buy")
+            ask_price = _get_seed_price(i, "sell")
+
+            bid = Order("SEED", symbol, "buy", 100, bid_price)
+            ask = Order("SEED", symbol, "sell", 100, ask_price)
+
+            await exchange.add_order(bid)
+            await exchange.add_order(ask)
 
     await exchange.start()
 
-    context: AppContext = AppContext(Session(traders={"1": trader1, "2": trader2}), broker, exchange, logger)
-    
+    traders = {"1": trader1, "2": trader2}
+
+    context = AppContext(Session(traders), broker, exchange, logger)
+
     return context

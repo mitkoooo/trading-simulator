@@ -6,7 +6,9 @@ from scripts.bootstrap import bootstrap
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cli", action="store_true", help="run interactive CLI")
+    parser.add_argument("--cli", action="store_true",
+                        help="run interactive CLI")
+
     args = parser.parse_args()
 
     if args.cli:
@@ -19,6 +21,7 @@ def main():
         asyncio.run(_main())
     else:
         print("Nothing to do. Use --cli or run uvicorn from Docker.")
+
 
 if __name__ == "__main__":
     main()

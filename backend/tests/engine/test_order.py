@@ -6,7 +6,7 @@ from app.context import AppContext
 
 def test_order_constructor_invalid_qty():
     try:
-        _ = Order(mpid="1", symbol="AAPL", order_type="sell", quantity=-42)
+        Order("BR01", "AAPL", "sell", -42)
         assert False
     except ValueError:
         assert True
@@ -14,9 +14,7 @@ def test_order_constructor_invalid_qty():
 
 def test_order_constructor_invalid_price():
     try:
-        _ = Order(
-            mpid="1", symbol="AAPL", order_type="sell", quantity=42, limit_price=-100
-        )
+        Order("BR01", "AAPL", "sell", 42, -100)
         assert False
     except ValueError:
         assert True
@@ -24,39 +22,40 @@ def test_order_constructor_invalid_price():
 
 def test_order_constructor_invalid_order_type():
     try:
-        _ = Order(
-            mpid="1", symbol="AAPL", order_type="foo", quantity=42, limit_price=-100
-        )
+        Order("BR01", "AAPL", "foo_type", 42, 100)
         assert False
     except ValueError:
         assert True
 
+
 @pytest.mark.asyncio
 async def test_cancel_order(test_context: AppContext):
     SYMBOL = "AAPL"
-    QUANTITY = 42 
+    QUANTITY = 42
     PRICE = 42.00
 
-    sample_trader = test_context.session.active_trader
-    assert sample_trader
+    trader = test_context.session.active_trader
+    assert trader
+    tid = trader.trader_id
 
-    sample_broker = test_context.broker 
-    sample_exchange = test_context.exchange
+    broker = test_context.broker
+    exchange = test_context.exchange
 
     # Add an order
-    o = await sample_broker.submit_order(sample_trader.trader_id, SYMBOL, "buy", QUANTITY, PRICE)
+    o = await broker.submit_order(tid, SYMBOL, "buy", QUANTITY, PRICE)
 
-    await sample_exchange._book_queues[SYMBOL].join()
+    await exchange._book_queues[SYMBOL].join()
     # Check the prequisites
-    assert sample_exchange.order_books[SYMBOL].buy_size() == 1
+    assert exchange.order_books[SYMBOL].buy_size() == 1
 
     # Cancel an order
-    await sample_broker.cancel_order(o.order_id)
-    await sample_exchange._book_queues[SYMBOL].join()
+    await broker.cancel_order(o.order_id)
+    await exchange._book_queues[SYMBOL].join()
 
-    assert sample_exchange.order_lookup[o.order_id].status == "cancelled"
+    assert exchange.order_lookup[o.order_id].status == "cancelled"
 
-    assert sample_exchange.order_books[SYMBOL].buy_size() == 0
+    assert exchange.order_books[SYMBOL].buy_size() == 0
+
 
 @pytest.mark.asyncio
 async def test_cancel_order_invalid_id(test_context: AppContext):
@@ -64,40 +63,36 @@ async def test_cancel_order_invalid_id(test_context: AppContext):
 
     try:
         await sample_exchange.cancel_order("fake_order_id")
-    except Exception as e:
-        assert type(e) == KeyError
+    except KeyError:
+        assert True
         return
 
     # Assert false if error not returned
-    assert False    
+    assert False
+
 
 @pytest.mark.asyncio
 async def test_cancel_fulfilled_order(test_context: AppContext):
     SYMBOL = "AAPL"
-    QUANTITY = 42 
+    QUANTITY = 42
     PRICE = 42.00
 
-    sample_trader = test_context.session.active_trader
-    assert sample_trader
+    trader = test_context.session.active_trader
+    assert trader
+    tid = trader.trader_id
 
-    sample_broker = test_context.broker 
-    sample_exchange = test_context.exchange
+    broker = test_context.broker
+    exchange = test_context.exchange
 
     # Add an order
-    o = await sample_broker.submit_order(sample_trader.trader_id, SYMBOL, "buy", QUANTITY, PRICE)
-    await sample_exchange._book_queues[SYMBOL].join()
+    o = await broker.submit_order(tid, SYMBOL, "buy", QUANTITY, PRICE)
+    await exchange._book_queues[SYMBOL].join()
 
-
-    # Mutate order's status to fulfilled 
-    sample_exchange.order_lookup[o.order_id].status = "filled"
+    # Mutate order's status to fulfilled
+    exchange.order_lookup[o.order_id].status = "filled"
 
     # Check the prequisites
-    assert sample_exchange.order_books[SYMBOL].buy_size() == 1
+    assert exchange.order_books[SYMBOL].buy_size() == 1
 
     # Cancel an order
-    assert not await sample_exchange.cancel_order(o.order_id)
-
-
-
-
-
+    assert not await exchange.cancel_order(o.order_id)

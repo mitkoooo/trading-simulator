@@ -1,12 +1,11 @@
 from engine.order_book.market_order_queue import MarketOrderQueue
 from engine.order_book.order_book import OrderBook
 from engine.order_book.order import Order
-from datetime import datetime
 
 
 def test_market_order_queue_adds_order():
-    market_o_queue = MarketOrderQueue() 
-    
+    market_o_queue = MarketOrderQueue()
+
     o = Order(mpid="BR01", symbol="AAPL", order_type="buy", quantity=40)
 
     market_o_queue.enqueue(o)
@@ -15,8 +14,8 @@ def test_market_order_queue_adds_order():
 
 
 def test_market_order_queue_remove_order():
-    market_o_queue = MarketOrderQueue() 
-    
+    market_o_queue = MarketOrderQueue()
+
     o = Order(mpid="BR01", symbol="AAPL", order_type="buy", quantity=40)
 
     market_o_queue.enqueue(o)
@@ -29,8 +28,8 @@ def test_market_order_queue_remove_order():
 
 
 def test_market_order_queue_is_empty():
-    market_o_queue = MarketOrderQueue() 
-   
+    market_o_queue = MarketOrderQueue()
+
     assert market_o_queue.is_empty()
 
     o = Order(mpid="BR01", symbol="AAPL", order_type="buy", quantity=40)
@@ -39,10 +38,11 @@ def test_market_order_queue_is_empty():
 
     assert not market_o_queue.is_empty()
 
+
 def test_market_order_queue_get_item():
-    market_o_queue = MarketOrderQueue() 
-    
-    o1 = Order(mpid="BR01", symbol="AAPL", order_type="buy", quantity=40) 
+    market_o_queue = MarketOrderQueue()
+
+    o1 = Order(mpid="BR01", symbol="AAPL", order_type="buy", quantity=40)
     o2 = Order(mpid="BR02", symbol="AAPL", order_type="buy", quantity=40)
     o3 = Order(mpid="BR03", symbol="AAPL", order_type="buy", quantity=40)
 
@@ -62,13 +62,13 @@ def test_market_order_queue_get_item():
 
 def test_order_book_empty_pop():
     order_book = OrderBook()
-    assert order_book.pop_best_buy() == None
-    assert order_book.pop_best_sell() == None
+    assert order_book.pop_best_buy() is None
+    assert order_book.pop_best_sell() is None
 
 
 def test_order_book_insert_pop():
-    o1 = Order(1, "AAPL", "buy", 1, 42.0)
-    o2 = Order(1, "AAPL", "sell", 1, 42.0)
+    o1 = Order("BR01", "AAPL", "buy", 1, 42.0)
+    o2 = Order("BR01", "AAPL", "sell", 1, 42.0)
     order_book = OrderBook()
 
     order_book.add_order(o1)
@@ -79,10 +79,10 @@ def test_order_book_insert_pop():
 
 
 def test_order_book_buy_priority():
-    o1 = Order(1, "AAPL", "buy", 1, 42.0, timestamp=datetime(2025, 1, 1, 0, 2))
-    o2 = Order(1, "AAPL", "buy", 1, 50.0, timestamp=datetime(2025, 1, 1, 0, 1))
-    o3 = Order(1, "AAPL", "buy", 1, 42.0, timestamp=datetime(2025, 1, 1, 0, 0))
-    o4 = Order(1, "AAPL", "buy", 1, 42.0, timestamp=datetime(2025, 1, 1, 0, 2))
+    o1 = Order("BR01", "AAPL", "buy", 1, 42.0)
+    o2 = Order("BR01", "AAPL", "buy", 1, 50.0)
+    o3 = Order("BR01", "AAPL", "buy", 1, 42.0)
+    o4 = Order("BR01", "AAPL", "buy", 1, 42.0)
 
     order_book = OrderBook()
 
@@ -102,10 +102,10 @@ def test_order_book_buy_priority():
 
 
 def test_order_book_sell_priority():
-    o1 = Order(1, "AAPL", "sell", 1, 42.0, timestamp=datetime(2025, 1, 1, 0, 2))
-    o2 = Order(1, "AAPL", "sell", 1, 50.0, timestamp=datetime(2025, 1, 1, 0, 1))
-    o3 = Order(1, "AAPL", "sell", 1, 50.0, timestamp=datetime(2025, 1, 1, 0, 0))
-    o4 = Order(1, "AAPL", "sell", 1, 50.0, timestamp=datetime(2025, 1, 1, 0, 1))
+    o1 = Order("BR01", "AAPL", "sell", 1, 42.0)
+    o2 = Order("BR01", "AAPL", "sell", 1, 50.0)
+    o3 = Order("BR01", "AAPL", "sell", 1, 50.0)
+    o4 = Order("BR01", "AAPL", "sell", 1, 50.0)
 
     order_book = OrderBook()
 
@@ -125,8 +125,8 @@ def test_order_book_sell_priority():
 
 
 def test_order_book_side_independence():
-    o1 = Order(1, "AAPL", "sell", 1, 42.0, timestamp=datetime(2025, 1, 1, 0, 2))
-    o2 = Order(1, "AAPL", "buy", 1, 50.0, timestamp=datetime(2025, 1, 1, 0, 1))
+    o1 = Order("BR01", "AAPL", "sell", 1, 42.0)
+    o2 = Order("BR01", "AAPL", "buy", 1, 50.0)
 
     order_book = OrderBook()
 

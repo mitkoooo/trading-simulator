@@ -1,11 +1,9 @@
-import asyncio
 import pytest
 import logging
 
 from cli.commands import (
     validate_symbol,
     handle_order,
-    do_next,
     do_place_order,
     do_match,
 )
@@ -14,9 +12,11 @@ from app.context import AppContext
 from engine.exchange.exchange import Exchange
 from engine.order_book.order import Order
 
+
 def test_validate_symbol_known(sample_exchange: Exchange):
     ok = validate_symbol("AAPL", sample_exchange, "BUY", ["AAPL", "1", "100"])
     assert ok
+
 
 def test_validate_symbol_unknown(sample_exchange: Exchange):
     ok = validate_symbol("MTKO", sample_exchange, "BUY", ["MTKO", "1", "100"])
@@ -26,13 +26,16 @@ def test_validate_symbol_unknown(sample_exchange: Exchange):
 @pytest.mark.asyncio
 async def test_handle_order_invalid_args_num(test_context: AppContext, caplog):
     test_logger = test_context.logger
-    sample_exchange = test_context.exchange
-    sample_trader = test_context.session.active_trader
-    assert sample_trader
+    assert test_logger
+    exchange = test_context.exchange
+
+    trader = test_context.session.active_trader
+    assert trader
+    tid = trader.trader_id
 
     caplog.set_level(logging.WARNING, logger=test_logger.name)
 
-    o = Order(mpid=sample_trader.trader_id, symbol="AAPL", order_type="buy", quantity=42)
+    o = Order(tid, symbol="AAPL", order_type="buy", quantity=42)
 
     await handle_order(
         test_context,
@@ -42,13 +45,12 @@ async def test_handle_order_invalid_args_num(test_context: AppContext, caplog):
 
     await test_context.exchange._book_queues["AAPL"].join()
     assert "BUY command usage error" in caplog.text
-    assert sample_exchange.order_books["AAPL"].buy_size() == 0
+    assert exchange.order_books["AAPL"].buy_size() == 0
 
 
 @pytest.mark.asyncio
 async def test_handle_order_adds_order(test_context: AppContext):
-
-    sample_trader = test_context.session.active_trader 
+    sample_trader = test_context.session.active_trader
     assert sample_trader
 
     o = Order(
@@ -89,6 +91,7 @@ async def test_do_place_order_places_order(test_context: AppContext):
 @pytest.mark.asyncio
 async def test_do_match_invalid_args_num(test_context: AppContext, caplog):
     test_logger = test_context.logger
+    assert test_logger
 
     caplog.set_level(logging.WARNING, logger=test_logger.name)
 

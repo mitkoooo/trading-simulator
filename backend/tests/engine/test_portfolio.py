@@ -1,84 +1,109 @@
 from datetime import datetime
 from engine.market_data.quote import MarketQuote
-from engine.trader import Trader
 from engine.position import Position
-from engine.instruments.stock import Stock
 
 from app.context import AppContext
 
 
 def test_portfolio_value_pure_cash(test_context: AppContext):
-    sample_trader: Trader = test_context.session.active_trader
-    assert sample_trader
+    trader = test_context.session.active_trader
+    assert trader
 
-    sample_exchange = test_context.exchange
+    exchange = test_context.exchange
 
-    assert (
-        sample_trader.portfolio.value(sample_exchange.quotes)
-        == sample_trader.portfolio.cash + sample_trader.portfolio.reserved_cash
-    )
+    total_cash = trader.portfolio.cash + trader.portfolio.reserved_cash
+    portfolio_value = trader.portfolio.value(exchange.quotes)
+
+    assert portfolio_value == total_cash
 
 
 def test_portfolio_value_combined(test_context: AppContext):
     SYMBOL = "AAPL"
     SHARE_NUM = 50
-    test_context.exchange.quotes[SYMBOL] = MarketQuote(symbol=SYMBOL, bid_price=None, bid_size=None, ask_price=None, ask_size=None, last_price=100, timestamp=datetime.now())
+    ts = datetime.now()
 
-    sample_trader: Trader = test_context.session.active_trader
-    assert sample_trader
+    quotes = {SYMBOL: MarketQuote(SYMBOL, bid_price=None, bid_size=0,
+                                  ask_price=None, ask_size=0, last_price=100,
+                                  timestamp=ts)}
 
-    sample_exchange = test_context.exchange
+    quote = quotes[SYMBOL]
+    assert quote and quote.last_price
 
-    sample_trader.portfolio.positions[SYMBOL] = Position(symbol=SYMBOL, qty=SHARE_NUM)
-    assert sample_trader.portfolio.value(sample_exchange.quotes) == (
-        sample_trader.portfolio.cash + sample_trader.portfolio.reserved_cash
-    ) + (sample_exchange.quotes[SYMBOL].last_price * SHARE_NUM)
+    trader = test_context.session.active_trader
+    assert trader
+    trader.portfolio.positions[SYMBOL] = Position(SYMBOL, SHARE_NUM)
+
+    total_for_cash = trader.portfolio.cash + trader.portfolio.reserved_cash
+    total_for_shares = quote.last_price * SHARE_NUM
+    portfolio_value = trader.portfolio.value(quotes)
+
+    assert portfolio_value == total_for_cash + total_for_shares
 
 
 def test_portfolio_calculate_unrealized_pl_loss(test_context: AppContext):
     AVG_PRICE = 150.00
     POSITION_QTY = 1
     SYMBOL = "AAPL"
-    test_context.exchange.quotes[SYMBOL] = MarketQuote(symbol=SYMBOL, bid_price=None, bid_size=None, ask_price=None, ask_size=None, last_price=AVG_PRICE - 1, timestamp=datetime.now())
+    last = AVG_PRICE - 1
+    ts = datetime.now()
 
-    sample_trader: Trader = test_context.session.active_trader
-    assert sample_trader
+    trader = test_context.session.active_trader
+    assert trader
+    trader.portfolio.positions[SYMBOL] = Position(SYMBOL, POSITION_QTY,
+                                                  AVG_PRICE)
 
-    sample_trader.portfolio.positions[SYMBOL] = Position(SYMBOL, POSITION_QTY, AVG_PRICE)
+    quotes = {SYMBOL: MarketQuote(symbol=SYMBOL, bid_price=None, bid_size=0,
+                                  ask_price=None, ask_size=0, last_price=last,
+                                  timestamp=ts)}
 
-    pl = sample_trader.portfolio.calculate_unrealized_pl(SYMBOL, test_context.exchange.quotes)
+    quote = quotes[SYMBOL]
+    assert quote and quote.last_price
 
-    assert pl == -(1 * POSITION_QTY)
+    pl = trader.portfolio.calculate_unrealized_pl(SYMBOL, quotes)
+    loss = -(1 * POSITION_QTY)
+
+    assert pl == loss
 
 
 def test_portfolio_calculate_unrealized_pl_profit(test_context: AppContext):
     AVG_PRICE = 150.00
     POSITION_QTY = 1
     SYMBOL = "AAPL"
-    test_context.exchange.quotes[SYMBOL] = MarketQuote(symbol=SYMBOL, bid_price=None, bid_size=None, ask_price=None, ask_size=None, last_price=AVG_PRICE + 1, timestamp=datetime.now())
+    last = AVG_PRICE + 1
+    ts = datetime.now()
 
-    sample_trader: Trader = test_context.session.active_trader
-    assert sample_trader
+    trader = test_context.session.active_trader
+    assert trader
+    trader.portfolio.positions[SYMBOL] = Position(SYMBOL, POSITION_QTY,
+                                                  AVG_PRICE)
 
-    sample_trader.portfolio.positions[SYMBOL] = Position(SYMBOL, POSITION_QTY, AVG_PRICE)
+    quotes = {SYMBOL: MarketQuote(symbol=SYMBOL, bid_price=None, bid_size=0,
+                                  ask_price=None, ask_size=0, last_price=last,
+                                  timestamp=ts)}
 
-    pl = sample_trader.portfolio.calculate_unrealized_pl(SYMBOL, test_context.exchange.quotes)
+    quote = quotes[SYMBOL]
+    assert quote and quote.last_price
 
-    assert pl == +(1 * POSITION_QTY)
+    pl = trader.portfolio.calculate_unrealized_pl(SYMBOL, quotes)
+    profit = (1 * POSITION_QTY)
+
+    assert pl == profit
 
 
 def test_portfolio_calculate_pl_unknown_ticket(test_context: AppContext):
     AVG_PRICE = 150.00
     POSITION_QTY = 50
-    SYMBOL = "FOO"
+    SYMBOL = "AAPL"
 
-    sample_trader: Trader = test_context.session.active_trader
-    assert sample_trader
+    trader = test_context.session.active_trader
+    assert trader
+    trader.portfolio.positions[SYMBOL] = Position(SYMBOL, POSITION_QTY,
+                                                  AVG_PRICE)
 
-    sample_trader.portfolio.positions[SYMBOL] = Position(SYMBOL, POSITION_QTY, AVG_PRICE)
+    quotes = test_context.exchange.quotes
 
     try:
-        pl = sample_trader.portfolio.calculate_unrealized_pl(SYMBOL, test_context.exchange.quotes)
+        trader.portfolio.calculate_unrealized_pl(SYMBOL, quotes)
         assert False
-    except:
+    except ValueError:
         assert True

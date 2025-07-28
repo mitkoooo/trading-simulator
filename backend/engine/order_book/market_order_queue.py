@@ -4,6 +4,7 @@ from typing import Deque, Iterator, Optional
 from engine.order_book.order import Order
 from engine.order_book.queue import OrderQueue
 
+
 class MarketOrderQueue(OrderQueue):
     """A FIFO queue for market orders (orders without a limit price).
 
@@ -12,12 +13,13 @@ class MarketOrderQueue(OrderQueue):
     and complete clearing of all orders.
 
     Attributes:
-        _queue (collections.deque[Order]): Underlying deque storing market orders in FIFO sequence..
-    """ 
+        _queue (collections.deque[Order]):
+            Deque storing market orders in FIFO sequence.
+    """
 
     def __init__(self):
         self._queue: Deque = deque[Order]()
-    
+
     def enqueue(self, order: Order):
         """Add an order to the back of the queue.
 
@@ -31,17 +33,17 @@ class MarketOrderQueue(OrderQueue):
             raise ValueError("Cannot enqueue a limit order")
 
         self._queue.append(order)
-    
+
     def dequeue(self) -> Optional[Order]:
         """Remove and return the order at the front of the queue.
 
         Returns:
-            Order or None: The oldest order in the queue, or `None` if the queue is empty.
+            Order or None: The oldest order in queue, `None` if queue empty.
         """
 
         if not self._queue:
             return None
-        order =  self._queue.popleft()
+        order = self._queue.popleft()
         return order
 
     def peek(self) -> Optional[Order]:
