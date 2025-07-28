@@ -22,6 +22,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Install uv CLI
+        working-directory: backend
         run: pip install uv
 
       - name: Cache uv environment
@@ -33,23 +34,28 @@ jobs:
             ${{ runner.os }}-uv-
 
       - name: Install dependencies
+        working-directory: backend
         run: uv sync
 
       - name: Lint with flake8
+        working-directory: backend
         run: uv run flake8 .
 
       - name: Type‑check with mypy
+        working-directory: backend
         run: uv run mypy .
 
       - name: Run tests & collect coverage
+        working-directory: backend
         run: uv run pytest --maxfail=1 --disable-warnings --cov=engine --cov-report=term-missing --cov-report=xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: coverage.xml
+          files: backend/coverage.xml
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Build Docker image
+        working-directory: backend
         run: docker build -t ghostswap:ci .
