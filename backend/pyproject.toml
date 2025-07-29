@@ -21,6 +21,7 @@ dependencies = [
     "sortedcontainers (>=2.4.0,<3.0.0)",
     "flake8>=7.3.0",
     "mypy>=1.17.0",
+    "ruff>=0.12.5",
 ]
 
 [tool.poetry]
