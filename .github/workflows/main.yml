@@ -39,7 +39,7 @@ jobs:
 
       - name: Lint with ruff
         working-directory: backend
-        run: uv run ruff .
+        run: ruff check .
 
       - name: Type‑check with mypy
         working-directory: backend
