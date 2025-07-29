@@ -23,8 +23,7 @@ Please log in with your Trader ID before issuing any other commands.
 
 
 def display_prices(exchange: Exchange):
-    """
-    Simulate a tick and print each stock's updated price.
+    """Simulate a tick and print each stock's updated price.
 
     Examples:
     >>> from engine.stock import Stock
@@ -35,14 +34,14 @@ def display_prices(exchange: Exchange):
     >>> s.update_price(101.0)
     >>> display_prices(ex)  # doctest: +NORMALIZE_WHITESPACE
     AAPL  | $101.00
+
     """
     for stock in exchange.market_data.values():
         print(f"{stock.symbol:<5} | ${stock.price:.2f}")
 
 
 def display_portfolio(exchange: Exchange, trader: Trader):
-    """
-    Print the trader's cash balance and current positions in a Bloomberg-style box.
+    """Print the trader's cash balance and current positions in a Bloomberg-style box.
 
     Examples:
         >>> from engine.trader import Trader
@@ -56,6 +55,7 @@ def display_portfolio(exchange: Exchange, trader: Trader):
     │  Positions:                                                  │
     │    AAPL: 4 @ $150.72  (avg $150.00, unrealized P/L +$0.88)   │
     └──────────────────────────────────────────────────────────────┘
+
     """
     box_width = 64
     inner_width = box_width - 2
@@ -74,7 +74,7 @@ def display_portfolio(exchange: Exchange, trader: Trader):
 
     positions = trader.portfolio.positions
     if not positions:
-        none_line = f"│    None".ljust(inner_width + 1) + "│"
+        none_line = "│    None".ljust(inner_width + 1) + "│"
         print(none_line)
     else:
         for symbol, pos in positions.items():
@@ -92,8 +92,7 @@ def display_portfolio(exchange: Exchange, trader: Trader):
 
 
 def display_pending_orders(exchange: Exchange):
-    """
-    Print all pending buy/sell orders in the exchange.
+    """Print all pending buy/sell orders in the exchange.
 
     Examples:
         >>> from engine.stock    import Stock
@@ -105,8 +104,8 @@ def display_pending_orders(exchange: Exchange):
         >>> o = tr.place_order(symbol="AAPL", order_type="buy", quantity=1, price=100.0)
         >>> ex.add_order(o)
         >>> display_pending_orders(ex)  # doctest: +SKIP
+
     """
-    
     message = ""
 
     for order_book in exchange.order_books.values():

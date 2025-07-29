@@ -1,16 +1,14 @@
-from engine.exchange import Exchange
-from engine.trader import Trader
-
-from typing import List, Tuple
 import logging
+from typing import List, Tuple
+
+from engine.exchange import Exchange
 from logging_config import LOG_NAME
 
 logger = logging.getLogger(LOG_NAME)
 
 
 def parse_order(args: List[str]) -> Tuple[str, int, float]:
-    """
-    Parse a list of CLI args into (symbol, qty, price).
+    """Parse a list of CLI args into (symbol, qty, price).
 
     Args:
         args (List[str]): [symbol, qty, price] as strings.
@@ -24,8 +22,8 @@ def parse_order(args: List[str]) -> Tuple[str, int, float]:
         ('AAPL', 10, 150.0)
         >>> parse_order(["AAPL","foo","150"])
         ('AAPL', None, None)
-    """
 
+    """
     if args is None or len(args) != 3:
         return None, None, None
 
@@ -38,8 +36,7 @@ def parse_order(args: List[str]) -> Tuple[str, int, float]:
 
 
 def validate_symbol(symbol: str, exchange: Exchange, cmd: str, args: List[str]) -> bool:
-    """
-    Check that SYMBOL exists in exchange.market_data, else print and log warning.
+    """Check that SYMBOL exists in exchange.market_data, else print and log warning.
 
     Args:
         symbol (str): ticket to validate
@@ -58,6 +55,7 @@ def validate_symbol(symbol: str, exchange: Exchange, cmd: str, args: List[str]) 
         True
         >>> validate_symbol("FOO", ex, "BUY", ["FOO","1","1"])  # doctest: +SKIP
         False
+
     """
     if symbol not in exchange.market_data:
         valid = ", ".join(sorted(exchange.market_data.keys()))

@@ -1,10 +1,11 @@
-from typing import Dict, Optional
 from math import log1p
+from typing import Dict, Optional
 
 from engine.exchange import Exchange
+from engine.order_book.order import Order
 from engine.position import Position
 from engine.trader import Trader
-from engine.order_book.order import Order
+
 
 class PowerLedger:
     """Manage reservations of cash and shares for orders.
@@ -18,7 +19,9 @@ class PowerLedger:
         traders (Dict[int, Trader]): Mapping of trader IDs to `Trader` objects with portfolios.
         _reserved_cash (Dict[str, float]): Maps order IDs to the amount of cash reserved for buy orders.
         _reserved_shares (Dict[str, int]): Maps order IDs to the quantity of shares reserved for sell orders.
+
     """
+
     def __init__(self, exchange: Exchange, traders: Dict[int, Trader]):
         self.exchange = exchange
         self.traders = traders
@@ -40,6 +43,7 @@ class PowerLedger:
             KeyError: If the trader is not registered.
             ValueError: If `order.order_type` is not 'buy' or if the trader’s
                 cash balance is insufficient.
+
         """       
         tid = order.trader_id
         trader = self.traders.get(tid, None)
@@ -75,6 +79,7 @@ class PowerLedger:
 
         Raises:
             KeyError: If the trader is not registered
+
         """
         tid = order.trader_id
         trader = self.traders.get(tid, None)
@@ -101,6 +106,7 @@ class PowerLedger:
             KeyError: If the trader is not registered or does not hold the shares.
             ValueError: If `order.order_type` is not 'sell' or the trader’s
                 position is insufficient.
+
         """
         tid = order.trader_id
         trader = self.traders.get(tid, None)
@@ -140,6 +146,7 @@ class PowerLedger:
 
         Raises:
             KeyError: If the trader is not registered.
+
         """        
         tid = order.trader_id
         trader = self.traders.get(tid, None)
@@ -173,6 +180,7 @@ class PowerLedger:
 
         Raises:
             ValueError: If book liquidity is insufficient to fill the request.
+
         """
         order_book = self.exchange.order_books.get(symbol, None)
         assert order_book
@@ -210,6 +218,7 @@ class PowerLedger:
 
         Returns:
             float: A slippage factor (e.g. between 0.01 and 0.05).
+
         """
         BASE_LINE = 0.01
 
@@ -233,6 +242,7 @@ class PowerLedger:
 
         Returns:
             int or None: Reserved share count, or None if no reservation exists.
+
         """
         return self._reserved_shares.get(order_id, None)
 
@@ -244,5 +254,6 @@ class PowerLedger:
 
         Returns:
             float or None: Reserved cash amount, or None if no reservation exists.
+
         """
         return self._reserved_cash.get(order_id, None)

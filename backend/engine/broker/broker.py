@@ -1,11 +1,11 @@
-from typing import Dict
 
 from engine.broker.power_ledger import PowerLedger
+from engine.exchange import Exchange
 from engine.order_book.order import Order
 from engine.position import Position
 from engine.trade import Trade
 from engine.trader import Trader
-from engine.exchange import Exchange
+
 
 class Broker:
     """Orchestrates order submission, cancellation, and trade settlement between traders and the exchange.
@@ -19,6 +19,7 @@ class Broker:
         exchange (Exchange): The matching engine where orders are enqueued and trades are generated.
         traders (Dict[int, Trader]): Maps trader IDs to their `Trader` objects, holding portfolios and logs.
         power_ledger (PowerLedger): Manages reservations and releases of cash and shares for pending orders.
+
     """
 
     def __init__(self, exchange: Exchange) -> None:
@@ -35,8 +36,8 @@ class Broker:
 
         Raises:
             ValueError: If a trader with the same `trader_id` is already registered.
-        """
 
+        """
         if trader.trader_id in self.traders:
             raise ValueError(f"Trader ID {trader.trader_id} already registered")
 
@@ -57,8 +58,8 @@ class Broker:
         Raises:
             KeyError: If the `order.trader_id` is not registered.
             ValueError: If `order.order_type` is not 'buy' or 'sell'.
+
         """
-      
         tid = order.trader_id
         trader = self.traders.get(tid, None)
         if not trader:
@@ -94,8 +95,8 @@ class Broker:
             KeyError: If no such trader is registered or the order is not pending.
             RuntimeError: If the exchange refuses to cancel (unexpected).
             ValueError: If the order’s type is neither 'buy' nor 'sell'.
-        """
 
+        """
         order = self.exchange.order_lookup[order_id]
 
         tid: int = order.trader_id
@@ -139,8 +140,8 @@ class Broker:
         Raises:
             KeyError: If reserved cash for the buy order is missing.
             RuntimeError: If the buyer’s available cash is insufficient.
-        """
 
+        """
         try:
             self.finalize_buy(trade)
         except (KeyError, RuntimeError):    # In case market price order fails
@@ -183,6 +184,7 @@ class Broker:
         Raises:
             KeyError: If no cash was reserved for this order.
             RuntimeError: If the trader’s cash balance is insufficient to cover cost.
+
         """
         order = trade.buy_order
         trader = self.traders[order.trader_id]
@@ -245,6 +247,7 @@ class Broker:
 
         Raises:
             KeyError: If no share reservation exists for this order.
+
         """
         order = trade.sell_order
 

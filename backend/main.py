@@ -1,18 +1,16 @@
 import argparse
 from datetime import timedelta
-from engine.broker.broker import Broker
-from logging_config import setup_logger
-
-from engine.exchange import Exchange
-from engine.trader import Trader
-from engine.stock import Stock
-from engine.position import Position
-from engine.market_simulator import MarketSimulator
-
-from cli.cli import CLI
 
 from app.context import AppContext
 from app.session import Session
+from cli.cli import CLI
+from engine.broker.broker import Broker
+from engine.exchange import Exchange
+from engine.market_simulator import MarketSimulator
+from engine.position import Position
+from engine.stock import Stock
+from engine.trader import Trader
+from logging_config import setup_logger
 
 # Dummy initial prices for Day 3 CLI setup
 MARKET_DATA = {

@@ -16,6 +16,7 @@ class OrderQueue(ABC):
     - __len__: count orders
     - __iter__: iterate in FIFO order
     """
+
     @abstractmethod
     def enqueue(self, order: Order) -> None:
         ...

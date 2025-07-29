@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import Callable, Dict, Iterable, List, Literal, Optional
+from typing import Callable, Dict, Iterable, Optional
 
+from engine.order_book.order import Order
 from engine.order_book.order_book import OrderBook
 from engine.order_book.price_level import PriceLevel
+
 from .stock import Stock
-from engine.order_book.order import Order
 from .trade import Trade
 
 
@@ -31,6 +32,7 @@ class Exchange:
         >>> exchange.add_order(o)
         >>> exchange.process_tick()
         >>> trades = exchange.match_orders("MTKO")
+
     """
 
     def __init__(
@@ -42,6 +44,7 @@ class Exchange:
         Examples:
             >>> data = {sym: Stock(sym, 100.0) for sym in ("AAPL", "MSFT")}
             >>> exchange = Exchange(market_data=data)
+
         """
         self.market_data = market_data
         self.order_books: Dict[str, OrderBook] = {
@@ -63,9 +66,10 @@ class Exchange:
             >>> exchange.add_order(o)
             >>> exchange.order_books["AAPL"].buy_size()
             1
+
         """
         if order.symbol not in self.market_data:
-            raise KeyError(f"The symbol does not exist")
+            raise KeyError("The symbol does not exist")
         
         self.order_books[order.symbol].add_order(order)
         self.order_lookup[order.order_id] = order
@@ -80,6 +84,7 @@ class Exchange:
         
         Returns:
             (bool): True if order has been cancelled, false if failed to cancel (already filled).
+
         """
         if order_id not in self.order_lookup:
             raise KeyError(f"An order with this `order_id` does not exist. (got {order_id})")
@@ -110,6 +115,7 @@ class Exchange:
         >>> after = [s.price for s in exchange.market_data.values()]
         >>> any(b != a for b, a in zip(before, after))
         True
+
         """
         self.current_time = datetime.now()
 
@@ -133,8 +139,8 @@ class Exchange:
             >>> exchange.add_order(o)
             >>> exchange.match_orders("AAPL")
             []
-        """
 
+        """
         order_book = self.order_books.get(symbol, None)
         
         if not order_book:
@@ -158,8 +164,7 @@ class Exchange:
 
     def _select_taker_and_predicate(self, order_book: OrderBook) -> Optional[
     tuple[Order, Iterable[PriceLevel], Callable[[Order], bool]]]:
-        """
-        Decide which side provides the taker order and return:
+        """Decide which side provides the taker order and return:
         - taker_side: "buy" or "sell"
         - taker: the Order object
         - maker_levels: the sequence of PriceLevel buckets to scan
@@ -212,8 +217,7 @@ class Exchange:
             return (taker, maker_levels, price_cross)
 
     def _find_maker(self, taker: Order, maker_levels: Iterable[PriceLevel], price_cross: Callable[[Order], bool]) -> Optional[Order]:
-        """
-        Walk price levels in priority order, then within each level walk FIFO,
+        """Walk price levels in priority order, then within each level walk FIFO,
         skipping same‐trader and non‐crossing orders.  Returns the first valid maker
         or None if no match exists.
         """
@@ -236,8 +240,7 @@ class Exchange:
         return maker
 
     def _build_trade(self, taker: Order, maker: Order, symbol: str) -> Trade:
-        """
-        Compute exec_qty and exec_price (with error if price is None),
+        """Compute exec_qty and exec_price (with error if price is None),
         adjust quantities on the two orders, and return a Trade object.
         """
         if taker.order_type == "buy":

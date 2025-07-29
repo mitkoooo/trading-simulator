@@ -1,21 +1,18 @@
 from typing import List
 
 from app.context import AppContext
-
 from cli.validation import parse_order, validate_symbol
-
 from engine.trade import Trade
 from view.render import (
-    display_prices,
-    display_portfolio,
-    display_pending_orders,
     display_help_menu,
+    display_pending_orders,
+    display_portfolio,
+    display_prices,
 )
 
 
 def handle_order(context: AppContext, order_type: str, args: list[str]):
-    """
-    Handle a buy or sell order: parse args, validate and enqueue the order, then show portfolio.
+    """Handle a buy or sell order: parse args, validate and enqueue the order, then show portfolio.
 
     Prints usage errors or order confirmation followed by the updated portfolio.
 
@@ -29,6 +26,7 @@ def handle_order(context: AppContext, order_type: str, args: list[str]):
         Order placed for AAPL.
         Cash balance: $1000.0
         Holdings: {}
+
     """
     exchange, session, logger, broker = context.exchange, context.session, context.logger, context.broker
 
@@ -69,8 +67,7 @@ def handle_order(context: AppContext, order_type: str, args: list[str]):
 
 
 def do_next(context: AppContext):
-    """
-    Advance the market by one tick and display prices & portfolio.
+    """Advance the market by one tick and display prices & portfolio.
 
     Examples:
         >>> from engine.exchange import Exchange
@@ -80,6 +77,7 @@ def do_next(context: AppContext):
         >>> tr = Trader(1, 1000.0)
         >>> do_next(ex, tr) is None
         True
+
     """
     exchange = context.exchange
 
@@ -90,8 +88,7 @@ def do_next(context: AppContext):
 
 
 def do_place_order(context: AppContext, order_type: str, args: List[str]):
-    """
-    Enqueue a buy/sell order and log details if valid.
+    """Enqueue a buy/sell order and log details if valid.
 
     Examples:
         >>> from engine.exchange import Exchange
@@ -101,8 +98,8 @@ def do_place_order(context: AppContext, order_type: str, args: List[str]):
         >>> tr = Trader(1, 1000.0)
         >>> do_place_order(ex, tr, 'sell', ['AAPL', '1', '100']) is None
         True
-    """
 
+    """
     logger = context.logger
 
     symbol, qty, price = parse_order(args)
@@ -179,8 +176,7 @@ def do_cancel_order(context: AppContext):
 
 
 def do_match(context: AppContext, args: List[str]):
-    """
-    Attempt to match orders for a given symbol and display results.
+    """Attempt to match orders for a given symbol and display results.
 
     Examples:
         >>> from engine.exchange import Exchange
@@ -188,6 +184,7 @@ def do_match(context: AppContext, args: List[str]):
         >>> ex = Exchange({'AAPL': Stock('AAPL', 100.0)})
         >>> do_match(ex, ['AAPL'])
         No trades yet
+
     """
     logger = context.logger
     exchange = context.exchange
@@ -252,8 +249,7 @@ def do_portfolio(context: AppContext):
 
 
 def do_status(context: AppContext):
-    """
-    Display pending orders and the trader's portfolio.
+    """Display pending orders and the trader's portfolio.
 
     Examples:
         >>> from engine.exchange import Exchange
@@ -265,6 +261,7 @@ def do_status(context: AppContext):
         Currently there are no pending orders on the exchange.
         Cash balance: $1000.0
         Holdings: {}
+
     """
     logger, exchange = context.logger, context.exchange
 
@@ -329,12 +326,12 @@ def do_help(context: AppContext):
 
 
 def log_quit(context: AppContext):
-    """
-    Print goodbye and log shutdown.
+    """Print goodbye and log shutdown.
 
     Examples:
         >>> log_quit() # doctest: +NORMALIZE_WHITESPACE
         Thank you for using York Stock Exchange.
+
     """
     logger = context.logger
 

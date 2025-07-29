@@ -1,5 +1,5 @@
-from typing import Callable, Optional
 from datetime import timedelta
+from typing import Callable, Optional
 
 from .exchange import Exchange
 from .trade import Trade
@@ -29,18 +29,17 @@ class MarketSimulator:
     """
 
     def __init__(self, exchange: Exchange, tick_interval: timedelta):
-        """
-        Args:
-            exchange (Exchange): the Exchange instance to drive
-            tick_interval (timedelta): how much “time” passes per step()
+        """Args:
+        exchange (Exchange): the Exchange instance to drive
+        tick_interval (timedelta): how much “time” passes per step()
+
         """
         self._exchange = exchange
         self._tick_interval = tick_interval
         self._running = False
 
     def step(self) -> list[Trade]:
-        """
-        Advance prices by one tick, then match all symbols.
+        """Advance prices by one tick, then match all symbols.
         Returns the list of Trades executed this step.
         """
         # 1) advance every stock by one tick
@@ -57,6 +56,7 @@ class MarketSimulator:
 
         Attributes:
             steps (Optional[int]): Auto run for `steps` iterations (endlessly if None).
+
         """
         self._running = True
         count = 0
@@ -81,6 +81,7 @@ class MarketSimulator:
 
         Raises:
             NotImplementedError: until Week 3 real-time integration.
+
         """
         raise NotImplementedError("MarketSimulator.start_stream not yet implemented")
 
@@ -89,12 +90,12 @@ class MarketSimulator:
 
         Raises:
             NotImplementedError: until Week 3 real-time integration
+
         """
         raise NotImplementedError("MarketSimulator.end_stream not yet implemented")
 
     def register_listener(self, callback: Callable[[str, float], None]) -> None:
-        """
-        Register a function to be called on each new price tick.
+        """Register a function to be called on each new price tick.
 
         Args:
             callback (Callable[[str, float], None]):
@@ -102,6 +103,7 @@ class MarketSimulator:
 
         Raises:
             NotImplementedError: until real-time integration in Week 3.
+
         """
         raise NotImplementedError(
             "MarketSimulator.register_listener not yet implemented"

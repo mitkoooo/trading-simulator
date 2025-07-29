@@ -1,6 +1,6 @@
-import random
 import math
-from typing import List, Callable
+import random
+from typing import Callable, List
 
 
 class Stock:
@@ -21,6 +21,7 @@ class Stock:
       >>> s = Stock("MTKO", 999.0)
       >>> next_price = s.simulate_price_tick()
       >>> s.update_price(next_price)
+
     """
 
     def __init__(
@@ -53,6 +54,7 @@ class Stock:
         >>> new = s.price
         >>> old != new
         True
+
         """
         if new_price < 0:
             raise ValueError(
@@ -73,8 +75,8 @@ class Stock:
         >>> new = s.price
         >>> old != new
         True
-        """
 
+        """
         return self._tick_model(self)
 
     @staticmethod
@@ -94,8 +96,8 @@ class Stock:
         >>> new = Stock._uniform_stub(s)
         >>> isinstance(new, float)
         True
-        """
 
+        """
         pct_change = random.uniform(-0.01, 0.01)
         return stock.price * (1 + pct_change)
 
@@ -119,6 +121,7 @@ class Stock:
         >>> new = s.price
         >>> old != new
         True
+
         """
         sigma = stock.volatility
         z = random.gauss(0, 1)

@@ -18,8 +18,8 @@ class Session:
 
         Raises:
             (ValueError): If `trader_id` is not registered.
-        """
 
+        """
         if trader_id not in self._traders:
             raise ValueError(f"No such existing trader: {trader_id}")
 
@@ -30,6 +30,7 @@ class Session:
 
         Raises:
             (RuntimeError): If no trader is currently logged in
+
         """
         if not self._active_trader:
             raise RuntimeError("Cannot log out: no trader is currently logged in.")
@@ -44,6 +45,7 @@ class Session:
 
         Raises:
           (RuntimeError): If the user is not currently logged in
+
         """
         if not self._active_trader:
             raise RuntimeError("The user is currently not logged in")

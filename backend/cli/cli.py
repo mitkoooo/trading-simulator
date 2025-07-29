@@ -1,28 +1,25 @@
-from typing import List, Callable, Optional
-
-from .commands import (
-    do_next,
-    do_place_order,
-    do_cancel_order,
-    do_match,
-    do_status,
-    log_quit,
-    do_portfolio,
-    do_login,
-    do_logout,
-    do_help,
-)
+import functools
+from typing import Callable
 
 from app.context import AppContext
-
 from view.render import display_welcome
 
-import functools
+from .commands import (
+    do_cancel_order,
+    do_help,
+    do_login,
+    do_logout,
+    do_match,
+    do_next,
+    do_place_order,
+    do_portfolio,
+    do_status,
+    log_quit,
+)
 
 
 def log_command_factory(logger):
-    """
-    Returns a decorator that will log using the supplied `logger`.
+    """Returns a decorator that will log using the supplied `logger`.
     """
 
     def decorator(fn):
@@ -40,8 +37,7 @@ def log_command_factory(logger):
 
 
 class CLI:
-    """
-    Read-Eval-Print Loop for the York Stock Exchange CLI.
+    """Read-Eval-Print Loop for the York Stock Exchange CLI.
 
     Manages user input and dispatches commands (next, buy, sell, match, status) to the appropriate handlers.
 
@@ -59,11 +55,11 @@ class CLI:
         >>> cli = CLI(exchange, trader, logger)
         >>> list(cli.commands)
         ['next', 'buy', 'sell', 'match', 'status']
+
     """
 
     def __init__(self, context: AppContext):
-        """
-        Initialize the CLI with its core dependencies and command map.
+        """Initialize the CLI with its core dependencies and command map.
 
         Args:
             context (AppContext): Current application context.
@@ -76,6 +72,7 @@ class CLI:
         >>> cli = CLI(exchange, trader, logger)
         >>> isinstance(cli, CLI)
         True
+
         """
         self.context = context
 
@@ -125,8 +122,7 @@ class CLI:
         }
 
     def run(self):
-        """
-        Start the interactive loop, reading user input and dispatching commands.
+        """Start the interactive loop, reading user input and dispatching commands.
 
         Continuously prompts with '>>> '.
         Handles empty input by printing a blank line, EOF by exiting gracefully,
@@ -143,8 +139,8 @@ class CLI:
         >>> cli = CLI(exchange, trader, logger)
         >>> # This would start an interactive loop
         >>> cli.run()  # doctest: +SKIP
-        """
 
+        """
         display_welcome()
         while True:
             try:

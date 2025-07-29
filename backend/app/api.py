@@ -1,19 +1,18 @@
-from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, WebSocket, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.encoders import jsonable_encoder
 from typing import Dict, Literal
 
-from logging_config import setup_logger
+from fastapi import FastAPI, HTTPException, WebSocket, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
-from engine.stock import Stock
-from engine.exchange import Exchange
-from engine.trader import Trader
-from engine.position import Position
-from engine.broker.broker import Broker
-
-from app.session import Session
 from app.context import AppContext
+from app.session import Session
+from engine.broker.broker import Broker
+from engine.exchange import Exchange
+from engine.position import Position
+from engine.stock import Stock
+from engine.trader import Trader
+from logging_config import setup_logger
 
 
 class LoginRequest(BaseModel):

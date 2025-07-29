@@ -17,6 +17,7 @@ class Position:
         42
         >>> p.avg_price
         100.0
+
     """
 
     symbol: str | None = None

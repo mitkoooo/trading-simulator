@@ -1,6 +1,6 @@
-from typing import List, Optional, Literal
-from sortedcontainers import SortedDict
+from typing import List, Literal, Optional
 
+from sortedcontainers import SortedDict
 
 from engine.order_book.market_order_queue import MarketOrderQueue
 from engine.order_book.order import Order
@@ -35,6 +35,7 @@ class OrderBook:
         >>> ob.add_order(o)
         >>> ob.buy_size()
         1
+
     """
 
     def __init__(self):
@@ -55,8 +56,8 @@ class OrderBook:
                 FIFO queue for market‐sell orders.
             _global_sequence (int):
                 Monotonic counter assigned to each enqueued order.
-        """
 
+        """
         self._buy_levels: SortedDict[float, PriceLevel] = SortedDict(lambda p: -p)
         self._sell_levels: SortedDict[float, PriceLevel] = SortedDict()
 
@@ -81,6 +82,7 @@ class OrderBook:
 
         Returns:
             PriceLevel or None: The existing (or newly created, if `create` is `True`)
+
         """
         levels = self._buy_levels if side == "buy" else self._sell_levels
         lvl: PriceLevel | None = levels.get(price, None)
@@ -113,8 +115,8 @@ class OrderBook:
             >>> ob.add_order(o)
             >>> ob.peek_best_buy() is o
             True
-        """
 
+        """
         side: Literal["buy", "sell"] = order.order_type
         price = order.limit_price
         order.sequence = self._global_sequence
@@ -151,6 +153,7 @@ class OrderBook:
             >>> ob.remove_order(o)
             >>> ob.peek_best_sell() is None
             True
+
         """
         side: Literal["buy", "sell"] = order.order_type
         price = order.limit_price
@@ -196,8 +199,8 @@ class OrderBook:
         >>> ob.add_order(o)
         >>> ob.peek_best_buy() == o
         True
+
         """
-        
         if not self._buy_levels:
             return None
 
@@ -220,6 +223,7 @@ class OrderBook:
         >>> ob.add_order(o)
         >>> ob.peek_best_sell() == o
         True
+
         """
         if not self._sell_levels:
             return None
@@ -230,8 +234,7 @@ class OrderBook:
 
 
     def pop_best_buy(self) -> Optional[Order]:
-        """
-        Remove and return the highest-price buy order.
+        """Remove and return the highest-price buy order.
 
         Returns:
             The Order with the highest limit_price, or None if no buy orders.
@@ -246,6 +249,7 @@ class OrderBook:
         True
         >>> ob.buy_size() == 0
         True
+
         """
         if not self._buy_levels:
             return None
@@ -276,6 +280,7 @@ class OrderBook:
         True
         >>> ob.sell_size() == 0
         True
+
         """
         if not self._sell_levels:
             return None
@@ -303,6 +308,7 @@ class OrderBook:
         >>> ob.add_order(o)
         >>> ob.buy_size()
         1
+
         """
         total = 0
 
@@ -327,6 +333,7 @@ class OrderBook:
         >>> ob.add_order(o)
         >>> ob.sell_size()
         1
+
         """
         total = 0
 
@@ -352,6 +359,7 @@ class OrderBook:
             >>> ob.add_order(Order(trader_id=2, symbol="AAPL", order_type="sell", quantity=2, limit_price=20.0))
             >>> ob.total_size
             2
+
         """
         return self.buy_size() + self.sell_size()
 
@@ -369,6 +377,7 @@ class OrderBook:
             >>> buys = ob.get_buy_orders()
             >>> [o.limit_price for o in buys]
             [55.0, 50.0]
+
         """
         if n and n<=0:
             raise KeyError("Cannot get 0 or less orders from the top of the order book")
@@ -384,8 +393,7 @@ class OrderBook:
         return out
 
     def get_n_sell_orders(self, n=None) -> List[Order]:
-        """
-        Return a list of first `n` limit price sell orders currently in the book (lowest-priority first).
+        """Return a list of first `n` limit price sell orders currently in the book (lowest-priority first).
 
         Examples:
             >>> from engine.order_book import OrderBook
@@ -398,6 +406,7 @@ class OrderBook:
             >>> sells = ob.get_sell_orders()
             >>> [o.limit_price for o in sells]
             [50.0, 55.0]
+
         """
         if n and n<=0:
             raise KeyError("Cannot get 0 or less orders from the top of the order book")

@@ -12,6 +12,7 @@ class AppContext:
       session (Session): Currently active user session.
       exchange (Exchange): The stock Exchange.
       logger (Logger): The logger to log user's actions.
+
     """
 
     def __init__(
@@ -27,6 +28,7 @@ class AppContext:
         broker (Broker): The broker on the stock exchange.
         exchange (Exchange): The stock exchange.
         logger (Logger): The logger to log user's actions.
+
         """
         self.session = session
         self.broker = broker
