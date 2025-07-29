@@ -1,6 +1,8 @@
-from typing import List, Dict
+from typing import Dict, List
 from uuid import uuid4
+
 from engine.order_book.order import Order
+
 from .portfolio import Portfolio
 
 
@@ -18,6 +20,7 @@ class Trader:
     Examples:
         >>> t = Trader(trader_id=1, starting_balance=10000.0)
         >>> o = t.place_order("MTKO", "buy", 42, 10.0)
+
     """
 
     def __init__(
@@ -32,6 +35,7 @@ class Trader:
         Examples:
         >>> t = Trader(trader_id=1, starting_balance=10000.0)
         >>> o = t.place_order("MTKO", "buy", 42, 10.0)
+
         """
         self.trader_id = trader_id or str(uuid4())
         self.portfolio = Portfolio(starting_balance)

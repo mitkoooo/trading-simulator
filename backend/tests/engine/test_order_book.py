@@ -1,6 +1,6 @@
 from engine.order_book.market_order_queue import MarketOrderQueue
-from engine.order_book.order_book import OrderBook
 from engine.order_book.order import Order
+from engine.order_book.order_book import OrderBook
 
 
 def test_market_order_queue_adds_order():

@@ -1,18 +1,17 @@
-import asyncio
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from scripts.bootstrap import bootstrap          
-from app.api import router            
-
+from app.api import router
+from scripts.bootstrap import bootstrap
 
 app = FastAPI(title="GhostSwap API")
+
 
 @app.on_event("startup")
 async def on_startup():
     ctx = await bootstrap()
     app.state.context = ctx
+
 
 @app.on_event("shutdown")
 async def on_shutdown():

@@ -5,23 +5,29 @@ from typing import Literal, Tuple
 from engine.exchange.exchange import Exchange
 from engine.market_data.quote import MarketQuote
 from engine.order_book.order import Order
-from engine.order_book.order_book import OrderBook
 
 
 class RetailPoisson:
-    """SOME DOCSTRING""" #TODO
+    """SOME DOCSTRING"""  # TODO
 
-
-    def __init__(self, exchange: Exchange, symbol: str, mpid: str, limit_rate: float = 1.0, market_rate: float = 0.2, quantity_range: Tuple[int, int] = (1, 5),
-                 tick_size: float = 0.01, market_probability: float = 0.3, ):
-
+    def __init__(
+        self,
+        exchange: Exchange,
+        symbol: str,
+        mpid: str,
+        limit_rate: float = 1.0,
+        market_rate: float = 0.2,
+        quantity_range: Tuple[int, int] = (1, 5),
+        tick_size: float = 0.01,
+        market_probability: float = 0.3,
+    ):
         self.current_mid = None
         self.exchange = exchange
         self.symbol = symbol
         self.limit_rate = limit_rate
         self.market_rate = market_rate
         self.quantity_min, self.quantity_max = quantity_range
-        self.tick_size = tick_size 
+        self.tick_size = tick_size
         self.market_probability = market_probability
         self.mpid = mpid
         self._running = False
@@ -34,7 +40,7 @@ class RetailPoisson:
 
         bid_price = market_quote.bid_price
         ask_price = market_quote.ask_price
-        
+
         if not bid_price or not ask_price:
             if not market_quote.last_price:
                 return
@@ -43,7 +49,7 @@ class RetailPoisson:
             reference_bid = bid_price
             reference_ask = ask_price
 
-        self.current_mid = (reference_bid + reference_ask) / 2 
+        self.current_mid = (reference_bid + reference_ask) / 2
 
     async def run(self):
         self._running = True
@@ -65,19 +71,31 @@ class RetailPoisson:
             side: Literal["buy", "sell"] = random.choice(["buy", "sell"])
             # Random size in configured size_range
             quantity = random.randint(self.quantity_min, self.quantity_max)
-            
+
             # Place market order_book
             if order_type == "market":
-                order = Order(mpid=self.mpid, order_type=side, symbol=self.symbol, quantity=quantity, limit_price=None)
+                order = Order(
+                    mpid=self.mpid,
+                    order_type=side,
+                    symbol=self.symbol,
+                    quantity=quantity,
+                    limit_price=None,
+                )
             else:
                 # one tick inward from mid
-                offset = -self.tick_size if side=="buy" else self.tick_size
-                assert self.current_mid, ValueError("Current mid price is unexpectedly None")
+                offset = -self.tick_size if side == "buy" else self.tick_size
+                assert self.current_mid, ValueError(
+                    "Current mid price is unexpectedly None"
+                )
                 price = round(self.current_mid + offset, 2)
-                order = Order(mpid=self.mpid, order_type=side, symbol=self.symbol, quantity=quantity, limit_price=price)
+                order = Order(
+                    mpid=self.mpid,
+                    order_type=side,
+                    symbol=self.symbol,
+                    quantity=quantity,
+                    limit_price=price,
+                )
             try:
                 await self.exchange.add_order(order)
             except Exception:
                 continue
-
-

@@ -1,7 +1,6 @@
 import pytest
 
 from app.context import AppContext
-
 from engine.position import Position
 from engine.trader import Trader
 
@@ -37,15 +36,15 @@ async def test_broker_reserves_shares_on_order(test_context: AppContext):
     assert trader
     tid = trader.trader_id
 
-    trader.portfolio.positions[SYMBOL] = Position(qty=old_quantity,
-                                                  avg_price=10)
+    trader.portfolio.positions[SYMBOL] = Position(
+        qty=old_quantity, avg_price=10
+    )
 
     tid = trader.trader_id
 
     broker = test_context.broker
 
-    await broker.submit_order(tid, SYMBOL, ORDER_TYPE, QUANTITY,
-                              LIMIT_PRICE)
+    await broker.submit_order(tid, SYMBOL, ORDER_TYPE, QUANTITY, LIMIT_PRICE)
 
     assert trader.portfolio.positions[SYMBOL].qty == old_quantity - QUANTITY
 
@@ -64,8 +63,9 @@ async def test_broker_release_cash_on_cancel(test_context: AppContext):
 
     broker = test_context.broker
 
-    o = await broker.submit_order(tid, SYMBOL, ORDER_TYPE, QUANTITY,
-                                  LIMIT_PRICE)
+    o = await broker.submit_order(
+        tid, SYMBOL, ORDER_TYPE, QUANTITY, LIMIT_PRICE
+    )
     await broker.cancel_order(o.order_id)
 
     assert trader.portfolio.cash == old_cash
@@ -82,13 +82,15 @@ async def test_broker_release_shares_on_cancel(test_context: AppContext):
     trader = test_context.session.active_trader
     assert trader
     tid = trader.trader_id
-    trader.portfolio.positions[SYMBOL] = Position(qty=old_quantity,
-                                                  avg_price=10)
+    trader.portfolio.positions[SYMBOL] = Position(
+        qty=old_quantity, avg_price=10
+    )
 
     broker = test_context.broker
 
-    o = await broker.submit_order(tid, SYMBOL, ORDER_TYPE, QUANTITY,
-                                  LIMIT_PRICE)
+    o = await broker.submit_order(
+        tid, SYMBOL, ORDER_TYPE, QUANTITY, LIMIT_PRICE
+    )
 
     await broker.cancel_order(o.order_id)
 
@@ -96,8 +98,9 @@ async def test_broker_release_shares_on_cancel(test_context: AppContext):
 
 
 @pytest.mark.asyncio
-async def test_broker_reserves_cash_on_partial_fill(test_context: AppContext,
-                                                    sample_trader2: Trader):
+async def test_broker_reserves_cash_on_partial_fill(
+    test_context: AppContext, sample_trader2: Trader
+):
     SYMBOL = "AAPL"
     old_cash = sample_trader2.portfolio.cash
     QUANTITY = 10
@@ -115,7 +118,9 @@ async def test_broker_reserves_cash_on_partial_fill(test_context: AppContext,
 
     broker = test_context.broker
 
-    await broker.submit_order(ask_id, SYMBOL, "sell", QUANTITY-5, LIMIT_PRICE)
+    await broker.submit_order(
+        ask_id, SYMBOL, "sell", QUANTITY - 5, LIMIT_PRICE
+    )
     await broker.submit_order(bid_id, SYMBOL, "buy", QUANTITY, LIMIT_PRICE)
 
     assert trader2.portfolio.cash == old_cash - NOTIONAL

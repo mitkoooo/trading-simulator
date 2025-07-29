@@ -1,14 +1,14 @@
-import pytest
 import logging
 
-from cli.commands import (
-    validate_symbol,
-    handle_order,
-    do_place_order,
-    do_match,
-)
+import pytest
 
 from app.context import AppContext
+from cli.commands import (
+    do_match,
+    do_place_order,
+    handle_order,
+    validate_symbol,
+)
 from engine.exchange.exchange import Exchange
 from engine.order_book.order import Order
 

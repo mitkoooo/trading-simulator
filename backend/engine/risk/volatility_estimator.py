@@ -2,7 +2,7 @@ from collections import deque
 
 
 class VolatilityEstimator:
-    """SOME DOCSTRING"""        # TODO
+    """SOME DOCSTRING"""  # TODO
 
     @staticmethod
     def realized_vol(mid_history: deque[float]):
@@ -20,14 +20,14 @@ class VolatilityEstimator:
 
         for i in range(1, n):
             old = mid_history[i]
-            new = mid_history[i-1]
+            new = mid_history[i - 1]
 
             percentage_delta = _compute_percentage_delta(new, old)
 
             returns.append(percentage_delta)
 
         # Measure spread or variance of returns
-        var = sum(r*r for r in returns) / len(returns)
+        var = sum(r * r for r in returns) / len(returns)
 
         # Convert to volatility (std × latest mid-price)
         # Final volatility tells market‑maker, "Prices are moving around by

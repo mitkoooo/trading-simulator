@@ -2,9 +2,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
+
 @dataclass(frozen=True)
 class MarketQuote:
-    """SOME DOCSTRING""" #TODO
+    """SOME DOCSTRING"""  # TODO
+
     symbol: str
     bid_price: Optional[float]
     bid_size: int
@@ -25,5 +27,4 @@ class MarketQuote:
         if self.bid_price is None or self.ask_price is None:
             return None
 
-        return (self.ask_price - self.bid_price)
-
+        return self.ask_price - self.bid_price

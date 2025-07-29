@@ -1,7 +1,7 @@
 import pytest
 
-from engine.order_book.order import Order
 from app.context import AppContext
+from engine.order_book.order import Order
 
 
 def test_order_constructor_invalid_qty():

@@ -1,13 +1,12 @@
+import uuid
 from datetime import datetime
 from typing import Literal
-import uuid
 
 from engine.order_book.order import Order
 
 
 class Trade:
-    """
-    A record of an executed match between a buy and a sell order.
+    """A record of an executed match between a buy and a sell order.
 
     Attributes:
       trade_id (str): Unique trade indentifier.
@@ -17,6 +16,7 @@ class Trade:
       quantity (int): Actual number of shares traded.
       price (float): Actual execution price.
       timestamp (datetime): Creation time of the trade.
+
     """
 
     def __init__(
@@ -27,8 +27,7 @@ class Trade:
         quantity: int,
         price: float,
     ):
-        """
-        Create a Trade. Used by Exchange.match_orders().
+        """Create a Trade. Used by Exchange.match_orders().
 
         Args:
           buy_order (Order):
@@ -57,6 +56,7 @@ class Trade:
             >>> t = Trade(o1, o2, "AAPL", 4, 42, 4, 42)
             >>> t.symbol
             'AAPL'
+
         """
         self.trade_id = str(uuid.uuid4())  # Generate new unique identifier
         self.buy_order = buy_order
@@ -76,4 +76,4 @@ class Trade:
             f"buy={self.buy_order!r} "
             f"sell={self.sell_order!r} "
             f"time={self.timestamp.isoformat()}>"
-            )
+        )

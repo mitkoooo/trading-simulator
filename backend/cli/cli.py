@@ -1,36 +1,35 @@
-import inspect
 import asyncio
-
-from .commands import (
-    do_next,
-    do_place_order,
-    do_cancel_order,
-    do_match,
-    do_status,
-    log_quit,
-    do_portfolio,
-    do_login,
-    do_logout,
-    do_help,
-)
+import functools
+import inspect
 
 from app.context import AppContext
-
 from cli.render import display_welcome
 
-import functools
+from .commands import (
+    do_cancel_order,
+    do_help,
+    do_login,
+    do_logout,
+    do_match,
+    do_next,
+    do_place_order,
+    do_portfolio,
+    do_status,
+    log_quit,
+)
 
 
 def log_command_factory(logger):
-    """
-    Returns a decorator that will log using the supplied `logger`.
+    """Returns a decorator that will log using the supplied `logger`.
     """
 
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
             cmd = fn.__name__.replace("do_", "").upper()
-            logger.info("%s command received: args=%r, kwargs=%r", cmd, args, kwargs)
+            logger.info(
+                "%s command received: args=%r, kwargs=%r", cmd, args, kwargs
+            )
             result = fn(*args, **kwargs)
             logger.info("%s command processed", cmd)
             return result
@@ -41,8 +40,7 @@ def log_command_factory(logger):
 
 
 class CLI:
-    """
-    Read-Eval-Print Loop for the York Stock Exchange CLI.
+    """Read-Eval-Print Loop for the York Stock Exchange CLI.
 
     Manages user input and dispatches commands (next, buy, sell, match, status) to the appropriate handlers.
 
@@ -60,11 +58,11 @@ class CLI:
         >>> cli = CLI(exchange, trader, logger)
         >>> list(cli.commands)
         ['next', 'buy', 'sell', 'match', 'status']
+
     """
 
     def __init__(self, context: AppContext):
-        """
-        Initialize the CLI with its core dependencies and command map.
+        """Initialize the CLI with its core dependencies and command map.
 
         Args:
             context (AppContext): Current application context.
@@ -77,6 +75,7 @@ class CLI:
         >>> cli = CLI(exchange, trader, logger)
         >>> isinstance(cli, CLI)
         True
+
         """
         self.context = context
 
@@ -116,7 +115,7 @@ class CLI:
             "login": _with_args(do_login),
             "logout": _no_args(do_logout),
             "next": _no_args(do_next),
-            "buy":  _with_side("buy"),
+            "buy": _with_side("buy"),
             "sell": _with_side("sell"),
             "cancel": _no_args(do_cancel_order),
             "match": _with_args(do_match),
@@ -126,8 +125,7 @@ class CLI:
         }
 
     async def run(self):
-        """
-        Start the interactive loop, reading user input and dispatching commands.
+        """Start the interactive loop, reading user input and dispatching commands.
 
         Continuously prompts with '>>> '.
         Handles empty input by printing a blank line, EOF by exiting gracefully,
@@ -144,8 +142,8 @@ class CLI:
         >>> cli = CLI(exchange, trader, logger)
         >>> # This would start an interactive loop
         >>> cli.run()  # doctest: +SKIP
-        """
 
+        """
         display_welcome()
         while True:
             try:
@@ -164,7 +162,6 @@ class CLI:
                 log_quit(self.context)
                 break
 
-
             handler = self.commands.get(cmd)
             if not handler:
                 print("Unknown command. Please try again.")
@@ -173,5 +170,3 @@ class CLI:
             result = handler(args if args else None)
             if inspect.iscoroutine(result):
                 await result
-
-                

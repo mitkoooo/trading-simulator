@@ -1,6 +1,6 @@
-from datetime import datetime
-from typing import Optional, Literal
 import uuid
+from datetime import datetime
+from typing import Literal, Optional
 
 
 class Order:
@@ -24,6 +24,7 @@ class Order:
         ...     quantity=2,
         ...     limit_price=999.0
         ... )
+
     """
 
     def __init__(
@@ -59,8 +60,8 @@ class Order:
         ...     quantity=2,
         ...     limit_price=999.0
         ... )
-        """
 
+        """
         if quantity <= 0:
             msg = f"Order must have quantity > 0. (got {quantity})"
             raise ValueError(msg)

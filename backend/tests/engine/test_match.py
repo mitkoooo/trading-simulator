@@ -1,14 +1,14 @@
 import pytest
 
 from app.context import AppContext
-
-from engine.trader import Trader
 from engine.position import Position
+from engine.trader import Trader
 
 
 @pytest.mark.asyncio
-async def test_match_exact_match(test_context: AppContext,
-                                 sample_trader2: Trader):
+async def test_match_exact_match(
+    test_context: AppContext, sample_trader2: Trader
+):
     SYMBOL = "AAPL"
 
     trader1 = test_context.session.active_trader
@@ -35,8 +35,9 @@ async def test_match_exact_match(test_context: AppContext,
 
 
 @pytest.mark.asyncio
-async def test_match_partial_fill(test_context: AppContext,
-                                  sample_trader2: Trader):
+async def test_match_partial_fill(
+    test_context: AppContext, sample_trader2: Trader
+):
     SYMBOL = "AAPL"
 
     trader1 = test_context.session.active_trader
@@ -68,8 +69,9 @@ async def test_match_partial_fill(test_context: AppContext,
 
 
 @pytest.mark.asyncio
-async def test_match_multistep_match(test_context: AppContext,
-                                     sample_trader2: Trader):
+async def test_match_multistep_match(
+    test_context: AppContext, sample_trader2: Trader
+):
     SYMBOL = "AAPL"
 
     trader1 = test_context.session.active_trader
@@ -95,9 +97,7 @@ async def test_match_multistep_match(test_context: AppContext,
     assert best_buy
 
     assert exchange.order_books[SYMBOL].buy_size() == 1
-    assert best_buy.quantity == (
-        qty_buy - qty_sell
-    )
+    assert best_buy.quantity == (qty_buy - qty_sell)
     assert exchange.order_books[SYMBOL].sell_size() == 0
 
     await broker.submit_order(tid1, SYMBOL, "sell", qty_sell, 100)
@@ -111,8 +111,9 @@ async def test_match_multistep_match(test_context: AppContext,
 
 
 @pytest.mark.asyncio
-async def test_match_no_match(test_context: AppContext,
-                              sample_trader2: Trader):
+async def test_match_no_match(
+    test_context: AppContext, sample_trader2: Trader
+):
     SYMBOL = "AAPL"
 
     trader1 = test_context.session.active_trader
@@ -142,8 +143,9 @@ async def test_match_no_match(test_context: AppContext,
 
 
 @pytest.mark.asyncio
-async def test_match_price_time(test_context: AppContext,
-                                sample_trader2: Trader):
+async def test_match_price_time(
+    test_context: AppContext, sample_trader2: Trader
+):
     SYMBOL = "AAPL"
 
     trader1 = test_context.session.active_trader
@@ -171,8 +173,9 @@ async def test_match_price_time(test_context: AppContext,
 
 
 @pytest.mark.asyncio
-async def test_match_market_price_buy(test_context: AppContext,
-                                      sample_trader2: Trader):
+async def test_match_market_price_buy(
+    test_context: AppContext, sample_trader2: Trader
+):
     SYMBOL = "AAPL"
 
     trader1 = test_context.session.active_trader

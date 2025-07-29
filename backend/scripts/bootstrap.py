@@ -1,32 +1,42 @@
-from typing import Dict, Optional, Literal
-import yaml
 import asyncio
 from pathlib import Path
+from typing import Dict, Literal, Optional
+
+import yaml
 
 from app.context import AppContext
 from app.session import Session
-
+from config.logging_config import setup_logger
 from engine.bots.passive_mm.passive_mm import PassiveMM
 from engine.bots.retail_poisson import RetailPoisson
 from engine.broker.broker import Broker
 from engine.exchange.exchange import Exchange
 from engine.exchange.participant_info import ParticipantInfo
-from engine.order_book.order import Order
 from engine.instruments.stock import Stock
+from engine.order_book.order import Order
 from engine.trader import Trader
-from config.logging_config import setup_logger
 
 # backend/bootstrap.py lives under backend/
-BASE_DIR = Path(__file__).resolve().parents[1]   # -> <repo>/backend
+BASE_DIR = Path(__file__).resolve().parents[1]  # -> <repo>/backend
 CONFIG_DIR = (BASE_DIR / "config").resolve()
 
 
 def register_bots_from_yaml(exchange: Exchange, bot: Dict):
-    categories = ["mpid", "display_name", "ptype", "margin_category",
-                  "allowed_symbols", "price_band_limit", "max_order_size",
-                  "max_notional_per_minute", "max_msgs_per_second",
-                  "clearing_member_id", "settlement_account", "initial_cash",
-                  "initial_positions"]
+    categories = [
+        "mpid",
+        "display_name",
+        "ptype",
+        "margin_category",
+        "allowed_symbols",
+        "price_band_limit",
+        "max_order_size",
+        "max_notional_per_minute",
+        "max_msgs_per_second",
+        "clearing_member_id",
+        "settlement_account",
+        "initial_cash",
+        "initial_positions",
+    ]
 
     kwargs = {k: bot[k] for k in categories}
 
@@ -35,20 +45,21 @@ def register_bots_from_yaml(exchange: Exchange, bot: Dict):
     exchange.register_participant(bot["mpid"], info)
 
 
-async def bootstrap(participants_path: Optional[str | Path] = None,
-                    market_data_path: Optional[str | Path] = None):
+async def bootstrap(
+    participants_path: Optional[str | Path] = None,
+    market_data_path: Optional[str | Path] = None,
+):
+    participants_path = Path(
+        participants_path or CONFIG_DIR / "participants.yml"
+    )
 
-    participants_path = Path(participants_path or
-                             CONFIG_DIR / "participants.yml")
-
-    market_data_path = Path(market_data_path or
-                            CONFIG_DIR / "market_data.yml")
+    market_data_path = Path(market_data_path or CONFIG_DIR / "market_data.yml")
 
     market_data_yml = yaml.safe_load(open(market_data_path))
 
     def _get_seed_price(i, side: Literal["buy", "sell"]) -> float:
         sign = 1 if side == "sell" else -1
-        return market_data_yml[symbol] + sign*i*tick
+        return market_data_yml[symbol] + sign * i * tick
 
     # 1. Core systems
     exchange = Exchange()
@@ -86,8 +97,14 @@ async def bootstrap(participants_path: Optional[str | Path] = None,
     for rp in config["retail_bots"]:
         register_bots_from_yaml(exchange, rp)
 
-        categories = ["symbol", "limit_rate", "market_rate", "quantity_range",
-                      "tick_size", "market_probability"]
+        categories = [
+            "symbol",
+            "limit_rate",
+            "market_rate",
+            "quantity_range",
+            "tick_size",
+            "market_probability",
+        ]
 
         bot_kwargs = {k: rp[k] for k in categories}
 

@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from engine.market_data.quote import MarketQuote
 from engine.bots.passive_mm.passive_mm import PassiveMM
 from engine.exchange.exchange import Exchange
+from engine.market_data.quote import MarketQuote
 from engine.order_book.order import Order
 from engine.trade import Trade
 
@@ -41,7 +41,7 @@ def test_update_inventory_on_trade_buy_order(sample_exchange: Exchange):
     sample_exchange.emit_trade(SYMBOL, trade)
 
     assert passive_mm.inv_manager.position == TRADE_QTY
-    assert passive_mm.inv_manager.realized_pnl == - TRADE_QTY * TRADE_PRICE
+    assert passive_mm.inv_manager.realized_pnl == -TRADE_QTY * TRADE_PRICE
 
 
 def test_update_inventory_on_trade_sell_order(sample_exchange: Exchange):
@@ -57,7 +57,7 @@ def test_update_inventory_on_trade_sell_order(sample_exchange: Exchange):
 
     sample_exchange.emit_trade(SYMBOL, trade)
 
-    assert passive_mm.inv_manager.position == - TRADE_QTY
+    assert passive_mm.inv_manager.position == -TRADE_QTY
     assert passive_mm.inv_manager.realized_pnl == TRADE_QTY * TRADE_PRICE
 
 
@@ -69,8 +69,15 @@ def test_get_mid_history(sample_exchange: Exchange):
 
     assert passive_mm.data_handler.get_mid_history() == []
 
-    mq = MarketQuote(SYMBOL, bid_price=None, bid_size=1, ask_price=None,
-                     ask_size=1, last_price=100, timestamp=ts)
+    mq = MarketQuote(
+        SYMBOL,
+        bid_price=None,
+        bid_size=1,
+        ask_price=None,
+        ask_size=1,
+        last_price=100,
+        timestamp=ts,
+    )
 
     passive_mm.data_handler.on_book_update(mq)
 
@@ -83,8 +90,15 @@ def test_on_book_update_mid_on_no_quote(sample_exchange: Exchange):
 
     passive_mm = PassiveMM(sample_exchange, SYMBOL, "MM_TEST")
 
-    mq = MarketQuote(SYMBOL, bid_price=None, bid_size=1, ask_price=None,
-                     ask_size=1, last_price=None, timestamp=ts)
+    mq = MarketQuote(
+        SYMBOL,
+        bid_price=None,
+        bid_size=1,
+        ask_price=None,
+        ask_size=1,
+        last_price=None,
+        timestamp=ts,
+    )
 
     passive_mm.data_handler.on_book_update(mq)
 
@@ -97,8 +111,15 @@ def test_on_book_update_mid_on_quote_empty(sample_exchange: Exchange):
 
     passive_mm = PassiveMM(sample_exchange, SYMBOL, "MM_TEST")
 
-    mq = MarketQuote(SYMBOL, bid_price=None, bid_size=0, ask_price=None,
-                     ask_size=0, last_price=None, timestamp=ts)
+    mq = MarketQuote(
+        SYMBOL,
+        bid_price=None,
+        bid_size=0,
+        ask_price=None,
+        ask_size=0,
+        last_price=None,
+        timestamp=ts,
+    )
 
     passive_mm.data_handler.on_book_update(mq)
 
@@ -111,8 +132,15 @@ def test_on_book_update_mid_on_quote(sample_exchange: Exchange):
 
     passive_mm = PassiveMM(sample_exchange, SYMBOL, "MM_TEST")
 
-    mq = MarketQuote(SYMBOL, bid_price=101, bid_size=1, ask_price=99,
-                     ask_size=1, last_price=None, timestamp=ts)
+    mq = MarketQuote(
+        SYMBOL,
+        bid_price=101,
+        bid_size=1,
+        ask_price=99,
+        ask_size=1,
+        last_price=None,
+        timestamp=ts,
+    )
 
     passive_mm.data_handler.on_book_update(mq)
 
@@ -122,7 +150,7 @@ def test_on_book_update_mid_on_quote(sample_exchange: Exchange):
 
 def test_compute_quote(sample_exchange: Exchange):
     SYMBOL = "AAPL"
-    mid = (101+99) / 2      # 100
+    mid = (101 + 99) / 2  # 100
     vol = 2.0
     depth_imb = 10
     inventory = 100
@@ -131,8 +159,9 @@ def test_compute_quote(sample_exchange: Exchange):
 
     qe = passive_mm.quote_engine
 
-    bid_price, ask_price = passive_mm.quote_engine.compute(mid, vol, depth_imb,
-                                                           inventory)
+    bid_price, ask_price = passive_mm.quote_engine.compute(
+        mid, vol, depth_imb, inventory
+    )
 
     assert bid_price and ask_price
 

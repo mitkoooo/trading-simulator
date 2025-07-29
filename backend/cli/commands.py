@@ -1,21 +1,20 @@
-from typing import List, Literal, LiteralString
+from typing import List, Literal
 
 from app.context import AppContext
-
-from cli.validation import parse_order, validate_symbol
-
-from engine.trade import Trade
 from cli.render import (
-    display_prices,
-    display_portfolio,
-    display_pending_orders,
     display_help_menu,
+    display_pending_orders,
+    display_portfolio,
+    display_prices,
 )
+from cli.validation import parse_order, validate_symbol
+from engine.trade import Trade
 
 
-async def handle_order(context: AppContext, order_type: Literal["buy", "sell"], args: list[str]):
-    """
-    Handle a buy or sell order: parse args, validate and enqueue the order, then show portfolio.
+async def handle_order(
+    context: AppContext, order_type: Literal["buy", "sell"], args: list[str]
+):
+    """Handle a buy or sell order: parse args, validate and enqueue the order, then show portfolio.
 
     Prints usage errors or order confirmation followed by the updated portfolio.
 
@@ -29,14 +28,22 @@ async def handle_order(context: AppContext, order_type: Literal["buy", "sell"], 
         Order placed for AAPL.
         Cash balance: $1000.0
         Holdings: {}
+
     """
-    exchange, session, logger, broker = context.exchange, context.session, context.logger, context.broker
+    exchange, session, logger, broker = (
+        context.exchange,
+        context.session,
+        context.logger,
+        context.broker,
+    )
 
     try:
         trader = session.require_active()
 
     except:
-        print("\nYou must log in to use this command. Please use login <trader_id>.\n")
+        print(
+            "\nYou must log in to use this command. Please use login <trader_id>.\n"
+        )
         logger.warning(
             "%s command usage error: args=%r — %s",
             order_type.upper(),
@@ -60,14 +67,15 @@ async def handle_order(context: AppContext, order_type: Literal["buy", "sell"], 
     if validate_symbol(symbol, exchange, order_type.upper(), args) == False:
         return
 
-    await broker.submit_order(trader.trader_id, symbol, order_type, quantity, price) 
+    await broker.submit_order(
+        trader.trader_id, symbol, order_type, quantity, price
+    )
 
     print(f"\nOrder placed for {symbol}.\n")
 
 
 def do_next(context: AppContext):
-    """
-    Advance the market by one tick and display prices & portfolio.
+    """Advance the market by one tick and display prices & portfolio.
 
     Examples:
         >>> from engine.exchange import Exchange
@@ -77,6 +85,7 @@ def do_next(context: AppContext):
         >>> tr = Trader(1, 1000.0)
         >>> do_next(ex, tr) is None
         True
+
     """
     exchange = context.exchange
 
@@ -85,9 +94,10 @@ def do_next(context: AppContext):
     print()
 
 
-async def do_place_order(context: AppContext, order_type: Literal["buy", "sell"], args: List[str]):
-    """
-    Enqueue a buy/sell order and log details if valid.
+async def do_place_order(
+    context: AppContext, order_type: Literal["buy", "sell"], args: List[str]
+):
+    """Enqueue a buy/sell order and log details if valid.
 
     Examples:
         >>> from engine.exchange import Exchange
@@ -97,8 +107,8 @@ async def do_place_order(context: AppContext, order_type: Literal["buy", "sell"]
         >>> tr = Trader(1, 1000.0)
         >>> do_place_order(ex, tr, 'sell', ['AAPL', '1', '100']) is None
         True
-    """
 
+    """
     logger = context.logger
 
     symbol, qty, price = parse_order(args)
@@ -123,7 +133,9 @@ async def do_cancel_order(context: AppContext):
         trader = context.session.require_active()
 
     except:
-        print("\nYou must log in to use this command. Please use login <trader_id>.\n")
+        print(
+            "\nYou must log in to use this command. Please use login <trader_id>.\n"
+        )
         logger.warning(
             "%s command usage error: %s",
             "CANCEL",
@@ -161,22 +173,23 @@ async def do_cancel_order(context: AppContext):
             print("\nThe operation was cancelled.\n")
             break
 
-        if not raw.strip() or not raw.isdigit() or int(raw) not in range(1, len(pending_orders) + 1):
+        if (
+            not raw.strip()
+            or not raw.isdigit()
+            or int(raw) not in range(1, len(pending_orders) + 1)
+        ):
             print(
                 "\nPlease choose an order number to cancel or cancel the operation by writing 'q'\n"
-                )
+            )
         else:
             order_id = pending_orders[int(raw) - 1].order_id
             await broker.cancel_order(order_id)
             print("\nThe order has been successfully cancelled.\n")
             break
-            
-
 
 
 def do_match(context: AppContext, args: List[str]):
-    """
-    Attempt to match orders for a given symbol and display results.
+    """Attempt to match orders for a given symbol and display results.
 
     Examples:
         >>> from engine.exchange import Exchange
@@ -184,6 +197,7 @@ def do_match(context: AppContext, args: List[str]):
         >>> ex = Exchange({'AAPL': Stock('AAPL', 100.0)})
         >>> do_match(ex, ['AAPL'])
         No trades yet
+
     """
     logger = context.logger
     exchange = context.exchange
@@ -212,7 +226,6 @@ def do_match(context: AppContext, args: List[str]):
             break
         broker.settle_trade(trade)
         trades.append(trade)
-    
 
     if not trades:
         print("\nNo trades yet\n")
@@ -229,13 +242,19 @@ def do_match(context: AppContext, args: List[str]):
 
 
 def do_portfolio(context: AppContext):
-
-    session, logger, exchange, broker = context.session, context.logger, context.exchange, context.broker
+    session, logger, exchange, broker = (
+        context.session,
+        context.logger,
+        context.exchange,
+        context.broker,
+    )
 
     try:
         trader = session.require_active()
     except:
-        print("\nYou must log in to use this command. Please use login <trader_id>.\n")
+        print(
+            "\nYou must log in to use this command. Please use login <trader_id>.\n"
+        )
         logger.warning(
             "%s command usage error: %s",
             "PORTFOLIO",
@@ -248,8 +267,7 @@ def do_portfolio(context: AppContext):
 
 
 def do_status(context: AppContext):
-    """
-    Display pending orders and the trader's portfolio.
+    """Display pending orders and the trader's portfolio.
 
     Examples:
         >>> from engine.exchange import Exchange
@@ -261,18 +279,15 @@ def do_status(context: AppContext):
         Currently there are no pending orders on the exchange.
         Cash balance: $1000.0
         Holdings: {}
+
     """
     logger, exchange = context.logger, context.exchange
 
-    pending = sum(
-        book.total_size
-        for book in exchange.order_books.values()
-    )
+    pending = sum(book.total_size for book in exchange.order_books.values())
     if pending > 0:
         display_pending_orders(exchange)
     else:
         print("\nCurrently there are no pending orders on the exchange.\n")
-
 
     logger.info("STATUS viewed: %d pending orders", pending)
 
@@ -326,12 +341,12 @@ def do_help(context: AppContext):
 
 
 def log_quit(context: AppContext):
-    """
-    Print goodbye and log shutdown.
+    """Print goodbye and log shutdown.
 
     Examples:
         >>> log_quit() # doctest: +NORMALIZE_WHITESPACE
         Thank you for using York Stock Exchange.
+
     """
     logger = context.logger
 

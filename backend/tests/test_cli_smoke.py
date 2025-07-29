@@ -1,6 +1,6 @@
+import os
 import subprocess
 import sys
-import os
 
 CLI_LOOP_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "main.py")

@@ -1,8 +1,8 @@
 from datetime import datetime
-from engine.market_data.quote import MarketQuote
-from engine.position import Position
 
 from app.context import AppContext
+from engine.market_data.quote import MarketQuote
+from engine.position import Position
 
 
 def test_portfolio_value_pure_cash(test_context: AppContext):
@@ -22,9 +22,17 @@ def test_portfolio_value_combined(test_context: AppContext):
     SHARE_NUM = 50
     ts = datetime.now()
 
-    quotes = {SYMBOL: MarketQuote(SYMBOL, bid_price=None, bid_size=0,
-                                  ask_price=None, ask_size=0, last_price=100,
-                                  timestamp=ts)}
+    quotes = {
+        SYMBOL: MarketQuote(
+            SYMBOL,
+            bid_price=None,
+            bid_size=0,
+            ask_price=None,
+            ask_size=0,
+            last_price=100,
+            timestamp=ts,
+        )
+    }
 
     quote = quotes[SYMBOL]
     assert quote and quote.last_price
@@ -49,12 +57,21 @@ def test_portfolio_calculate_unrealized_pl_loss(test_context: AppContext):
 
     trader = test_context.session.active_trader
     assert trader
-    trader.portfolio.positions[SYMBOL] = Position(SYMBOL, POSITION_QTY,
-                                                  AVG_PRICE)
+    trader.portfolio.positions[SYMBOL] = Position(
+        SYMBOL, POSITION_QTY, AVG_PRICE
+    )
 
-    quotes = {SYMBOL: MarketQuote(symbol=SYMBOL, bid_price=None, bid_size=0,
-                                  ask_price=None, ask_size=0, last_price=last,
-                                  timestamp=ts)}
+    quotes = {
+        SYMBOL: MarketQuote(
+            symbol=SYMBOL,
+            bid_price=None,
+            bid_size=0,
+            ask_price=None,
+            ask_size=0,
+            last_price=last,
+            timestamp=ts,
+        )
+    }
 
     quote = quotes[SYMBOL]
     assert quote and quote.last_price
@@ -74,18 +91,27 @@ def test_portfolio_calculate_unrealized_pl_profit(test_context: AppContext):
 
     trader = test_context.session.active_trader
     assert trader
-    trader.portfolio.positions[SYMBOL] = Position(SYMBOL, POSITION_QTY,
-                                                  AVG_PRICE)
+    trader.portfolio.positions[SYMBOL] = Position(
+        SYMBOL, POSITION_QTY, AVG_PRICE
+    )
 
-    quotes = {SYMBOL: MarketQuote(symbol=SYMBOL, bid_price=None, bid_size=0,
-                                  ask_price=None, ask_size=0, last_price=last,
-                                  timestamp=ts)}
+    quotes = {
+        SYMBOL: MarketQuote(
+            symbol=SYMBOL,
+            bid_price=None,
+            bid_size=0,
+            ask_price=None,
+            ask_size=0,
+            last_price=last,
+            timestamp=ts,
+        )
+    }
 
     quote = quotes[SYMBOL]
     assert quote and quote.last_price
 
     pl = trader.portfolio.calculate_unrealized_pl(SYMBOL, quotes)
-    profit = (1 * POSITION_QTY)
+    profit = 1 * POSITION_QTY
 
     assert pl == profit
 
@@ -97,8 +123,9 @@ def test_portfolio_calculate_pl_unknown_ticket(test_context: AppContext):
 
     trader = test_context.session.active_trader
     assert trader
-    trader.portfolio.positions[SYMBOL] = Position(SYMBOL, POSITION_QTY,
-                                                  AVG_PRICE)
+    trader.portfolio.positions[SYMBOL] = Position(
+        SYMBOL, POSITION_QTY, AVG_PRICE
+    )
 
     quotes = test_context.exchange.quotes
 

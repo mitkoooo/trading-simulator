@@ -1,16 +1,14 @@
-from engine.exchange.exchange import Exchange
-from engine.trader import Trader
-
-from typing import List, Tuple
 import logging
+from typing import List, Tuple
+
 from config.logging_config import LOG_NAME
+from engine.exchange.exchange import Exchange
 
 logger = logging.getLogger(LOG_NAME)
 
 
 def parse_order(args: List[str]) -> Tuple[str, int, float]:
-    """
-    Parse a list of CLI args into (symbol, qty, price).
+    """Parse a list of CLI args into (symbol, qty, price).
 
     Args:
         args (List[str]): [symbol, qty, price] as strings.
@@ -24,8 +22,8 @@ def parse_order(args: List[str]) -> Tuple[str, int, float]:
         ('AAPL', 10, 150.0)
         >>> parse_order(["AAPL","foo","150"])
         ('AAPL', None, None)
-    """
 
+    """
     if args is None or len(args) != 3:
         return None, None, None
 
@@ -37,9 +35,10 @@ def parse_order(args: List[str]) -> Tuple[str, int, float]:
         return symbol, None, None
 
 
-def validate_symbol(symbol: str, exchange: Exchange, cmd: str, args: List[str]) -> bool:
-    """
-    Check that SYMBOL exists in exchange.market_data, else print and log warning.
+def validate_symbol(
+    symbol: str, exchange: Exchange, cmd: str, args: List[str]
+) -> bool:
+    """Check that SYMBOL exists in exchange.market_data, else print and log warning.
 
     Args:
         symbol (str): ticket to validate
@@ -58,13 +57,16 @@ def validate_symbol(symbol: str, exchange: Exchange, cmd: str, args: List[str]) 
         True
         >>> validate_symbol("FOO", ex, "BUY", ["FOO","1","1"])  # doctest: +SKIP
         False
+
     """
     if symbol not in exchange.instruments:
         valid = ", ".join(sorted(exchange.instruments.keys()))
 
         print(f"Unknown symbol. Please enter one of: {valid}")
 
-        logger.warning("%s command usage error: args=%r — unknown symbol", cmd, args)
+        logger.warning(
+            "%s command usage error: args=%r — unknown symbol", cmd, args
+        )
         return False
     else:
         return True

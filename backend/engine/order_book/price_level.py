@@ -17,6 +17,7 @@ class PriceLevel(OrderQueue):
             Deque storing orders at the same price in FIFO sequence.
         total_shares (int):
             Sum of `order.quantity` for all orders currently in the queue.
+
     """
 
     def __init__(self) -> None:
@@ -31,6 +32,7 @@ class PriceLevel(OrderQueue):
 
         Side Effects:
             - Increments `total_shares` by `order.quantity`.
+
         """
         self._queue.append(order)
         self.total_shares += order.quantity
@@ -44,6 +46,7 @@ class PriceLevel(OrderQueue):
 
         Side Effects:
             - Decrements `total_shares` by the returned order's quantity.
+
         """
         if not self._queue:
             return None
@@ -58,6 +61,7 @@ class PriceLevel(OrderQueue):
 
         Returns:
             Order or None: The oldest order, or `None` if the queue is empty.
+
         """
         return self._queue[0] if self._queue else None
 
@@ -69,6 +73,7 @@ class PriceLevel(OrderQueue):
 
         Side Effects:
             - Decrements `total_shares` by `order.quantity`.
+
         """
         self._queue.remove(order)
         self.total_shares -= order.quantity
@@ -88,6 +93,7 @@ class PriceLevel(OrderQueue):
 
         Returns:
             bool: `True` if no orders are queued, `False` otherwise.
+
         """
         return not self._queue
 
@@ -102,6 +108,7 @@ class PriceLevel(OrderQueue):
 
         Returns:
             Order or None: The order at `index`, or `None` if out of range.
+
         """
         if index == 0:
             return self.peek()

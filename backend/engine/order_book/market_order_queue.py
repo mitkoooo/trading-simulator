@@ -15,6 +15,7 @@ class MarketOrderQueue(OrderQueue):
     Attributes:
         _queue (collections.deque[Order]):
             Deque storing market orders in FIFO sequence.
+
     """
 
     def __init__(self):
@@ -28,6 +29,7 @@ class MarketOrderQueue(OrderQueue):
 
         Raises:
             (ValueError): If `order.limit_price` is not `None`.
+
         """
         if order.limit_price:
             raise ValueError("Cannot enqueue a limit order")
@@ -39,8 +41,8 @@ class MarketOrderQueue(OrderQueue):
 
         Returns:
             Order or None: The oldest order in queue, `None` if queue empty.
-        """
 
+        """
         if not self._queue:
             return None
         order = self._queue.popleft()
@@ -51,6 +53,7 @@ class MarketOrderQueue(OrderQueue):
 
         Returns:
             Order or None: The oldest order, or `None` if the queue is empty.
+
         """
         return self._queue[0] if self._queue else None
 
@@ -59,6 +62,7 @@ class MarketOrderQueue(OrderQueue):
 
         Args:
             order (Order): The order to remove.
+
         """
         self._queue.remove(order)
 
@@ -75,6 +79,7 @@ class MarketOrderQueue(OrderQueue):
 
         Returns:
             bool: `True` if no orders are queued, `False` otherwise.
+
         """
         return not self._queue
 
@@ -89,6 +94,7 @@ class MarketOrderQueue(OrderQueue):
 
         Returns:
             Order or None: The order at `index`, or `None` if out of range.
+
         """
         if index == 0:
             return self.peek()

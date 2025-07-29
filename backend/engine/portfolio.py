@@ -1,12 +1,12 @@
 from typing import Dict, Optional
 
 from engine.market_data.quote import MarketQuote
+
 from .position import Position
 
 
 class Portfolio:
-    """
-    Tracks a trader's positions and cash balance.
+    """Tracks a trader's positions and cash balance.
 
     Responsibilities (to be implemented in Week 2):
       - apply_trade(trade: Trade) → None
@@ -34,8 +34,7 @@ class Portfolio:
         self.reserved_positions: Dict[str, Position] = {}
 
     def value(self, quotes: Dict[str, MarketQuote]) -> float:
-        """
-        Compute total portfolio value: cash + Σ(position_qty x current_price).
+        """Compute total portfolio value: cash + Σ(position_qty x current_price).
 
         Args:
             quotes (Dict[str, MarketQuote]):
@@ -43,8 +42,8 @@ class Portfolio:
 
         Returns:
             float: Total value of portfolio.
-        """
 
+        """
         total = self.cash + self.reserved_cash
 
         # Add value of free positions
@@ -74,8 +73,7 @@ class Portfolio:
     def calculate_unrealized_pl(
         self, symbol: str, quotes: Dict[str, MarketQuote]
     ) -> Optional[float]:
-        """
-        Compute unrealized P/L for the given symbol.
+        """Compute unrealized P/L for the given symbol.
 
         Args:
             symbol (str): ticker symbol for the position
@@ -84,11 +82,11 @@ class Portfolio:
         Returns:
             float: unrealized profit (positive) or loss (negative);
                    zero if you hold no position in symbol
-        """
 
+        """
         if symbol not in quotes:
-            msg = (f"""Cannot calculate unrealized P/L
-                        for a nonexistent symbol (Got {symbol}).""")
+            msg = f"""Cannot calculate unrealized P/L
+                        for a nonexistent symbol (Got {symbol})."""
 
             raise ValueError(msg)
 
