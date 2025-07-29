@@ -37,9 +37,9 @@ jobs:
         working-directory: backend
         run: uv sync
 
-      - name: Lint with flake8
+      - name: Lint with ruff
         working-directory: backend
-        run: uv run flake8 .
+        run: uv run ruff .
 
       - name: Type‑check with mypy
         working-directory: backend
