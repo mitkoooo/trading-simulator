@@ -1,5 +1,6 @@
 import asyncio
 import random
+from dataclasses import dataclass
 from typing import Literal
 
 from engine.bots.base_bot import BaseBot
@@ -8,39 +9,72 @@ from engine.market_data.quote import MarketQuote
 from engine.order_book.order import Order
 
 
+@dataclass
+class RetailPoissonSettings:
+    """Configuration for RetailPoisson bot simulating retail order flow.
+
+    Attributes:
+        limit_rate (float):
+            Exponential rate (λ) for delay between market orders (events/sec).
+
+        market_rate (float):
+            Exponential rate for delay between limit orders.
+
+        quantity_range (tuple[int, int]:
+            Tuple of (min, max) shares/contracts per order.
+
+        tick_size (float):
+            Price increment for limit order offsets from mid price.
+
+        market_probability (float):
+            Probability of generating a limit order instead of market.
+
+    """
+
+    limit_rate: float = 1.0
+    market_rate: float = 0.2
+    quantity_range: tuple[int, int] = (1, 5)
+    tick_size: float = 0.01
+    market_probability: float = 0.3
+
 class RetailPoisson(BaseBot):
-    """SOME DOCSTRING."""  # TODO
+    """Simulates a retail trader using a Poisson process for order arrivals.
+
+    Generates limit and market orders for a single symbol according to
+    configurable rates, quantities, and price tick sizes, aiming to mimic
+    retail order flow dynamics.
+    """
 
     def __init__(
         self,
         exchange: Exchange,
         symbol: str,
         mpid: str,
-        limit_rate: float = 1.0,
-        market_rate: float = 0.2,
-        quantity_range: tuple[int, int] = (1, 5),
-        tick_size: float = 0.01,
-        market_probability: float = 0.3,
-    ):
+        settings: RetailPoissonSettings = None
+    ) -> None:
+        """Initialize a `RetailPoisson` Bot."""
         self.current_mid = None
         self.exchange = exchange
         self.symbol = symbol
-        self.limit_rate = limit_rate
-        self.market_rate = market_rate
-        self.quantity_min, self.quantity_max = quantity_range
-        self.tick_size = tick_size
-        self.market_probability = market_probability
+        self.settings = settings if settings else RetailPoissonSettings()
+        self.quantity_min, self.quantity_max = self.settings.quantity_range
         self._mpid = mpid
         self._running = False
 
-        self.exchange.subscribe(f"book_update{symbol}", self._update_mid)
+        self.exchange.subscribe(f"book_update{symbol}", self.update_mid)
     
     @property
     def mpid(self) -> str:
         """Market participant ID of the RetailPoisson Bot."""
         return self._mpid
 
-    def _update_mid(self, market_quote: MarketQuote):
+    def update_mid(self, market_quote: MarketQuote) -> None:
+        """Update historical mid prices based on new market quote.
+        
+        Args:
+            market_quote (MarketQuote): Latest market quotation.
+
+        """
         if market_quote.bid_size == 0 or market_quote.ask_size == 0:
             return
 
@@ -57,7 +91,8 @@ class RetailPoisson(BaseBot):
 
         self.current_mid = (reference_bid + reference_ask) / 2
 
-    async def run(self):
+    async def run(self) -> None:
+        """Boot the bot's trading algorithm."""
         self._running = True
         while self._running:
             # Sample inter-arrival delay ~ (Poisson) Exponential(rate)
@@ -107,4 +142,5 @@ class RetailPoisson(BaseBot):
                 continue
 
     def stop(self) -> None:
+        """Stop the bot's trading algorithm."""
         self._running = False

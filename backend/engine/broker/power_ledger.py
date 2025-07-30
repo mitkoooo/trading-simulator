@@ -33,7 +33,8 @@ class PowerLedger:
         exchange: Exchange,
         traders: dict[str, Trader],
         volatility_window: int = 100,
-    ):
+    ) -> None:
+        """Initialize `PowerLedger` object."""
         self.exchange = exchange
         self.traders = traders
 
@@ -53,15 +54,18 @@ class PowerLedger:
     def reserve_cash(self, trader_id: str, order: Order) -> None:
         """Reserve cash for a new buy order.
 
-        Deducts an estimated cost from the trader’s cash balance and reserves
+        Deducts an estimated cost from the trader's cash balance and reserves
         it under the order ID.
 
         Args:
-            order (Order): A buy order requiring cash reservation.
+            trader_id: (str):
+                Trader id of `Trader` who submitted the order request.
+            order (Order):
+                Order for which cash is reserved.
 
         Raises:
             KeyError: If the trader is not registered.
-            ValueError: If `order.order_type` is not 'buy' or if the trader’s
+            ValueError: If `order.order_type` is not 'buy' or if the trader's
                 cash balance is insufficient.
 
         """
@@ -90,12 +94,14 @@ class PowerLedger:
 
 
     def release_cash(self, trader_id: str, order: Order) -> None:
-        """Release reserved cash back to the trader’s balance.
+        """Release reserved cash back to the trader's balance.
 
         Returns the full reserved amount for the given buy order ID to the
-        trader’s cash, removing the reservation record.
+        trader's cash, removing the reservation record.
 
         Args:
+            trader_id (str):
+                Trader id of `Trader` who owns `order`
             order (Order): A previously reserved buy order.
 
         Raises:
@@ -114,10 +120,13 @@ class PowerLedger:
     def reserve_shares(self, trader_id: str, order: Order) -> None:
         """Reserve shares for a new sell order.
 
-        Deducts the order’s quantity from the trader’s position and reserves
+        Deducts the order's quantity from the trader's position and reserves
         it under the order ID.
 
         Args:
+            trader_id (str):
+                Trader id of `Trader` who owns `order`.
+
             order (Order):
                 A sell order requiring share reservation.
 
@@ -125,7 +134,7 @@ class PowerLedger:
             KeyError:
                 If the trader is not registered or does not hold the shares.
             ValueError:
-                If the trader’s position is insufficient.
+                If the trader's position is insufficient.
 
         """
         trader = self.traders.get(trader_id, None)
@@ -159,12 +168,15 @@ class PowerLedger:
 
 
     def release_shares(self, trader_id: str, order: Order) -> None:
-        """Release reserved shares back to the trader’s position.
+        """Release reserved shares back to the trader's position.
 
         Returns the full reserved share quantity for the given sell order
-        back to the trader’s position, removing the reservation record.
+        back to the trader's position, removing the reservation record.
 
         Args:
+            trader_id (str):
+                Trader id of `Trader` who owns `order`.
+
             order (Order):
                 A previously reserved sell order.
 
@@ -190,7 +202,13 @@ class PowerLedger:
 
 
     def consume_quote(self, quote: MarketQuote) -> None:
-        """SOME DOCSTRING"""  # TODO
+        """Consume and process latest market quotation information.
+
+        Args:
+            quote (MarketQuote):
+                Market quote containing last, bid, and ask prices.
+
+        """
         symbol = quote.symbol
         bid_price = quote.bid_price
         ask_price = quote.ask_price
@@ -207,7 +225,7 @@ class PowerLedger:
 
         return
 
-    def estimate_market_buy_cost(self, symbol: str, quantity: int):
+    def estimate_market_buy_cost(self, symbol: str, quantity: int) -> float:
         """Estimate the total cost of a market-price buy order.
 
         Walks the sell-side order book until the requested quantity is covered,
@@ -256,7 +274,7 @@ class PowerLedger:
         return expected_cost * (1 + self._compute_slippage_buffer(symbol))
 
     def _compute_slippage_buffer(self, symbol: str) -> float:
-        """Compute a safety margin for market‐buy cost estimates.
+        """Compute a safety margin for market-buy cost estimates.
 
         Calculates a slippage buffer based on baseline percentage, current
         volatility, and book depth.
@@ -269,7 +287,7 @@ class PowerLedger:
             float: A slippage factor (e.g. between 0.01 and 0.05).
 
         """
-        BASE_LINE = 0.01
+        base_line = 0.01
 
         order_book = self.exchange.order_books.get(symbol, None)
         assert order_book
@@ -279,7 +297,7 @@ class PowerLedger:
 
         # Scale depth to [0, 1]-ish range using log
         liquidity_penalty = 1 / (1 + log1p(order_book.sell_size()))
-        slippage_buffer = BASE_LINE + vol * liquidity_penalty
+        slippage_buffer = base_line + vol * liquidity_penalty
 
         return min(slippage_buffer, 0.05)  # cap at 5%
 
@@ -312,6 +330,7 @@ class PowerLedger:
         return self._reserved_cash.get(order_id, None)
 
     def __repr__(self) -> str:
+        """Display a representation string for `PowerLedger`."""
         cash_n = len(self._reserved_cash)
         share_n = len(self._reserved_shares)
         cash_sum = sum(self._reserved_cash.values())

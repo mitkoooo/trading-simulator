@@ -247,7 +247,8 @@ class Exchange:
         """
         self._subscriptions.setdefault(topic, []).append(handler)
 
-    def _dispatch(self, topic: str, event_payload: any) -> None:
+    def _dispatch(self, topic: str,
+                  event_payload: MarketQuote | Trade) -> None:
         """Dispatch an event onto the event bus to all its subscribers.
 
         Args:
