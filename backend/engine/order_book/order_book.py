@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional
+from typing import Literal
 
 from sortedcontainers import SortedDict
 
@@ -8,7 +8,7 @@ from engine.order_book.price_level import PriceLevel
 
 
 class OrderBook:
-    """Maintain buy‐side and sell‐side priority queues for order matching.
+    """Maintain buy-side and sell-side priority queues for order matching.
 
     Hold two sorted maps of price levels to FIFO queues for limit orders and
     two FIFO queues for market orders, ensuring that the highest buy order and
@@ -22,10 +22,10 @@ class OrderBook:
             Maps sell prices (lowest first) to their FIFO `PriceLevel` queues.
 
         market_buys (MarketOrderQueue):
-            FIFO queue of market‐buy orders in arrival order.
+            FIFO queue of market-buy orders in arrival order.
 
         market_sells (MarketOrderQueue):
-            FIFO queue of market‐sell orders in arrival order.
+            FIFO queue of market-sell orders in arrival order.
 
         _global_sequence (int):
             Sequential counter given to `Order` on enqueue.
@@ -42,23 +42,23 @@ class OrderBook:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize `OrderBook` with limit order maps and market queues.
 
         Sets up two `SortedDict` instances for buy and sell limit orders,
         each mapping price levels to `PriceLevel` queues,
         and two FIFO `MarketOrderQueue`s for market orders.
-        Also initializes the global sequence counter for tie‐breaking.
+        Also initializes the global sequence counter for tie-breaking.
 
         Attributes:
             _buy_levels (SortedDict[float, PriceLevel]):
-                Descending‐key map of bid prices to `PriceLevel` queues.
+                Descending-key map of bid prices to `PriceLevel` queues.
             _sell_levels (SortedDict[float, PriceLevel]):
-                Ascending‐key map of ask prices to `PriceLevel` queues.
+                Ascending-key map of ask prices to `PriceLevel` queues.
             market_buys (MarketOrderQueue):
-                FIFO queue for market‐buy orders.
+                FIFO queue for market-buy orders.
             market_sells (MarketOrderQueue):
-                FIFO queue for market‐sell orders.
+                FIFO queue for market-sell orders.
             _global_sequence (int):
                 Monotonic counter assigned to each enqueued order.
 
@@ -72,7 +72,7 @@ class OrderBook:
         self.market_sells = MarketOrderQueue()
 
         self._global_sequence = 0
-        self.last_trade_price: Optional[float] = None
+        self.last_trade_price: float | None = None
 
     def _get_market_order_queue(
         self, side: Literal["buy", "sell"]
@@ -82,12 +82,12 @@ class OrderBook:
 
     def _get_level(
         self, side: Literal["buy", "sell"], price: float, create: bool = False
-    ) -> Optional[PriceLevel]:
+    ) -> PriceLevel | None:
         """Fetch or optionally create the `PriceLevel` at `price` from `side`.
 
         Args:
             side ("buy" or "sell"):
-                Indicates which side’s limit‐order map to query.
+                Indicates which side's limit-order map to query.
 
             price (float):
                 The limit price level to look up.
@@ -113,7 +113,7 @@ class OrderBook:
     def add_order(self, order: Order) -> None:
         """Enqueue an order into the appropriate market or limit queue.
 
-        Assigns a global sequence number to the order for tie‐breaking, then:
+        Assigns a global sequence number to the order for tie-breaking, then:
         - If `order.limit_price` is `None`, adds to its market queue.
         - Otherwise, adds to the `PriceLevel` queue for its limit price.
 
@@ -152,7 +152,7 @@ class OrderBook:
         return
 
     def remove_order(self, order: Order) -> None:
-        """Remove an existing order from the book’s queues.
+        """Remove an existing order from the book's queues.
 
         Removes the given order from its market or limit queue. If the order
         was filled or cancelled, it will be dropped entirely;
@@ -200,7 +200,7 @@ class OrderBook:
 
         return
 
-    def peek_best_buy(self) -> Optional[Order]:
+    def peek_best_buy(self) -> Order | None:
         """Return the highest-price sell order without removing it.
 
         Returns:
@@ -224,7 +224,7 @@ class OrderBook:
 
         return lvl[0]
 
-    def peek_best_sell(self) -> Optional[Order]:
+    def peek_best_sell(self) -> Order | None:
         """Return the lowest-price sell order without removing it.
 
         Returns:
@@ -248,7 +248,7 @@ class OrderBook:
 
         return lvl[0]
 
-    def pop_best_buy(self) -> Optional[Order]:
+    def pop_best_buy(self) -> Order | None:
         """Remove and return the highest-price buy order.
 
         Returns:
@@ -279,7 +279,7 @@ class OrderBook:
 
         return order
 
-    def pop_best_sell(self) -> Optional[Order]:
+    def pop_best_sell(self) -> Order | None:
         """Remove and return the lowest-price sell order.
 
         Returns:
@@ -333,7 +333,7 @@ class OrderBook:
         """Return the total number of orders (buy + sell)."""
         return self.buy_size() + self.sell_size()
 
-    def get_n_buy_orders(self, n=None) -> List[Order]:
+    def get_n_buy_orders(self, n: int | None = None) -> list[Order]:
         """Return a list of highest `n` limit buy orders.
 
         Examples:
@@ -366,7 +366,7 @@ class OrderBook:
 
         return out
 
-    def get_n_sell_orders(self, n=None) -> List[Order]:
+    def get_n_sell_orders(self, n: int | None = None) -> list[Order]:
         """Return list of lowest `n` limit sell orders currently in the book.
 
         Examples:
@@ -400,6 +400,7 @@ class OrderBook:
         return out
 
     def __repr__(self) -> str:
+        """Display a representation string of `OrderBook`."""
         parts = ["OrderBook("]
 
         # Show head of book

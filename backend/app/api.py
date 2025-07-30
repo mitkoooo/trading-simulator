@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Literal
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
@@ -166,7 +166,7 @@ def me_pending_orders(ctx: AppContext = Depends(get_ctx)):
     return jsonable_encoder(orders)
 
 
-@router.get("/quotes", response_model=List[QuoteSchema])
+@router.get("/quotes", response_model=list[QuoteSchema])
 def market_data(ctx: AppContext = Depends(get_ctx)):
     quotes = ctx.exchange.quotes
 

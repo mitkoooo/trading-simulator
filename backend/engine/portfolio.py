@@ -1,4 +1,3 @@
-from typing import Dict, Optional
 
 from engine.market_data.quote import MarketQuote
 
@@ -6,13 +5,9 @@ from .position import Position
 
 
 class Portfolio:
-    """Tracks a trader's positions and cash balance.
+    """Tracks a trader's positions and cash balance."""
 
-    Responsibilities (to be implemented in Week 2):
-      - apply_trade(trade: Trade) → None
-    """
-
-    def __init__(self, starting_balance: float):
+    def __init__(self, starting_balance: float) -> None:
         """Create a Portfolio with starting cash and no positions.
 
         Args:
@@ -30,11 +25,13 @@ class Portfolio:
 
         self.cash: float = starting_balance
         self.reserved_cash: float = 0.0
-        self.positions: Dict[str, Position] = {}
-        self.reserved_positions: Dict[str, Position] = {}
+        self.positions: dict[str, Position] = {}
+        self.reserved_positions: dict[str, Position] = {}
 
-    def value(self, quotes: Dict[str, MarketQuote]) -> float:
-        """Compute total portfolio value: cash + Σ(position_qty x current_price).
+    def value(self, quotes: dict[str, MarketQuote]) -> float:
+        """Compute total portfolio value.
+            
+        Total value = cash + Σ(position_qty x current_price).
 
         Args:
             quotes (Dict[str, MarketQuote]):
@@ -71,13 +68,13 @@ class Portfolio:
         return total
 
     def calculate_unrealized_pl(
-        self, symbol: str, quotes: Dict[str, MarketQuote]
-    ) -> Optional[float]:
+        self, symbol: str, quotes: dict[str, MarketQuote]
+    ) -> float | None:
         """Compute unrealized P/L for the given symbol.
 
         Args:
             symbol (str): ticker symbol for the position
-            market_data (Dict[str, Stock]): map from symbol to current Stock
+            quotes (Dict[str, MarketQuote]): map from symbol to its quote.
 
         Returns:
             float: unrealized profit (positive) or loss (negative);

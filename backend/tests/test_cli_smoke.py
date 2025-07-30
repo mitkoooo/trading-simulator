@@ -7,11 +7,11 @@ CLI_LOOP_PATH = os.path.abspath(
 )
 
 
-def run_cli(commands: str, tmp_path):
-    """Helper: run main.py with a sequence of newline-separated commands."""
+def run_cli(commands: str, tmp_path: os.PathLike) -> str:
+    """Run main.py with a sequence of newline-separated commands."""
     proc = subprocess.run(
         [sys.executable, CLI_LOOP_PATH, "--cli"],
-        input=commands,
+        check=False, input=commands,
         text=True,
         capture_output=True,
         timeout=5.00,
@@ -19,10 +19,17 @@ def run_cli(commands: str, tmp_path):
     )
 
     assert proc.returncode == 0, f"CLI crashed: {proc.stderr!r}"
+
     return proc.stdout
 
 
-def test_smoke_flow(tmp_path):
+def test_smoke_flow(tmp_path: os.PathLike) -> None:
+    """Run the smoke test with output piped into tmp_path.
+    
+    Args:
+        tmp_path (Path): path to tmp/ for logging to go be logged to
+
+    """
     cmds = (
         "\n".join(
             [

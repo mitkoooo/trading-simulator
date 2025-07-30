@@ -15,6 +15,7 @@ async def on_startup():
 
 @app.on_event("shutdown")
 async def on_shutdown():
+    await app.state.context.bot_manager.stop_all()
     await app.state.context.exchange.stop()
 
 

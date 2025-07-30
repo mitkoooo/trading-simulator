@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Iterator, Optional
+from collections.abc import Iterator
 
 from engine.order_book.order import Order
 from engine.order_book.queue import OrderQueue
@@ -21,6 +21,7 @@ class PriceLevel(OrderQueue):
     """
 
     def __init__(self) -> None:
+        """Initialize new `PriceLevel`."""
         self._queue = deque[Order]()
         self.total_shares = 0
 
@@ -37,7 +38,7 @@ class PriceLevel(OrderQueue):
         self._queue.append(order)
         self.total_shares += order.quantity
 
-    def dequeue(self) -> Optional[Order]:
+    def dequeue(self) -> Order | None:
         """Remove and return the order at the front of the queue.
 
         Returns:
@@ -56,7 +57,7 @@ class PriceLevel(OrderQueue):
 
         return order
 
-    def peek(self) -> Optional[Order]:
+    def peek(self) -> Order | None:
         """Return the order at the front of the queue without removing it.
 
         Returns:
@@ -78,7 +79,7 @@ class PriceLevel(OrderQueue):
         self._queue.remove(order)
         self.total_shares -= order.quantity
 
-    def clear(self):
+    def clear(self) -> None:
         """Remove all orders from this price level.
 
         Side Effects:
@@ -98,9 +99,10 @@ class PriceLevel(OrderQueue):
         return not self._queue
 
     def __len__(self) -> int:
+        """Return length of `Order` queue in `PriceLevel`."""
         return len(self._queue)
 
-    def __getitem__(self, index: int) -> Optional[Order]:
+    def __getitem__(self, index: int) -> Order | None:
         """Retrieve an order by position without removing it.
 
         Args:
@@ -119,12 +121,15 @@ class PriceLevel(OrderQueue):
             return None
 
     def __bool__(self) -> bool:
+        """Return True if `Order` queue is empty, False otherwise."""
         return bool(self._queue)
 
     def __iter__(self) -> Iterator[Order]:
+        """Yield an iterator over `Order` queue."""
         yield from self._queue
 
     def __repr__(self) -> str:
+        """Display a representation string of `PriceLevel`."""
         return f"""<PriceLevel
                     orders={len(self)}
                     total_shares={self.total_shares}>"""

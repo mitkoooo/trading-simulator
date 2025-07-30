@@ -12,14 +12,14 @@ from engine.risk.volatility_estimator import VolatilityEstimator
         (deque([100.0]), 100.0 * 1e-4),  # single → price * 1e-4
     ],
 )
-def test_realized_vol_insufficient(history, expected):
+def test_realized_vol_insufficient(history: deque[float], expected: float):
     """Guard clause when <2 data points."""
     result = VolatilityEstimator.realized_vol(history)
     assert result == pytest.approx(expected)
 
 
 def test_realized_vol_two_points():
-    """With two mid‐prices [100, 105]:
+    """With two mid-prices [100, 105]:
     returns = [(105 - 100) / 100] = [0.05]
     var = 0.05^2 / 1 = 0.0025
     std = 0.05
@@ -31,7 +31,7 @@ def test_realized_vol_two_points():
 
 
 def test_realized_vol_multiple_points():
-    """With three mid‐prices [100, 110, 121]:
+    """With three mid-prices [100, 110, 121]:
     returns = [0.10, 0.10]
     var = (0.01 + 0.01) / 2 = 0.01
     std = 0.1

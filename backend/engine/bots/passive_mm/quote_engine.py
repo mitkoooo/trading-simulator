@@ -1,4 +1,3 @@
-from typing import Tuple
 
 
 class QuoteEngine:
@@ -15,7 +14,7 @@ class QuoteEngine:
 
     def compute(
         self, mid: float, vol: float, depth_imb: float, inventory: int
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """SOME DOCSTRING"""  # TODO
         # Calculate base spread.
         # If prices are jumping around, you demand more compensation.

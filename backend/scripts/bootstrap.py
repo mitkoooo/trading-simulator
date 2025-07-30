@@ -1,12 +1,12 @@
-import asyncio
 from pathlib import Path
-from typing import Dict, Literal, Optional
+from typing import Literal
 
 import yaml
 
 from app.context import AppContext
 from app.session import Session
 from config.logging_config import setup_logger
+from engine.bots.bot_manager import BotManager
 from engine.bots.passive_mm.passive_mm import PassiveMM
 from engine.bots.retail_poisson import RetailPoisson
 from engine.broker.broker import Broker
@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parents[1]  # -> <repo>/backend
 CONFIG_DIR = (BASE_DIR / "config").resolve()
 
 
-def register_bots_from_yaml(exchange: Exchange, bot: Dict):
+def _register_bots_from_yaml(exchange: Exchange, bot: dict) -> None:
     categories = [
         "mpid",
         "display_name",
@@ -46,9 +46,22 @@ def register_bots_from_yaml(exchange: Exchange, bot: Dict):
 
 
 async def bootstrap(
-    participants_path: Optional[str | Path] = None,
-    market_data_path: Optional[str | Path] = None,
-):
+    participants_path: str | Path | None = None,
+    market_data_path: str | Path | None = None,
+) -> AppContext:
+    """Bootstrap App's state with default settings.
+        
+    Args:
+        participants_path (Path):
+            Path to YAML file with info about market participants.
+
+        market_data_path (Path):
+            Path to YAML file with initial prices for tickers.
+    
+    Returns:
+        (AppContext): Application context of the simulator.
+
+    """
     participants_path = Path(
         participants_path or CONFIG_DIR / "participants.yml"
     )
@@ -57,12 +70,13 @@ async def bootstrap(
 
     market_data_yml = yaml.safe_load(open(market_data_path))
 
-    def _get_seed_price(i, side: Literal["buy", "sell"]) -> float:
+    def _get_seed_price(i: int, side: Literal["buy", "sell"]) -> float:
         sign = 1 if side == "sell" else -1
         return market_data_yml[symbol] + sign * i * tick
 
     # 1. Core systems
     exchange = Exchange()
+    bot_manager = BotManager()
     broker = Broker(exchange, mpid="BR01")
     logger = setup_logger()
 
@@ -81,21 +95,21 @@ async def bootstrap(
     config = yaml.safe_load(open(participants_path))
 
     for ss in config["system_seed"]:
-        register_bots_from_yaml(exchange, ss)
+        _register_bots_from_yaml(exchange, ss)
 
     for mm in config["market_makers"]:
-        register_bots_from_yaml(exchange, mm)
+        _register_bots_from_yaml(exchange, mm)
 
         categories = ["symbol", "base_size", "alpha", "beta", "gamma"]
 
         bot_kwargs = {k: mm[k] for k in categories}
 
-        mm = PassiveMM(exchange, mpid=mm["mpid"], **bot_kwargs)
+        bot = PassiveMM(exchange, mpid=mm["mpid"], **bot_kwargs)
 
-        asyncio.create_task(mm.run())
+        bot_manager.register_bot(bot)
 
     for rp in config["retail_bots"]:
-        register_bots_from_yaml(exchange, rp)
+        _register_bots_from_yaml(exchange, rp)
 
         categories = [
             "symbol",
@@ -108,9 +122,9 @@ async def bootstrap(
 
         bot_kwargs = {k: rp[k] for k in categories}
 
-        rp = RetailPoisson(exchange, mpid=rp["mpid"], **bot_kwargs)
-
-        asyncio.create_task(rp.run())
+        bot = RetailPoisson(exchange, mpid=rp["mpid"], **bot_kwargs)
+        
+        bot_manager.register_bot(bot)
 
     # SEED THE ORDER BOOKS WITH INITIAL ORDERS
     tick = 0.02
@@ -125,10 +139,12 @@ async def bootstrap(
             await exchange.add_order(bid)
             await exchange.add_order(ask)
 
-    await exchange.start()
+    exchange.start()
+    bot_manager.start_all()
 
     traders = {"1": trader1, "2": trader2}
 
-    context = AppContext(Session(traders), broker, exchange, logger)
+    context = AppContext(Session(traders),broker, exchange,
+                         bot_manager, logger)
 
     return context

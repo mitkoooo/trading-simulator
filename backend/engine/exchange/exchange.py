@@ -1,6 +1,6 @@
 import asyncio
+from collections.abc import Callable
 from datetime import datetime
-from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 from engine.exchange.participant_info import ParticipantInfo
 from engine.exchange.risk_gateway import RiskGateway
@@ -45,7 +45,7 @@ class Exchange:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Exchange with market data and prepare order books.
 
         Examples:
@@ -54,25 +54,34 @@ class Exchange:
 
         """
         self.name: str = "GhostSwap"
-        self.instruments: Dict[str, Stock] = {}
-        self.order_books: Dict[str, OrderBook] = {}
-        self.market_participants: Dict[str, ParticipantInfo] = {}
+        self.instruments: dict[str, Stock] = {}
+        self.order_books: dict[str, OrderBook] = {}
+        self.market_participants: dict[str, ParticipantInfo] = {}
 
-        self._book_queues: Dict[str, asyncio.Queue[Tuple[str, Order]]] = {}
-        self._book_tasks: List[asyncio.Task] = []
+        self._book_queues: dict[str, asyncio.Queue[tuple[str, Order]]] = {}
+        self._book_tasks: list[asyncio.Task] = []
 
-        self.trade_num: Tuple = (0, datetime.now())
+        self.trade_num: tuple = (0, datetime.now())
         self.avg_service_time = 0
 
         self.risk_gateaway = RiskGateway()
 
-        self.order_lookup: Dict[str, Order] = {}
-        self.quotes: Dict[str, MarketQuote] = {}
-        self._subscriptions: Dict[str, List[Callable]] = {}
+        self.order_lookup: dict[str, Order] = {}
+        self.quotes: dict[str, MarketQuote] = {}
+        self._subscriptions: dict[str, list[Callable]] = {}
 
         self.current_time = datetime.now()
 
-    def register_instrument(self, stock: Stock):
+    def register_instrument(self, stock: Stock) -> None:
+        """Register a new instrument on the exchange.
+
+        Args:
+            stock (Stock): Capital stock of the company.
+        
+        Raises:
+            (KeyError): If instrument already registered.
+
+        """
         if stock.symbol in self.instruments:
             msg = f"Instrument already registered. got ({stock.symbol})"
             raise KeyError(msg)
@@ -81,26 +90,59 @@ class Exchange:
         self.order_books[stock.symbol] = OrderBook()
         self._book_queues[stock.symbol] = asyncio.Queue()
 
-    def register_participant(self, mpid: str, info: ParticipantInfo):
-        """SOME DOCSTRING"""  # TODO
+    def register_participant(self, mpid: str, info: ParticipantInfo) -> None:
+        """Register a new market participant on the exchange.
+
+        Args:
+            mpid (str):
+                A unique market participant identifier.
+            info (ParticipantInfo):
+                Permissions and information about market participant.
+
+        Raises:
+            (KeyError): If market participant is already registered.
+
+        """
         mp = self.market_participants.get(mpid, None)
         if mp:
             msg = f"The market participant with {mpid} is already registered."
-            raise ValueError(msg)
+            raise KeyError(msg)
         else:
             self.market_participants[mpid] = info
 
-    async def start(self):
+    def start(self) -> None:
+        """Boot the exchange to process and route orders.
+
+        Under the hood create book worker `asyncio.Task` for each symbol.
+        """
         for symbol, queue in self._book_queues.items():
             task = asyncio.create_task(self._book_worker(symbol, queue))
             self._book_tasks.append(task)
 
-    async def stop(self):
+    async def stop(self) -> None:
+        """Stop the exchange from processing and routing orders.
+
+        Under the hood cancel all book worker `asyncio.Task`.
+        """
         for t in self._book_tasks:
             t.cancel()
         await asyncio.gather(*self._book_tasks, return_exceptions=True)
 
-    async def _book_worker(self, symbol, queue: asyncio.Queue):
+    async def _book_worker(self, symbol: str, queue: asyncio.Queue) -> None:
+        """Process a symbol's order book events from an internal queue.
+
+        Args:
+            symbol (str):
+                Ticker symbol (e.g. AAPL or MSFT).
+
+            queue (asyncio.Queue):
+                An `asyncio.Queue` yielding tuples of (cmd, order), 
+                where cmd is "add" or "remove" and order is the `Order`.
+
+        Raises:
+            (RuntimeError): If removing an order fails.
+
+        """
         order_book: OrderBook = self.order_books[symbol]
 
         while True:
@@ -108,16 +150,13 @@ class Exchange:
                 cmd, order = await queue.get()
                 if cmd == "add":
                     order_book.add_order(order)
-                    self.emit_book_update(
-                        order.symbol, self.order_books[order.symbol]
-                    )
+                    self.emit_book_update(order.symbol)
                 elif cmd == "remove":
                     order_book.remove_order(order)
-                    self.emit_book_update(
-                        order.symbol, self.order_books[order.symbol]
-                    )
+                    self.emit_book_update(order.symbol)
             except RuntimeError:
-                raise RuntimeError("Couldn't remove the order")
+                msg = "Could not remove the order"
+                raise RuntimeError(msg) from RuntimeError
 
             queue.task_done()
             # after each mutation, run matching and publish quotes
@@ -178,21 +217,47 @@ class Exchange:
 
         if order.status != "filled":
             order.status = "cancelled"
-            await self.remove_order(order_id)
+            await self._remove_order(order_id)
 
         return order.status == "cancelled"
 
-    async def remove_order(self, order_id: str) -> None:
+    async def _remove_order(self, order_id: str) -> None:
+        """Remove order from the exchange's order books.
+
+        Emits a `book_update` event to all its subscribers.
+        
+        Args:
+            order_id (str):
+                id of `Order` to remove.
+
+        """
         order = self.order_lookup[order_id]
         await self._book_queues[order.symbol].put(("remove", order))
-        self.emit_book_update(order.symbol, self.order_books[order.symbol])
 
-    def subscribe(self, topic: str, handler: Callable):
-        """SOME DOCSTRING"""  # TODO
+    def subscribe(self, topic: str, handler: Callable) -> None:
+        """Subscribe a market participant's handler function to an event.
+
+        Args:
+            topic (str):
+                Topic to subscribe `handler` to
+
+            handler (Callable):
+                Function to subcribe to `topic`
+
+        """
         self._subscriptions.setdefault(topic, []).append(handler)
 
-    def _dispatch(self, topic: str, event_payload):
-        """SOME DOCSTRING"""  # TODO
+    def _dispatch(self, topic: str, event_payload: any) -> None:
+        """Dispatch an event onto the event bus to all its subscribers.
+
+        Args:
+            topic (str):
+                Event name to dispatch the payload to.
+
+            event_payload (any):
+                Payload for subscribed handler functions.
+
+        """
         for handler in self._subscriptions.get(topic, []):
             handler(event_payload)
 
@@ -210,8 +275,18 @@ class Exchange:
         for handler in self._subscriptions.get(wildcard, []):
             handler(event_payload)
 
-    def emit_book_update(self, symbol, order_book: OrderBook) -> None:
+    def emit_book_update(self, symbol: str) -> None:
+        """Emit a `book_update` event that is dispatched to its subscribers.
+
+        Submits latest `MarketQuote` as event payload.
+
+        Args:
+            symbol (str):
+                A ticker symbol (e.g. AAPL or MSFT).
+
+        """
         topic = f"book_update:{symbol}"
+        order_book = self.order_books.get(symbol)
 
         # Construct MarketQuote to emit
 
@@ -240,11 +315,19 @@ class Exchange:
 
         self._dispatch(topic, event_payload)
 
-    def emit_trade(self, symbol, trade: Trade, mpid: Optional[str] = None):
-        topic = f"trade:{symbol}"
+    def emit_trade(self, trade: Trade) -> None:
+        """Emit a `trade` that is dispatched to its subscribers.
 
-        if mpid:
-            topic += f":{mpid}"
+        Submits `trade` as event payload.
+
+        Args:
+            trade (Trade):
+                `Trade` object to emit.
+
+        """
+        mpids = [trade.buy_order.mpid, trade.sell_order.mpid]
+        symbol = trade.symbol
+        topic = f"trade:{symbol}"
 
         order_book = self.order_books[symbol]
         bid = order_book.peek_best_buy()
@@ -268,9 +351,10 @@ class Exchange:
         )
         self.quotes[symbol] = quote
 
-        self._dispatch(topic, trade)
+        for mpid in mpids:
+            self._dispatch(topic + ":" + mpid, trade)
 
-    def match_orders(self, symbol: str) -> Optional[Trade]:
+    def match_orders(self, symbol: str) -> Trade | None:
         """Match buy and sell orders in the specified symbol's order book.
 
         Args:
@@ -330,8 +414,7 @@ class Exchange:
 
         self.trade_num = (self.trade_num[0], datetime.now())
 
-        self.emit_trade(symbol=trade.symbol, trade=trade, mpid=taker.mpid)
-        self.emit_trade(symbol=trade.symbol, trade=trade, mpid=maker.mpid)
+        self.emit_trade(trade)
 
         # Store last trade price in the order book
         self.order_books[symbol].last_trade_price = trade.price
@@ -341,98 +424,114 @@ class Exchange:
     def _select_taker_and_predicate(
         self,
         order_book: OrderBook,
-    ) -> Optional[
-        Tuple[
-            Order,
-            Iterable[PriceLevel],
-            Callable[[Order], bool],
-        ]
-    ]:
-        """Decide which side provides the taker order and return:
-        - taker_side: "buy" or "sell"
-        - taker: the Order object
-        - maker_levels: sequence of PriceLevel buckets to scan
-        - price_cross: predicate testing price‐crossing
+    ) -> tuple[Order, list[PriceLevel], Callable[[Order], bool]] | None:
+        """Decide which side provides the taker order.
+        
+        Args:
+            order_book (OrderBook):
+                `OrderBook` in which orders are matched.
+
+        Returns:
+            taker:
+                `Order` to be taker.
+
+            taker_side (Literal["buy", "sell"):
+                "buy" or "sell"
+
+            maker_levels (list[PriceLevel]):
+                PriceLevel bucket list to scan for a maker.
+
+            price_cross (Callable):
+                Predicate testing price-crossing.
+
         """
+        market = self._select_market_taker(order_book)
+        if market:
+            return market
+
+        return self._select_limit_taker(order_book)
+
+    def _select_market_taker(
+        self, order_book: OrderBook
+    ) -> tuple[
+        Order, list[PriceLevel], Callable[[Order], bool]
+    ] | None:
         mb = order_book.market_buys.peek()
         ms = order_book.market_sells.peek()
+        if not (mb or ms):
+            return None
 
-        # Market‐only taker
-        if mb or ms:
-            cond = not ms or (
-                mb
-                and ms
-                and (mb.timestamp, mb.sequence) < (ms.timestamp, ms.sequence)
-            )
-            if cond:
-                taker = mb
-                maker_levels = order_book._sell_levels.values()
-            else:
-                taker = ms
-                maker_levels = order_book._buy_levels.values()
+        if ((not ms) or (mb
+            and (mb.timestamp, mb.sequence)
+                < (ms.timestamp, ms.sequence))
+        ):
+            taker = mb
+            maker_lvls = list(order_book._sell_levels.values())
+        else:
+            taker = ms
+            maker_lvls = list(order_book._buy_levels.values())
 
-            assert taker, "Market‐order taker unexpectedly None"
+        assert taker, "Market-order taker is None"
 
-            def price_cross_market(_: Order) -> bool:
-                return True
+        def always_cross(_: Order) -> bool:
+            return True
 
-            return taker, maker_levels, price_cross_market
+        return taker, maker_lvls, always_cross
 
-        # Two‐sided limit orders
+    def _select_limit_taker(
+        self, order_book: OrderBook
+    ) -> tuple[
+        Order, list[PriceLevel], Callable[[Order], bool]
+    ] | None:
         best_buy = order_book.peek_best_buy()
         best_sell = order_book.peek_best_sell()
         if not best_buy or not best_sell:
             return None
 
-        # No crossing in spread?
-        no_cross = (
-            best_buy.limit_price is not None
-            and best_sell.limit_price is not None
-            and best_buy.limit_price < best_sell.limit_price
-        )
-        if no_cross:
+        if best_buy.limit_price < best_sell.limit_price:
             return None
 
         buy_later = (
-            best_buy.timestamp,
-            best_buy.sequence,
+            best_buy.timestamp, best_buy.sequence
         ) > (
-            best_sell.timestamp,
-            best_sell.sequence,
+            best_sell.timestamp, best_sell.sequence
         )
 
         if buy_later:
             taker = best_buy
-            maker_levels = order_book._sell_levels.values()
-            assert taker, "Limit‐order buy taker unexpectedly None"
+            maker_lvls = list(order_book._sell_levels.values())
 
             def price_cross(m: Order) -> bool:
-                assert m.limit_price
+                assert m.limit_price is not None
                 if taker.limit_price is None:
                     return True
                 return taker.limit_price >= m.limit_price
-
         else:
             taker = best_sell
-            maker_levels = order_book._buy_levels.values()
-            assert taker, "Limit‐order sell taker unexpectedly None"
+            maker_lvls = list(order_book._buy_levels.values())
 
             def price_cross(m: Order) -> bool:
-                assert m.limit_price
+                assert m.limit_price is not None
                 if taker.limit_price is None:
                     return True
                 return m.limit_price >= taker.limit_price
 
-        return taker, maker_levels, price_cross
+        assert taker, "Limit-order taker is None"
+        return taker, maker_lvls, price_cross
 
     def _find_maker(
         self,
-        maker_levels: Iterable[PriceLevel],
+        maker_levels: list[PriceLevel],
         price_cross: Callable[[Order], bool],
-    ) -> Optional[Order]:
-        """Walk price levels in priority order, then within each level walk FIFO,
-        skipping same‐trader and non‐crossing orders. Returns
-        the first valid maker or None if no match exists.
+    ) -> Order | None:
+        """Find a suitable maker `Order` from list of `PriceLevel` buckets.
+
+        Walk price levels in priority order, then within each level walk FIFO.
+
+        Returns:
+            maker (`Order` or None):
+                Maker `Order`, or None if no matches.
+
         """
         maker = None
 
@@ -449,8 +548,21 @@ class Exchange:
         return maker
 
     def _build_trade(self, taker: Order, maker: Order, symbol: str) -> Trade:
-        """Compute exec_qty and exec_price (with error if price is None),
-        adjust quantities on the two orders, and return a Trade object.
+        """Build a new trade based on `taker` and `maker`.
+        
+        Args:
+            taker (Order):
+                Taker `Order` of the trade
+
+            maker (Order):
+                Maker `Order` of the trade
+
+            symbol (str):
+                A ticker symbol of the trade.
+
+        Returns:
+            (Trade): `Trade` object.
+
         """
         if taker.order_type == "buy":
             best_buy, best_sell = taker, maker
@@ -478,7 +590,3 @@ class Exchange:
         )
 
         return new_trade
-
-    def verify_symbol(self, symbol) -> None:
-        if symbol not in self.instruments:
-            raise KeyError(f"The symbol '{symbol}' does not exist")

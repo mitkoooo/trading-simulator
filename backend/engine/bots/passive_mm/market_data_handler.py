@@ -1,5 +1,4 @@
 from collections import deque
-from typing import Deque, List, Optional
 
 from engine.market_data.quote import MarketQuote
 
@@ -8,7 +7,7 @@ class MarketDataHandler:
     """SOME DOCSTRING"""  # TODO
 
     def __init__(self, hist_len=200) -> None:
-        self.mid_history: Deque[float] = deque(maxlen=hist_len)
+        self.mid_history: deque[float] = deque(maxlen=hist_len)
         self.bid_size = self.ask_size = 0
 
     def on_book_update(self, market_quote: MarketQuote) -> None:
@@ -36,12 +35,12 @@ class MarketDataHandler:
 
         return
 
-    def get_mid(self) -> Optional[float]:
+    def get_mid(self) -> float | None:
         return self.mid_history[-1] if self.mid_history else None
 
     def get_depth_imbalance(self) -> float:
         total = self.bid_size + self.ask_size or 1
         return (self.bid_size - self.ask_size) / total
 
-    def get_mid_history(self) -> List[float]:
+    def get_mid_history(self) -> list[float]:
         return list(self.mid_history)

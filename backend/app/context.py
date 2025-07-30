@@ -1,6 +1,7 @@
 from logging import Logger
 
 from app.session import Session
+from engine.bots.bot_manager import BotManager
 from engine.broker.broker import Broker
 from engine.exchange.exchange import Exchange
 
@@ -20,9 +21,10 @@ class AppContext:
         session: Session,
         broker: Broker,
         exchange: Exchange,
+        bot_manager: BotManager,
         logger: Logger | None = None,
     ):
-        """Instantiate AppContext class
+        """Instantiate AppContext class.
 
         Args:
         session (Session): Currently active user session.
@@ -34,10 +36,11 @@ class AppContext:
         self.session = session
         self.broker = broker
         self.exchange = exchange
+        self.bot_manager = bot_manager
         self.logger = logger
 
     def __repr__(self):
-        def n(x):  # helper for None-safe len
+        def n(x: list) -> int:  # helper for None-safe len
             return 0 if x is None else len(x)
 
         exch_name = getattr(self.exchange, "name", "Exchange")

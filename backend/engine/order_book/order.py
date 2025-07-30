@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 
 
 class Order:
@@ -33,15 +33,12 @@ class Order:
         symbol: str,
         order_type: Literal["buy", "sell"],
         quantity: int,
-        limit_price: Optional[float] = None,
-        *,
-        order_id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
-    ):
+        limit_price: float | None = None,
+    ) -> None:
         """Initialize a new Order.
 
         Args:
-            trader_id (int): ID of the submitting trader.
+            mpid (int): ID of the submitting market participant.
             symbol (str): Stock ticker.
             order_type (Literal['buy','sell']): One of 'buy' or 'sell'.
             quantity (int): >0 shares to trade.
@@ -80,9 +77,9 @@ class Order:
         self.status = "pending"
         self.quantity = quantity
         self.limit_price = limit_price
-        self.order_id = order_id or str(uuid.uuid4())
-        self.timestamp = timestamp or datetime.now()
-        self.sequence: Optional[int] = None
+        self.order_id = str(uuid.uuid4())
+        self.timestamp = datetime.now()
+        self.sequence: int | None = None
 
     def __eq__(self, other: object) -> bool:
         """Orders compare equal if they share the same order_id."""
@@ -95,6 +92,7 @@ class Order:
         return hash(self.order_id)
 
     def __repr__(self) -> str:
+        """Display representation string of `Order`."""
         cls = self.__class__.__name__
         lp = self.limit_price if self.limit_price is not None else "NONE"
         return (

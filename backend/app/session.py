@@ -1,4 +1,3 @@
-from typing import Dict, Optional
 
 from engine.trader import Trader
 
@@ -6,8 +5,8 @@ from engine.trader import Trader
 class Session:
     """Keeps track of the active trader on the exchange."""
 
-    def __init__(self, traders: Dict[str, Trader]):
-        self._traders: Dict[str, Trader] = traders
+    def __init__(self, traders: dict[str, Trader]):
+        self._traders: dict[str, Trader] = traders
         self._active_trader: Trader | None = None
 
     def login(self, trader_id: str) -> None:
@@ -55,6 +54,6 @@ class Session:
         return self._active_trader
 
     @property
-    def active_trader(self) -> Optional[Trader]:
+    def active_trader(self) -> Trader | None:
         """Currently logged in trader"""
         return self._active_trader

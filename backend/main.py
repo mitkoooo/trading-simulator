@@ -5,7 +5,8 @@ from cli.cli import CLI
 from scripts.bootstrap import bootstrap
 
 
-def main():
+def main() -> None:
+    """Start the console line interface of the trading simulator."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--cli", action="store_true", help="run interactive CLI"
@@ -15,11 +16,12 @@ def main():
 
     if args.cli:
 
-        async def _main():
+        async def _main() -> None:
             ctx = await bootstrap()
             try:
                 await CLI(ctx).run()
             finally:
+                await ctx.bot_manager.stop_all()
                 await ctx.exchange.stop()
 
         asyncio.run(_main())

@@ -8,9 +8,9 @@ from engine.trade import Trade
 
 
 def test_risk_breached_position(sample_exchange: Exchange):
-    SYMBOL = "AAPL"
+    symbol = "AAPL"
 
-    passive_mm = PassiveMM(sample_exchange, SYMBOL, "MM_TEST")
+    passive_mm = PassiveMM(sample_exchange, symbol, "MM_TEST")
     passive_mm.inv_manager.inv_limit = 1000
     passive_mm.inv_manager.position = 1001
 
@@ -18,9 +18,9 @@ def test_risk_breached_position(sample_exchange: Exchange):
 
 
 def test_risk_breached_pnl_limit(sample_exchange: Exchange):
-    SYMBOL = "AAPL"
+    symbol = "AAPL"
 
-    passive_mm = PassiveMM(sample_exchange, SYMBOL, "MM_TEST")
+    passive_mm = PassiveMM(sample_exchange, symbol, "MM_TEST")
     passive_mm.inv_manager.pnl_limit = 1000
     passive_mm.inv_manager.realized_pnl = -1001
 
@@ -28,49 +28,49 @@ def test_risk_breached_pnl_limit(sample_exchange: Exchange):
 
 
 def test_update_inventory_on_trade_buy_order(sample_exchange: Exchange):
-    SYMBOL = "AAPL"
-    TRADE_QTY = 10
-    TRADE_PRICE = 100
+    symbol = "AAPL"
+    trade_qty = 10
+    trade_price = 100
 
-    passive_mm = PassiveMM(sample_exchange, SYMBOL, "MM_TEST")
+    passive_mm = PassiveMM(sample_exchange, symbol, "MM_TEST")
 
-    order1 = Order("MM_TEST", SYMBOL, "buy", 1, TRADE_PRICE)
-    order2 = Order("BR_TEST", SYMBOL, "sell", 1, TRADE_PRICE)
-    trade = Trade(order1, order2, SYMBOL, TRADE_QTY, TRADE_PRICE)
+    order1 = Order("MM_TEST", symbol, "buy", 1, trade_price)
+    order2 = Order("BR_TEST", symbol, "sell", 1, trade_price)
+    trade = Trade(order1, order2, symbol, trade_qty, trade_price)
 
-    sample_exchange.emit_trade(SYMBOL, trade)
+    sample_exchange.emit_trade(trade)
 
-    assert passive_mm.inv_manager.position == TRADE_QTY
-    assert passive_mm.inv_manager.realized_pnl == -TRADE_QTY * TRADE_PRICE
+    assert passive_mm.inv_manager.position == trade_qty
+    assert passive_mm.inv_manager.realized_pnl == -trade_qty * trade_price
 
 
 def test_update_inventory_on_trade_sell_order(sample_exchange: Exchange):
-    SYMBOL = "AAPL"
-    TRADE_QTY = 10
-    TRADE_PRICE = 100
+    symbol = "AAPL"
+    trade_qty = 10
+    trade_price = 100
 
-    passive_mm = PassiveMM(sample_exchange, SYMBOL, "MM_TEST")
+    passive_mm = PassiveMM(sample_exchange, symbol, "MM_TEST")
 
-    order1 = Order("BR_TEST", SYMBOL, "buy", 1, TRADE_PRICE)
-    order2 = Order("MM_TEST", SYMBOL, "sell", 1, TRADE_PRICE)
-    trade = Trade(order1, order2, SYMBOL, TRADE_QTY, TRADE_PRICE)
+    order1 = Order("BR_TEST", symbol, "buy", 1, trade_price)
+    order2 = Order("MM_TEST", symbol, "sell", 1, trade_price)
+    trade = Trade(order1, order2, symbol, trade_qty, trade_price)
 
-    sample_exchange.emit_trade(SYMBOL, trade)
+    sample_exchange.emit_trade(trade)
 
-    assert passive_mm.inv_manager.position == -TRADE_QTY
-    assert passive_mm.inv_manager.realized_pnl == TRADE_QTY * TRADE_PRICE
+    assert passive_mm.inv_manager.position == -trade_qty
+    assert passive_mm.inv_manager.realized_pnl == trade_qty * trade_price
 
 
 def test_get_mid_history(sample_exchange: Exchange):
-    SYMBOL = "AAPL"
+    symbol = "AAPL"
     ts = datetime.now()
 
-    passive_mm = PassiveMM(sample_exchange, SYMBOL, "MM_TEST")
+    passive_mm = PassiveMM(sample_exchange, symbol, "MM_TEST")
 
     assert passive_mm.data_handler.get_mid_history() == []
 
     mq = MarketQuote(
-        SYMBOL,
+        symbol,
         bid_price=None,
         bid_size=1,
         ask_price=None,
@@ -85,13 +85,13 @@ def test_get_mid_history(sample_exchange: Exchange):
 
 
 def test_on_book_update_mid_on_no_quote(sample_exchange: Exchange):
-    SYMBOL = "AAPL"
+    symbol = "AAPL"
     ts = datetime.now()
 
-    passive_mm = PassiveMM(sample_exchange, SYMBOL, "MM_TEST")
+    passive_mm = PassiveMM(sample_exchange, symbol, "MM_TEST")
 
     mq = MarketQuote(
-        SYMBOL,
+        symbol,
         bid_price=None,
         bid_size=1,
         ask_price=None,
@@ -106,13 +106,13 @@ def test_on_book_update_mid_on_no_quote(sample_exchange: Exchange):
 
 
 def test_on_book_update_mid_on_quote_empty(sample_exchange: Exchange):
-    SYMBOL = "AAPL"
+    symbol = "AAPL"
     ts = datetime.now()
 
-    passive_mm = PassiveMM(sample_exchange, SYMBOL, "MM_TEST")
+    passive_mm = PassiveMM(sample_exchange, symbol, "MM_TEST")
 
     mq = MarketQuote(
-        SYMBOL,
+        symbol,
         bid_price=None,
         bid_size=0,
         ask_price=None,
@@ -127,13 +127,14 @@ def test_on_book_update_mid_on_quote_empty(sample_exchange: Exchange):
 
 
 def test_on_book_update_mid_on_quote(sample_exchange: Exchange):
-    SYMBOL = "AAPL"
+    symbol = "AAPL"
     ts = datetime.now()
+    expected = 100
 
-    passive_mm = PassiveMM(sample_exchange, SYMBOL, "MM_TEST")
+    passive_mm = PassiveMM(sample_exchange, symbol, "MM_TEST")
 
     mq = MarketQuote(
-        SYMBOL,
+        symbol,
         bid_price=101,
         bid_size=1,
         ask_price=99,
@@ -145,17 +146,17 @@ def test_on_book_update_mid_on_quote(sample_exchange: Exchange):
     passive_mm.data_handler.on_book_update(mq)
 
     assert len(passive_mm.data_handler.get_mid_history()) == 1
-    assert passive_mm.data_handler.get_mid_history()[0] == 100
+    assert passive_mm.data_handler.get_mid_history()[0] == expected
 
 
 def test_compute_quote(sample_exchange: Exchange):
-    SYMBOL = "AAPL"
+    symbol = "AAPL"
     mid = (101 + 99) / 2  # 100
     vol = 2.0
     depth_imb = 10
     inventory = 100
 
-    passive_mm = PassiveMM(sample_exchange, SYMBOL, "MM_TEST")
+    passive_mm = PassiveMM(sample_exchange, symbol, "MM_TEST")
 
     qe = passive_mm.quote_engine
 

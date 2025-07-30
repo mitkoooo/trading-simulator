@@ -1,7 +1,8 @@
 import asyncio
 import random
-from typing import Dict, Literal
+from typing import Literal
 
+from engine.bots.base_bot import BaseBot
 from engine.bots.passive_mm.inventory_manager import InventoryManager
 from engine.bots.passive_mm.market_data_handler import MarketDataHandler
 from engine.bots.passive_mm.quote_engine import QuoteEngine
@@ -10,7 +11,7 @@ from engine.order_book.order import Order
 from engine.risk.volatility_estimator import VolatilityEstimator
 
 
-class PassiveMM:
+class PassiveMM(BaseBot):
     """SOME DOCSTRING"""  # TODO
 
     def __init__(
@@ -30,17 +31,17 @@ class PassiveMM:
         self.exchange = exchange
         self.symbol = symbol
         self.base_size = base_size
-        self.mpid = mpid
+        self._mpid = mpid
         self.quote_interval = quote_interval
         self._running = False
 
         # Compose core blocks
         self.data_handler = MarketDataHandler(hist_len)
         self.vol_estimator = VolatilityEstimator()
-        self.inv_manager = InventoryManager(inventory_limit, pnl_limit)
+        self.inv_manager = InventoryManager(mpid, inventory_limit, pnl_limit)
         self.quote_engine = QuoteEngine(alpha, beta, gamma, base_size)
 
-        self.active_orders: Dict[
+        self.active_orders: dict[
             Literal["buy", "sell"], Order
         ] = {}  # Order side -> Order
 
@@ -48,8 +49,13 @@ class PassiveMM:
             f"book_update:{symbol}", self.data_handler.on_book_update
         )
         self.exchange.subscribe(
-            f"trade:{symbol}", lambda t: self.inv_manager.on_trade(t, mpid)
+            f"trade:{symbol}:{mpid}", lambda t: self.inv_manager.on_trade(t)
         )
+
+    @property
+    def mpid(self) -> str:
+         """Market participant ID of the PassiveMarketMaker Bot."""
+         return self._mpid
 
     async def run(self):
         self._running = True

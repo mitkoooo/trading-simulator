@@ -6,10 +6,11 @@ from engine.market_data.quote import MarketQuote
 
 
 def test_update_mid_two_sided(sample_exchange: Exchange):
-    SYMBOL = "AAPL"
-    rp = RetailPoisson(sample_exchange, SYMBOL, mpid="RP01")
+    symbol = "AAPL"
+    expected = 11.0
+    rp = RetailPoisson(sample_exchange, symbol, mpid="RP01")
     mq = MarketQuote(
-        symbol=SYMBOL,
+        symbol=symbol,
         bid_price=10,
         bid_size=5,
         ask_price=12,
@@ -18,14 +19,14 @@ def test_update_mid_two_sided(sample_exchange: Exchange):
         timestamp=datetime.now(),
     )
     rp._update_mid(mq)
-    assert rp.current_mid == 11.0
+    assert rp.current_mid == expected
 
 
 def test_update_mid_ignores_when_empty_side(sample_exchange: Exchange):
-    SYMBOL = "AAPL"
-    rp = RetailPoisson(sample_exchange, SYMBOL, mpid="RP01")
+    symbol = "AAPL"
+    rp = RetailPoisson(sample_exchange, symbol, mpid="RP01")
     mq = MarketQuote(
-        SYMBOL,
+        symbol,
         bid_price=10,
         bid_size=0,
         ask_price=12,
@@ -38,10 +39,11 @@ def test_update_mid_ignores_when_empty_side(sample_exchange: Exchange):
 
 
 def test_update_mid_fallback_to_last_price(sample_exchange: Exchange):
-    SYMBOL = "AAPL"
-    rp = RetailPoisson(sample_exchange, SYMBOL, mpid="RP01")
+    symbol = "AAPL"
+    expected = 100
+    rp = RetailPoisson(sample_exchange, symbol, mpid="RP01")
     mq = MarketQuote(
-        SYMBOL,
+        symbol,
         bid_price=None,
         bid_size=5,
         ask_price=None,
@@ -50,4 +52,4 @@ def test_update_mid_fallback_to_last_price(sample_exchange: Exchange):
         timestamp=datetime.now(),
     )
     rp._update_mid(mq)
-    assert rp.current_mid == 100
+    assert rp.current_mid == expected

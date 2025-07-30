@@ -1,12 +1,13 @@
 import asyncio
 import logging
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
 
 from app.context import AppContext
 from app.session import Session
+from engine.bots.bot_manager import BotManager
 from engine.broker.broker import Broker
 from engine.exchange.exchange import Exchange
 from engine.exchange.participant_info import (
@@ -66,7 +67,7 @@ async def test_context(
     pi = ParticipantInfo(
         mpid="BR_TEST",
         display_name="Test Broker Alpha",
-        ptype=ParticipantType.BROKER,
+        ptype=ParticipantType.DIRECT_MEMBER,
         margin_category=MarginCategory.STANDARD_EQUITY,
         price_band_limit=None,
         allowed_symbols=["*"],
@@ -80,6 +81,8 @@ async def test_context(
     )
 
     sample_exchange.register_participant(sample_broker.mpid, pi)
+    
+    bot_manager = BotManager()
 
     session = Session(sample_broker.traders)
     session.login(sample_trader.trader_id)
@@ -88,8 +91,9 @@ async def test_context(
     test_logger.propagate = True
     test_logger.setLevel(logging.INFO)
 
-    await sample_exchange.start()
+    sample_exchange.start()
 
-    yield AppContext(session, sample_broker, sample_exchange, test_logger)
+    yield AppContext(session, sample_broker, sample_exchange,
+                     bot_manager, test_logger)
 
     await sample_exchange.stop()

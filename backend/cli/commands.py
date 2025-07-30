@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import Literal
 
 from app.context import AppContext
 from cli.render import (
@@ -95,7 +95,7 @@ def do_next(context: AppContext):
 
 
 async def do_place_order(
-    context: AppContext, order_type: Literal["buy", "sell"], args: List[str]
+    context: AppContext, order_type: Literal["buy", "sell"], args: list[str]
 ):
     """Enqueue a buy/sell order and log details if valid.
 
@@ -188,7 +188,7 @@ async def do_cancel_order(context: AppContext):
             break
 
 
-def do_match(context: AppContext, args: List[str]):
+def do_match(context: AppContext, args: list[str]):
     """Attempt to match orders for a given symbol and display results.
 
     Examples:
@@ -218,7 +218,7 @@ def do_match(context: AppContext, args: List[str]):
     if validate_symbol(symbol, exchange, "MATCH", args) == False:
         return
 
-    trades: List[Trade] = []
+    trades: list[Trade] = []
 
     while True:
         trade = exchange.match_orders(symbol)

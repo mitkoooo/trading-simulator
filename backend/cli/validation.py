@@ -1,5 +1,4 @@
 import logging
-from typing import List, Tuple
 
 from config.logging_config import LOG_NAME
 from engine.exchange.exchange import Exchange
@@ -7,7 +6,7 @@ from engine.exchange.exchange import Exchange
 logger = logging.getLogger(LOG_NAME)
 
 
-def parse_order(args: List[str]) -> Tuple[str, int, float]:
+def parse_order(args: list[str]) -> tuple[str, int, float]:
     """Parse a list of CLI args into (symbol, qty, price).
 
     Args:
@@ -36,7 +35,7 @@ def parse_order(args: List[str]) -> Tuple[str, int, float]:
 
 
 def validate_symbol(
-    symbol: str, exchange: Exchange, cmd: str, args: List[str]
+    symbol: str, exchange: Exchange, cmd: str, args: list[str]
 ) -> bool:
     """Check that SYMBOL exists in exchange.market_data, else print and log warning.
 

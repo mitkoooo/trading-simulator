@@ -1,6 +1,5 @@
 from collections import deque
 from math import log1p
-from typing import Deque, Dict, Optional
 
 from engine.exchange.exchange import Exchange
 from engine.market_data.quote import MarketQuote
@@ -32,7 +31,7 @@ class PowerLedger:
     def __init__(
         self,
         exchange: Exchange,
-        traders: Dict[str, Trader],
+        traders: dict[str, Trader],
         volatility_window: int = 100,
     ):
         self.exchange = exchange
@@ -40,16 +39,16 @@ class PowerLedger:
 
         self.volatility_window = volatility_window
         self.volatility_estimator = VolatilityEstimator()
-        self.mid_histories: Dict[str, Deque[float]] = {}
+        self.mid_histories: dict[str, deque[float]] = {}
 
         for symbol in self.exchange.instruments:
             self.mid_histories[symbol] = deque(maxlen=volatility_window)
 
         # order_id -> cash amount
-        self._reserved_cash: Dict[str, float] = {}
+        self._reserved_cash: dict[str, float] = {}
 
         # order_id -> share number
-        self._reserved_shares: Dict[str, int] = {}
+        self._reserved_shares: dict[str, int] = {}
 
     def reserve_cash(self, trader_id: str, order: Order) -> None:
         """Reserve cash for a new buy order.
@@ -89,7 +88,6 @@ class PowerLedger:
         trader.portfolio.cash -= cost_estimate
         self._reserved_cash[order.order_id] = cost_estimate
 
-        return
 
     def release_cash(self, trader_id: str, order: Order) -> None:
         """Release reserved cash back to the trader’s balance.
@@ -112,7 +110,6 @@ class PowerLedger:
         reserved_amount = self._reserved_cash.pop(order.order_id)
         trader.portfolio.cash += reserved_amount
 
-        return
 
     def reserve_shares(self, trader_id: str, order: Order) -> None:
         """Reserve shares for a new sell order.
@@ -160,7 +157,6 @@ class PowerLedger:
 
         self._reserved_shares[order.order_id] = prev_reserved + quantity
 
-        return
 
     def release_shares(self, trader_id: str, order: Order) -> None:
         """Release reserved shares back to the trader’s position.
@@ -192,7 +188,6 @@ class PowerLedger:
 
         position.qty += reserved_quantity
 
-        return
 
     def consume_quote(self, quote: MarketQuote) -> None:
         """SOME DOCSTRING"""  # TODO
@@ -302,7 +297,7 @@ class PowerLedger:
         """
         return self._reserved_shares.get(order_id, 0)
 
-    def get_reserved_cash(self, order_id: str) -> Optional[float]:
+    def get_reserved_cash(self, order_id: str) -> float | None:
         """Get the amount of cash reserved for a given order ID.
 
         Args:

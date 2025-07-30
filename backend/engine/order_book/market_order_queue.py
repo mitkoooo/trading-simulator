@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Deque, Iterator, Optional
+from collections.abc import Iterator
 
 from engine.order_book.order import Order
 from engine.order_book.queue import OrderQueue
@@ -18,10 +18,11 @@ class MarketOrderQueue(OrderQueue):
 
     """
 
-    def __init__(self):
-        self._queue: Deque = deque[Order]()
+    def __init__(self) -> None:
+        """Initialize `MarketOrderQueue`."""
+        self._queue: deque = deque[Order]()
 
-    def enqueue(self, order: Order):
+    def enqueue(self, order: Order) -> None:
         """Add an order to the back of the queue.
 
         Args:
@@ -36,7 +37,7 @@ class MarketOrderQueue(OrderQueue):
 
         self._queue.append(order)
 
-    def dequeue(self) -> Optional[Order]:
+    def dequeue(self) -> Order | None:
         """Remove and return the order at the front of the queue.
 
         Returns:
@@ -48,7 +49,7 @@ class MarketOrderQueue(OrderQueue):
         order = self._queue.popleft()
         return order
 
-    def peek(self) -> Optional[Order]:
+    def peek(self) -> Order | None:
         """Return the order at the front of the queue without removing it.
 
         Returns:
@@ -66,7 +67,7 @@ class MarketOrderQueue(OrderQueue):
         """
         self._queue.remove(order)
 
-    def clear(self):
+    def clear(self) -> None:
         """Remove all orders from this market price queue.
 
         Side Effects:
@@ -84,6 +85,7 @@ class MarketOrderQueue(OrderQueue):
         return not self._queue
 
     def __len__(self) -> int:
+        """Retrieve length of `Order` queue."""
         return len(self._queue)
 
     def __getitem__(self, index: int) -> Order | None:
@@ -105,10 +107,13 @@ class MarketOrderQueue(OrderQueue):
             return None
 
     def __bool__(self) -> bool:
+        """Return True if `Order` queue is not empty, False otherwise."""
         return bool(self._queue)
 
     def __iter__(self) -> Iterator[Order]:
+        """Yield an iterator over `Order` queue."""
         yield from self._queue
 
     def __repr__(self) -> str:
+        """Display a representation string of `MarketOrderQueue`."""
         return f"<MarketOrderQueue orders={len(self)}>"

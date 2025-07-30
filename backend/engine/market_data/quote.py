@@ -1,29 +1,54 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass(frozen=True)
 class MarketQuote:
-    """SOME DOCSTRING"""  # TODO
+    """Current price at which a stock or commodity is being traded.
+
+    Attributes:
+        symbol (str):
+            A ticker symbol (eg. AAPL or MSFT).
+
+        bid_price (float or None):
+            Currently highest bid price.
+
+        bid_size (int or None):
+            Current number of bid orders in order book.
+
+        ask_price (float or None):
+            Currently lowest ask price.
+
+        ask_size (int or None):
+            Current number of ask orders in order book.
+
+        last_price (float or None):
+            Latest price at which a stock or a commodity was traded.
+
+    """
 
     symbol: str
-    bid_price: Optional[float]
+    bid_price: float | None
     bid_size: int
-    ask_price: Optional[float]
+    ask_price: float | None
     ask_size: int
-    last_price: Optional[float]
+    last_price: float | None
     timestamp: datetime
 
     @property
-    def mid(self) -> Optional[float]:
+    def mid(self) -> float | None:
+        """Computes a mid price, which is average of bid and ask prices."""
         if self.bid_price is None or self.ask_price is None:
             return None
 
         return (self.bid_price + self.ask_price) / 2
 
     @property
-    def spread(self) -> Optional[float]:
+    def spread(self) -> float | None:
+        """Computes spread of a market quotation.
+
+        Spread is a difference between ask and bid prices.
+        """
         if self.bid_price is None or self.ask_price is None:
             return None
 

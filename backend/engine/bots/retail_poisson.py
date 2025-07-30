@@ -1,14 +1,15 @@
 import asyncio
 import random
-from typing import Literal, Tuple
+from typing import Literal
 
+from engine.bots.base_bot import BaseBot
 from engine.exchange.exchange import Exchange
 from engine.market_data.quote import MarketQuote
 from engine.order_book.order import Order
 
 
-class RetailPoisson:
-    """SOME DOCSTRING"""  # TODO
+class RetailPoisson(BaseBot):
+    """SOME DOCSTRING."""  # TODO
 
     def __init__(
         self,
@@ -17,7 +18,7 @@ class RetailPoisson:
         mpid: str,
         limit_rate: float = 1.0,
         market_rate: float = 0.2,
-        quantity_range: Tuple[int, int] = (1, 5),
+        quantity_range: tuple[int, int] = (1, 5),
         tick_size: float = 0.01,
         market_probability: float = 0.3,
     ):
@@ -29,10 +30,15 @@ class RetailPoisson:
         self.quantity_min, self.quantity_max = quantity_range
         self.tick_size = tick_size
         self.market_probability = market_probability
-        self.mpid = mpid
+        self._mpid = mpid
         self._running = False
 
         self.exchange.subscribe(f"book_update{symbol}", self._update_mid)
+    
+    @property
+    def mpid(self) -> str:
+        """Market participant ID of the RetailPoisson Bot."""
+        return self._mpid
 
     def _update_mid(self, market_quote: MarketQuote):
         if market_quote.bid_size == 0 or market_quote.ask_size == 0:
@@ -99,3 +105,6 @@ class RetailPoisson:
                 await self.exchange.add_order(order)
             except Exception:
                 continue
+
+    def stop(self) -> None:
+        self._running = False

@@ -1,4 +1,3 @@
-from typing import Dict, List
 from uuid import uuid4
 
 from engine.order_book.order import Order
@@ -27,7 +26,7 @@ class Trader:
         self,
         trader_id: str | None,
         starting_balance: float,
-    ):
+    ) -> None:
         """Initialize trader with ID and starting cash.
 
         positions and transaction_log start empty.
@@ -39,5 +38,5 @@ class Trader:
         """
         self.trader_id = trader_id or str(uuid4())
         self.portfolio = Portfolio(starting_balance)
-        self.transaction_log: List[Order] = []
-        self.pending_orders: Dict[str, Order] = {}
+        self.transaction_log: list[Order] = []
+        self.pending_orders: dict[str, Order] = {}

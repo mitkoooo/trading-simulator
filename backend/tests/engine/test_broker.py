@@ -7,11 +7,11 @@ from engine.trader import Trader
 
 @pytest.mark.asyncio
 async def test_broker_reserves_cash_on_order(test_context: AppContext):
-    SYMBOL = "AAPL"
-    ORDER_TYPE = "buy"
-    QUANTITY = 10
-    LIMIT_PRICE = 10
-    notional = QUANTITY * LIMIT_PRICE
+    symbol = "AAPL"
+    order_type = "buy"
+    quantity = 10
+    limit_price = 10
+    notional = quantity * limit_price
 
     trader = test_context.session.active_trader
     assert trader
@@ -20,23 +20,23 @@ async def test_broker_reserves_cash_on_order(test_context: AppContext):
 
     broker = test_context.broker
 
-    await broker.submit_order(tid, SYMBOL, ORDER_TYPE, QUANTITY, LIMIT_PRICE)
+    await broker.submit_order(tid, symbol, order_type, quantity, limit_price)
     assert trader.portfolio.cash == old_cash - notional
 
 
 @pytest.mark.asyncio
 async def test_broker_reserves_shares_on_order(test_context: AppContext):
-    SYMBOL = "AAPL"
-    ORDER_TYPE = "sell"
+    symbol = "AAPL"
+    order_type = "sell"
     old_quantity = 10
-    QUANTITY = 10
-    LIMIT_PRICE = 10
+    quantity = 10
+    limit_price = 10
 
     trader = test_context.session.active_trader
     assert trader
     tid = trader.trader_id
 
-    trader.portfolio.positions[SYMBOL] = Position(
+    trader.portfolio.positions[symbol] = Position(
         qty=old_quantity, avg_price=10
     )
 
@@ -44,17 +44,17 @@ async def test_broker_reserves_shares_on_order(test_context: AppContext):
 
     broker = test_context.broker
 
-    await broker.submit_order(tid, SYMBOL, ORDER_TYPE, QUANTITY, LIMIT_PRICE)
+    await broker.submit_order(tid, symbol, order_type, quantity, limit_price)
 
-    assert trader.portfolio.positions[SYMBOL].qty == old_quantity - QUANTITY
+    assert trader.portfolio.positions[symbol].qty == old_quantity - quantity
 
 
 @pytest.mark.asyncio
 async def test_broker_release_cash_on_cancel(test_context: AppContext):
-    SYMBOL = "AAPL"
-    ORDER_TYPE = "buy"
-    QUANTITY = 10
-    LIMIT_PRICE = 10
+    symbol = "AAPL"
+    order_type = "buy"
+    quantity = 10
+    limit_price = 10
 
     trader = test_context.session.active_trader
     assert trader
@@ -64,7 +64,7 @@ async def test_broker_release_cash_on_cancel(test_context: AppContext):
     broker = test_context.broker
 
     o = await broker.submit_order(
-        tid, SYMBOL, ORDER_TYPE, QUANTITY, LIMIT_PRICE
+        tid, symbol, order_type, quantity, limit_price
     )
     await broker.cancel_order(o.order_id)
 
@@ -73,43 +73,43 @@ async def test_broker_release_cash_on_cancel(test_context: AppContext):
 
 @pytest.mark.asyncio
 async def test_broker_release_shares_on_cancel(test_context: AppContext):
-    SYMBOL = "AAPL"
-    ORDER_TYPE = "sell"
+    symbol = "AAPL"
+    order_type = "sell"
     old_quantity = 10
-    QUANTITY = 10
-    LIMIT_PRICE = 10
+    quantity = 10
+    limit_price = 10
 
     trader = test_context.session.active_trader
     assert trader
     tid = trader.trader_id
-    trader.portfolio.positions[SYMBOL] = Position(
+    trader.portfolio.positions[symbol] = Position(
         qty=old_quantity, avg_price=10
     )
 
     broker = test_context.broker
 
     o = await broker.submit_order(
-        tid, SYMBOL, ORDER_TYPE, QUANTITY, LIMIT_PRICE
+        tid, symbol, order_type, quantity, limit_price
     )
 
     await broker.cancel_order(o.order_id)
 
-    assert trader.portfolio.positions[SYMBOL].qty == old_quantity
+    assert trader.portfolio.positions[symbol].qty == old_quantity
 
 
 @pytest.mark.asyncio
 async def test_broker_reserves_cash_on_partial_fill(
     test_context: AppContext, sample_trader2: Trader
 ):
-    SYMBOL = "AAPL"
+    symbol = "AAPL"
     old_cash = sample_trader2.portfolio.cash
-    QUANTITY = 10
-    LIMIT_PRICE = 10
-    NOTIONAL = QUANTITY * LIMIT_PRICE
+    quantity = 10
+    limit_price = 10
+    notional = quantity * limit_price
 
     trader1 = test_context.session.active_trader
     assert trader1
-    trader1.portfolio.positions[SYMBOL] = Position(qty=10, avg_price=10)
+    trader1.portfolio.positions[symbol] = Position(qty=10, avg_price=10)
 
     trader2 = sample_trader2
 
@@ -119,8 +119,77 @@ async def test_broker_reserves_cash_on_partial_fill(
     broker = test_context.broker
 
     await broker.submit_order(
-        ask_id, SYMBOL, "sell", QUANTITY - 5, LIMIT_PRICE
+        ask_id, symbol, "sell", quantity - 5, limit_price
     )
-    await broker.submit_order(bid_id, SYMBOL, "buy", QUANTITY, LIMIT_PRICE)
+    await broker.submit_order(bid_id, symbol, "buy", quantity, limit_price)
 
-    assert trader2.portfolio.cash == old_cash - NOTIONAL
+    assert trader2.portfolio.cash == old_cash - notional
+
+@pytest.mark.asyncio
+async def test_cancel_order(test_context: AppContext):
+    symbol = "AAPL"
+    quantity = 42
+    price = 42.00
+
+    trader = test_context.session.active_trader
+    assert trader
+    tid = trader.trader_id
+
+    broker = test_context.broker
+    exchange = test_context.exchange
+
+    # Add an order
+    o = await broker.submit_order(tid, symbol, "buy", quantity, price)
+
+    await exchange._book_queues[symbol].join()
+    # Check the prequisites
+    assert exchange.order_books[symbol].buy_size() == 1
+
+    # Cancel an order
+    await broker.cancel_order(o.order_id)
+    await exchange._book_queues[symbol].join()
+
+    assert exchange.order_lookup[o.order_id].status == "cancelled"
+
+    assert exchange.order_books[symbol].buy_size() == 0
+
+
+@pytest.mark.asyncio
+async def test_cancel_order_invalid_id(test_context: AppContext):
+    sample_exchange = test_context.exchange
+
+    try:
+        await sample_exchange.cancel_order("fake_order_id")
+    except KeyError:
+        assert True
+        return
+
+    # Raise AssertionError if error not returned
+    raise AssertionError("Should not cancel an order with nonexistent id")
+
+
+@pytest.mark.asyncio
+async def test_cancel_fulfilled_order(test_context: AppContext):
+    symbol = "AAPL"
+    quantity = 42
+    price = 42.00
+
+    trader = test_context.session.active_trader
+    assert trader
+    tid = trader.trader_id
+
+    broker = test_context.broker
+    exchange = test_context.exchange
+
+    # Add an order
+    o = await broker.submit_order(tid, symbol, "buy", quantity, price)
+    await exchange._book_queues[symbol].join()
+
+    # Mutate order's status to fulfilled
+    exchange.order_lookup[o.order_id].status = "filled"
+
+    # Check the prequisites
+    assert exchange.order_books[symbol].buy_size() == 1
+
+    # Cancel an order
+    assert not await exchange.cancel_order(o.order_id)

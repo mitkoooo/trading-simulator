@@ -1,4 +1,4 @@
-from typing import Dict, Literal
+from typing import Literal
 
 from engine.broker.power_ledger import PowerLedger
 from engine.exchange.exchange import Exchange
@@ -26,8 +26,8 @@ class Broker:
     def __init__(self, exchange: Exchange, mpid: str) -> None:
         self.mpid = mpid
         self.exchange = exchange
-        self.traders: Dict[str, Trader] = {}
-        self.active_orders: Dict[str, str] = {}  # order.mpid -> trader_id
+        self.traders: dict[str, Trader] = {}
+        self.active_orders: dict[str, str] = {}  # order.mpid -> trader_id
         self.power_ledger = PowerLedger(exchange, self.traders)
         self.exchange.subscribe(f"trade:*:{self.mpid}", self.settle_trade)
         self.exchange.subscribe(
@@ -149,7 +149,6 @@ class Broker:
         else:
             raise ValueError("Unknown order type.")
 
-        return
 
     def settle_trade(self, trade: Trade):
         """Settle a matched trade or cancel on buyer failure.
