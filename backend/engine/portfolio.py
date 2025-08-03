@@ -1,7 +1,6 @@
 
 from engine.market_data.quote import MarketQuote
-
-from .position import Position
+from engine.position import Position
 
 
 class Portfolio:
