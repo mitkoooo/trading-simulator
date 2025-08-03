@@ -34,7 +34,7 @@ class Broker:
         self.mpid = mpid
         self.exchange = exchange
         self.traders: dict[str, Trader] = {}
-        self.active_orders: dict[str, str] = {}  # order.mpid -> trader_id
+        self.active_orders: dict[str, str] = {}  # order.order_id -> trader_id
         self.power_ledger = PowerLedger(exchange, self.traders)
 
         self.exchange.subscribe(f"trade:*:{self.mpid}", self.settle_trade)
@@ -113,10 +113,11 @@ class Broker:
         await self.exchange.add_order(order)
 
         trader.pending_orders[order.order_id] = order
+        trader.transaction_log[order.order_id] = order
 
         return order
 
-    async def cancel_order(self, order_id: str) -> None:
+    async def cancel_order(self, order_id: str) -> Order:
         """Cancel a trader's pending order and free reserved funds or shares.
 
         Calls the exchange to cancel the order, removes it from the trader's
@@ -170,6 +171,8 @@ class Broker:
             self.power_ledger.release_shares(trader_id, cancelled_order)
         else:
             raise ValueError("Unknown order type.")
+        
+        return order
 
 
     def settle_trade(self, trade: Trade) -> None:
@@ -235,7 +238,7 @@ class Broker:
         order = trade.buy_order
         trader_id = self.active_orders[order.order_id]
         trader = self.traders[trader_id]
-
+        
         price = trade.price
         qty = trade.quantity
         symbol = trade.symbol
@@ -275,11 +278,10 @@ class Broker:
         pos.qty += qty
         # Calculate new avg
         pos.avg_price = (old_avg * old_qty + qty * price) / pos.qty
-
         # Bookkeeping
         if order.quantity == 0:
             del trader.pending_orders[order.order_id]
-            trader.transaction_log.append(order)
+            trader.transaction_log[order.order_id] = order
 
             del self.active_orders[order.order_id]
         else:
@@ -304,8 +306,6 @@ class Broker:
 
         """
         order = trade.sell_order
-
-        print(order)
 
         trader_id = self.active_orders[order.order_id]
         trader = self.traders[trader_id]
@@ -337,7 +337,7 @@ class Broker:
         # Bookkeeping
         if order.quantity == 0:
             trader.pending_orders.pop(order.order_id)
-            trader.transaction_log.append(order)
+            trader.transaction_log[order.order_id] = order
 
             self.active_orders.pop(order.order_id)
         else:

@@ -16,13 +16,13 @@ HELP_MENU = """
     """
 
 WELCOME_MESSAGE = f"""
-YORK STOCK EXCHANGE TERMINAL
+GHOSTSWAP TERMINAL
 
 Please log in with your Trader ID before issuing any other commands.
 {HELP_MENU}"""
 
 
-def display_prices(exchange: Exchange):
+def display_prices(exchange: Exchange) -> None:
     """Simulate a tick and print each stock's updated price.
 
     Examples:
@@ -40,8 +40,8 @@ def display_prices(exchange: Exchange):
         print(f"{symbol:<5} | ${order_book.last_trade_price:.2f}")
 
 
-def display_portfolio(exchange: Exchange, trader: Trader):
-    """Print the trader's cash balance and current positions in a Bloomberg-style box.
+def display_portfolio(exchange: Exchange, trader: Trader) -> None:
+    """Print `Trader` cash balance and current positions.
 
     Examples:
         >>> from engine.trader import Trader
@@ -80,8 +80,14 @@ def display_portfolio(exchange: Exchange, trader: Trader):
         print(none_line)
     else:
         for symbol, pos in positions.items():
+            pnl = trader.portfolio.calculate_unrealized_pl(symbol,
+                                                           exchange.quotes)
+            s = symbol
+            p = pos.avg_price
+            q = pos.qty
+
             line = (
-                f"│    {symbol}: {pos.qty} @ ${pos.avg_price}, unrealized P/L +${trader.portfolio.calculate_unrealized_pl(symbol, exchange.quotes):,.2f}".ljust(
+                f"│    {s}: {q} @ ${p}, unrealized P/L +${pnl:,.2f}".ljust(
                     inner_width + 1
                 )
                 + "│"
@@ -93,7 +99,7 @@ def display_portfolio(exchange: Exchange, trader: Trader):
     print()
 
 
-def display_pending_orders(exchange: Exchange):
+def display_pending_orders(exchange: Exchange) -> None:
     """Print all pending buy/sell orders in the exchange.
 
     Examples:
@@ -103,7 +109,8 @@ def display_pending_orders(exchange: Exchange):
         >>> from view.render     import display_pending_orders
         >>> ex = Exchange(market_data={"AAPL": Stock("AAPL", 100.0)})
         >>> tr = Trader(trader_id=1, starting_balance=1000.0)
-        >>> o = tr.place_order(symbol="AAPL", order_type="buy", quantity=1, price=100.0)
+        >>> o = tr.place_order(symbol="AAPL", order_type="buy",
+        >>>                    quantity=1, price=100.0)
         >>> ex.add_order(o)
         >>> display_pending_orders(ex)  # doctest: +SKIP
 
@@ -117,9 +124,14 @@ def display_pending_orders(exchange: Exchange):
             if order.status == "cancelled":
                 continue
 
+            ts = order.timestamp
+            order_type = order.order_type.capitalize()
+            s = order.symbol
+            q = order.quantity
+
             message += (
-                f"\n[{order.timestamp:%Y-%m-%d %H:%M:%S}] Pending {order.order_type.capitalize()} Order: "
-                f"{order.quantity} share{'s' if order.quantity != 1 else ''} of {order.symbol} "
+                f"\n[{ts:%Y-%m-%d %H:%M:%S}] Pending {order_type} Order: "
+                f"{q} share{'s' if q != 1 else ''} of {s} "
                 f"@ ${order.limit_price:,.2f}."
             )
     if not message:
@@ -129,9 +141,11 @@ def display_pending_orders(exchange: Exchange):
     print()
 
 
-def display_welcome():
+def display_welcome() -> None:
+    """Display welcome message in CLI."""
     print(WELCOME_MESSAGE)
 
 
-def display_help_menu():
+def display_help_menu() -> None:
+    """Display help menu in CLI."""
     print(HELP_MENU)

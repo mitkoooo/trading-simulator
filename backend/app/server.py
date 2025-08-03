@@ -1,23 +1,39 @@
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import router
+from app.routers.orders import router as orders_router
+from app.routers.quotes import router as quotes_router
+from app.routers.users import router as users_router
 from scripts.bootstrap import bootstrap
 
-app = FastAPI(title="GhostSwap API")
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator:
+    """Manage FastAPI application startup and shutdown.
 
-@app.on_event("startup")
-async def on_startup():
+    Before the server starts, perform any necessary initialization.
+    After the server stops, perform any cleanup or teardown tasks.
+
+    Args:
+        app (FastAPI): The FastAPI application instance.
+
+    Yields:
+        None: Control is yielded back to FastAPI to run the application.
+
+    """
     ctx = await bootstrap()
     app.state.context = ctx
 
+    try:
+        yield
+    finally:
+        await app.state.context.bot_manager.stop_all()
+        await app.state.context.exchange.stop()
 
-@app.on_event("shutdown")
-async def on_shutdown():
-    await app.state.context.bot_manager.stop_all()
-    await app.state.context.exchange.stop()
-
+app = FastAPI(title="GhostSwap API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,4 +43,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
+routers = [quotes_router, users_router, orders_router]
+
+for r in routers:
+    app.include_router(r)

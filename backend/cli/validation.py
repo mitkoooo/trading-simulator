@@ -23,7 +23,9 @@ def parse_order(args: list[str]) -> tuple[str, int, float]:
         ('AAPL', None, None)
 
     """
-    if args is None or len(args) != 3:
+    arg_num = 3
+
+    if args is None or len(args) != arg_num:
         return None, None, None
 
     symbol, quantity, price = args
@@ -37,7 +39,7 @@ def parse_order(args: list[str]) -> tuple[str, int, float]:
 def validate_symbol(
     symbol: str, exchange: Exchange, cmd: str, args: list[str]
 ) -> bool:
-    """Check that SYMBOL exists in exchange.market_data, else print and log warning.
+    """Check whether ticker symbol is registered on the exchange.
 
     Args:
         symbol (str): ticket to validate
@@ -47,15 +49,6 @@ def validate_symbol(
 
     Returns:
         True if valid, False (after printing usage) otherwise.
-
-    Examples:
-        >>> from engine.exchange import Exchange
-        >>> from engine.stock import Stock
-        >>> ex = Exchange(market_data={"AAPL": Stock("AAPL", 1.0)})
-        >>> validate_symbol("AAPL", ex, "BUY", ["AAPL","1","1"])
-        True
-        >>> validate_symbol("FOO", ex, "BUY", ["FOO","1","1"])  # doctest: +SKIP
-        False
 
     """
     if symbol not in exchange.instruments:

@@ -55,6 +55,7 @@ market_makers:
     # - init parameters -
     symbol: AAPL
     base_size: 100
+    inv_limit: 500
     alpha: 1.2
     beta: 0.0020
     gamma: 0.50
@@ -78,6 +79,7 @@ market_makers:
     # - init parameters -
     symbol: MSFT
     base_size: 100
+    inv_limit: 200
     alpha: 1.1
     beta: 0.0018
     gamma: 0.45
@@ -101,6 +103,7 @@ market_makers:
     # - init parameters -
     symbol: GOOG
     base_size: 20
+    inv_limit: 200
     alpha: 1.5
     beta: 0.0030
     gamma: 0.60
@@ -124,6 +127,7 @@ market_makers:
     # - init parameters -
     symbol: AMZN
     base_size: 20
+    inv_limit: 200
     alpha: 1.4
     beta: 0.0025
     gamma: 0.60
@@ -147,6 +151,7 @@ market_makers:
     # - init parameters -
     symbol: TSLA
     base_size: 50
+    inv_limit: 200
     alpha: 2.0
     beta: 0.0040
     gamma: 0.80
@@ -170,6 +175,7 @@ market_makers:
     # - init parameters -
     symbol: NFLX
     base_size: 30
+    inv_limit: 200
     alpha: 1.8
     beta: 0.0035
     gamma: 0.70
@@ -193,6 +199,7 @@ market_makers:
     # - init parameters -
     symbol: META
     base_size: 50
+    inv_limit: 200
     alpha: 1.3
     beta: 0.0020
     gamma: 0.50
@@ -216,6 +223,7 @@ market_makers:
     # - init parameters -
     symbol: NVDA
     base_size: 40
+    inv_limit: 200
     alpha: 1.7
     beta: 0.0030
     gamma: 0.60
@@ -239,6 +247,7 @@ market_makers:
     # - init parameters -
     symbol: INTC
     base_size: 200
+    inv_limit: 200
     alpha: 0.9
     beta: 0.0015
     gamma: 0.40

@@ -18,7 +18,7 @@ def test_update_mid_two_sided(sample_exchange: Exchange):
         last_price=None,
         timestamp=datetime.now(),
     )
-    rp._update_mid(mq)
+    rp.update_mid(mq)
     assert rp.current_mid == expected
 
 
@@ -34,7 +34,7 @@ def test_update_mid_ignores_when_empty_side(sample_exchange: Exchange):
         last_price=50,
         timestamp=datetime.now(),
     )
-    rp._update_mid(mq)
+    rp.update_mid(mq)
     assert rp.current_mid is None
 
 
@@ -51,5 +51,5 @@ def test_update_mid_fallback_to_last_price(sample_exchange: Exchange):
         last_price=100,
         timestamp=datetime.now(),
     )
-    rp._update_mid(mq)
+    rp.update_mid(mq)
     assert rp.current_mid == expected

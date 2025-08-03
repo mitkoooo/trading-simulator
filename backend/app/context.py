@@ -7,12 +7,15 @@ from engine.exchange.exchange import Exchange
 
 
 class AppContext:
-    """Keeps track of the exchange, the current active user, and of the logger
+    """Keeps track of the exchange, the current active user, and of the logger.
 
     Attributes:
-      session (Session): Currently active user session.
-      exchange (Exchange): The stock Exchange.
-      logger (Logger): The logger to log user's actions.
+      session (Session):
+        Currently active user session.
+      exchange (Exchange):
+        The stock Exchange.
+      logger (Logger):
+        The logger to log user's actions.
 
     """
 
@@ -23,13 +26,14 @@ class AppContext:
         exchange: Exchange,
         bot_manager: BotManager,
         logger: Logger | None = None,
-    ):
+    ) -> None:
         """Instantiate AppContext class.
 
         Args:
         session (Session): Currently active user session.
         broker (Broker): The broker on the stock exchange.
         exchange (Exchange): The stock exchange.
+        bot_manager (BotManager): Bot manager to manage trading bots.
         logger (Logger): The logger to log user's actions.
 
         """
@@ -39,7 +43,8 @@ class AppContext:
         self.bot_manager = bot_manager
         self.logger = logger
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Display a representation string for `AppContext`."""
         def n(x: list) -> int:  # helper for None-safe len
             return 0 if x is None else len(x)
 

@@ -170,8 +170,10 @@ class Exchange:
                         order.status = "partially_filled"
                     else:
                         order_book.remove_order(order)
-                        order.status = "filled"  # sync method, no await
+                        order.status = "filled"
 
+                self.emit_trade(trade)
+               
     async def add_order(self, order: Order) -> None:
         """Enqueue an Order in its respective order book for later matching.
 
@@ -391,7 +393,7 @@ class Exchange:
         # No valid maker found → restore and exit
         if maker is None:
             return None
-
+        
         # Build the trade
         trade = self._build_trade(taker, maker, symbol)
 
@@ -414,8 +416,6 @@ class Exchange:
                         {self.avg_service_time} ms""")
 
         self.trade_num = (self.trade_num[0], datetime.now())
-
-        self.emit_trade(trade)
 
         # Store last trade price in the order book
         self.order_books[symbol].last_trade_price = trade.price

@@ -11,7 +11,7 @@ import { API_BASE } from "../config/api";
 
 // ——— Types ———
 interface LoginFormData {
-  trader_id: number;
+  trader_id: string;
 }
 
 // ——— Route Definition ———
@@ -39,11 +39,11 @@ function Login() {
   const [error, setError] = useState(null);
 
   const handleLoginSubmit: SubmitHandler<LoginFormData> = async (
-    data: LoginFormData
+    data: LoginFormData,
   ) => {
     const trader_id = data.trader_id;
 
-    const res = await fetch(`${API_BASE}/login`, {
+    const res = await fetch(`${API_BASE}/users/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ trader_id }),
@@ -61,7 +61,7 @@ function Login() {
 
   return (
     <div className="p-2">
-      <h3 className="text-lg font-semibold mb-2">
+      <h3 className="mb-2 text-lg font-semibold">
         Please log in before continuing
       </h3>
 
@@ -70,7 +70,7 @@ function Login() {
         className="flex items-end"
       >
         <div>
-          <label htmlFor="trader_id" className="block mb-1">
+          <label htmlFor="trader_id" className="mb-1 block">
             Trader ID
           </label>
           <input
@@ -79,25 +79,23 @@ function Login() {
             placeholder="Enter your trader ID"
             {...register("trader_id", {
               required: "Trader ID is required",
-              valueAsNumber: true,
-              validate: (v) => !isNaN(v) || "Must be a number",
             })}
             aria-invalid={errors.trader_id ? "true" : "false"}
-            className={`bg-slate-200 rounded-2xl p-2 text-black ${errors.trader_id ? "border border-red-500" : ""}`}
+            className={`rounded-2xl bg-slate-200 p-2 text-black ${errors.trader_id ? "border border-red-500" : ""}`}
           />
         </div>
         <div>
           <input
             type="submit"
             value="Log in"
-            className="bg-blue-400 rounded-2xl p-2 text-white mx-8  h-10"
+            className="mx-8 h-10 rounded-2xl bg-blue-400 p-2 text-white"
           />
         </div>
       </form>
       {errors.trader_id && (
-        <p className="text-red-600 mt-1 text-sm">{errors.trader_id.message}</p>
+        <p className="mt-1 text-sm text-red-600">{errors.trader_id.message}</p>
       )}
-      {error && <p className="text-red-600 mt-1 text-sm">{error}</p>}
+      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   );
 }

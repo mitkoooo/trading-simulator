@@ -1,6 +1,9 @@
 import asyncio
 import functools
 import inspect
+from collections.abc import Callable
+from logging import Logger
+from typing import Literal
 
 from app.context import AppContext
 from cli.render import display_welcome
@@ -19,13 +22,18 @@ from .commands import (
 )
 
 
-def log_command_factory(logger):
-    """Returns a decorator that will log using the supplied `logger`.
+def log_command_factory(logger: Logger) -> Callable:
+    """Retturn a decorator that will log using the supplied `logger`.
+    
+    Args:
+        logger (Logger):
+            Logger to use for CLI commands.
+
     """
 
-    def decorator(fn):
+    def _decorator(fn: Callable) -> Callable:
         @functools.wraps(fn)
-        def wrapper(*args, **kwargs):
+        def _wrapper(*args: list[str], **kwargs: list[str]) -> Callable:
             cmd = fn.__name__.replace("do_", "").upper()
             logger.info(
                 "%s command received: args=%r, kwargs=%r", cmd, args, kwargs
@@ -34,21 +42,28 @@ def log_command_factory(logger):
             logger.info("%s command processed", cmd)
             return result
 
-        return wrapper
+        return _wrapper
 
-    return decorator
+    return _decorator
 
 
 class CLI:
     """Read-Eval-Print Loop for the York Stock Exchange CLI.
 
-    Manages user input and dispatches commands (next, buy, sell, match, status) to the appropriate handlers.
+    Manages user input and dispatches commands to the appropriate handlers.
 
     Attributes:
-        exchange (Exchange): the market exchange instance.
-        trader (Trader): the trader instance.
-        logger (logging.Logger): logger for audit logs.
-        commands (dict[str, Callable[[Optional[List[str]]], None]]): mapping of command names to handler callables.
+        exchange (Exchange):
+            The market exchange instance.
+
+        trader (Trader):
+            The trader instance.
+
+        logger (logging.Logger):
+            Logger for audit logs.
+
+        commands (dict[str, Callable[[Optional[List[str]]], None]]):
+            Mapping of command names to handler callables.
 
     Examples:
         >>> from logging_config import setup_logger
@@ -61,7 +76,7 @@ class CLI:
 
     """
 
-    def __init__(self, context: AppContext):
+    def __init__(self, context: AppContext) -> None:
         """Initialize the CLI with its core dependencies and command map.
 
         Args:
@@ -82,29 +97,41 @@ class CLI:
         wrap = log_command_factory(self.context.logger)
 
         # --- helper factories ---
-        def _no_args(fn):
-            """Wrap a command fn(ctx) → None"""
+        def _no_args(fn: Callable) -> Callable:
+            """Wrap a command fn(ctx) → None."""
 
             @functools.wraps(fn)
-            def handler(_args=None):
+            def _handler(_: list[str] | None) -> Callable:
                 return fn(self.context)
 
-            return wrap(handler)
+            return wrap(_handler)
 
-        def _with_args(fn):
-            """Wrap a command fn(ctx, args) → None"""
+        def _with_args(fn: Callable) -> Callable:
+            """Wrap a command fn(ctx, args) → None.
+
+            Args:
+                fn (Callable):
+                    Function to wrap with AppContext and args.
+
+            """
 
             @functools.wraps(fn)
-            def handler(args=None):
+            def _handler(args: list[str] | None = None) -> Callable:
                 return fn(self.context, args or [])
 
-            return wrap(handler)
+            return wrap(_handler)
 
-        def _with_side(side):
-            """Special factory for buy/sell which need (ctx, side, args)"""
+        def _with_side(side: Literal["buy", "sell"]) -> Callable:
+            """Add special factory for buy/sell commands.
+            
+            Args:
+                side (Literal["buy", "sell"]):
+                    Buy or sell an order.
+
+            """
 
             @functools.wraps(do_place_order)
-            def handler(args=None):
+            def handler(args: list[str] | None = None) -> None:
                 return do_place_order(self.context, side, args or [])
 
             return wrap(handler)
@@ -124,11 +151,12 @@ class CLI:
             "help": _no_args(do_help),
         }
 
-    async def run(self):
-        """Start the interactive loop, reading user input and dispatching commands.
+    async def run(self) -> None:
+        """Start the interactive loop, reading input and dispatching commands.
 
         Continuously prompts with '>>> '.
-        Handles empty input by printing a blank line, EOF by exiting gracefully,
+        Handles empty input by printing a blank line,
+        EOF by exiting gracefully,
         and 'quit' to terminate.
 
         Examples:

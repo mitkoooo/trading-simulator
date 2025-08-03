@@ -7,8 +7,8 @@ from app.context import AppContext
 from app.session import Session
 from config.logging_config import setup_logger
 from engine.bots.bot_manager import BotManager
-from engine.bots.passive_mm.passive_mm import PassiveMM
-from engine.bots.retail_poisson import RetailPoisson
+from engine.bots.passive_mm.passive_mm import PassiveMM, PassiveMMSettings
+from engine.bots.retail_poisson import RetailPoisson, RetailPoissonSettings
 from engine.broker.broker import Broker
 from engine.exchange.exchange import Exchange
 from engine.exchange.participant_info import ParticipantInfo
@@ -100,29 +100,33 @@ async def bootstrap(
     for mm in config["market_makers"]:
         _register_bots_from_yaml(exchange, mm)
 
-        categories = ["symbol", "base_size", "alpha", "beta", "gamma"]
 
-        bot_kwargs = {k: mm[k] for k in categories}
+        settings: PassiveMMSettings = PassiveMMSettings
 
-        bot = PassiveMM(exchange, mpid=mm["mpid"], **bot_kwargs)
+        settings.base_size = mm["base_size"]
+        settings.inv_limit = mm["inv_limit"]
+        settings.alpha = mm["alpha"]
+        settings.beta = mm["beta"]
+        settings.gamma = mm["gamma"]
+
+        bot = PassiveMM(symbol=mm["symbol"], exchange=exchange,
+                        mpid=mm["mpid"], settings=settings)
 
         bot_manager.register_bot(bot)
 
     for rp in config["retail_bots"]:
         _register_bots_from_yaml(exchange, rp)
 
-        categories = [
-            "symbol",
-            "limit_rate",
-            "market_rate",
-            "quantity_range",
-            "tick_size",
-            "market_probability",
-        ]
+        settings: RetailPoissonSettings = RetailPoissonSettings
 
-        bot_kwargs = {k: rp[k] for k in categories}
+        settings.limit_rate = rp["limit_rate"]
+        settings.market_rate = rp["market_rate"]
+        settings.quantity_range = rp["quantity_range"]
+        settings.tick_size = rp["tick_size"]
+        settings.market_probability = rp["market_probability"]
 
-        bot = RetailPoisson(exchange, mpid=rp["mpid"], **bot_kwargs)
+        bot = RetailPoisson(symbol=rp["symbol"], exchange=exchange,
+                            mpid=rp["mpid"], settings=settings)
         
         bot_manager.register_bot(bot)
 

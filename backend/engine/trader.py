@@ -14,7 +14,7 @@ class Trader:
     Attributes:
         trader_id (int): A unique trader identifier.
         portfolio (Portfolio): #TODO
-        transaction_log (List[Order]): List of previous transactions.
+        transaction_log (dict[str, Order]): List of previous transactions.
 
     Examples:
         >>> t = Trader(trader_id=1, starting_balance=10000.0)
@@ -38,5 +38,5 @@ class Trader:
         """
         self.trader_id = trader_id or str(uuid4())
         self.portfolio = Portfolio(starting_balance)
-        self.transaction_log: list[Order] = []
+        self.transaction_log: dict[str, Order] = {}
         self.pending_orders: dict[str, Order] = {}

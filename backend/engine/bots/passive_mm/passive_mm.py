@@ -27,7 +27,7 @@ class PassiveMMSettings:
         gamma (float):
             Additional spread factor for order-book imbalance.
 
-        inventory_limit (int):
+        inv_limit (int):
             Maximum allowable inventory before risk triggers.
 
         pnl_limit (float):
@@ -41,14 +41,14 @@ class PassiveMMSettings:
 
     """
 
-    base_size=50
-    alpha=1.0
-    beta=0.001
-    gamma=0.5
-    inventory_limit=200
-    pnl_limit=1e5
-    hist_len=200
-    quote_interval=0.2
+    base_size: float = 50
+    alpha: float = 1.0
+    beta: float = 0.001
+    gamma: float = 0.5
+    inv_limit: int = 200
+    pnl_limit: float = 1e5
+    hist_len: int = 200
+    quote_interval: float = 0.2
 
 
 class PassiveMM(BaseBot):
@@ -90,7 +90,7 @@ class PassiveMM(BaseBot):
 
         # Compose core blocks
         hist_len = self.settings.hist_len
-        inventory_limit = self.settings.inventory_limit
+        inv_limit = self.settings.inv_limit
         pnl_limit = self.settings.pnl_limit
         alpha = self.settings.alpha
         beta = self.settings.beta
@@ -99,7 +99,7 @@ class PassiveMM(BaseBot):
 
         self.data_handler = MarketDataHandler(hist_len)
         self.vol_estimator = VolatilityEstimator()
-        self.inv_manager = InventoryManager(mpid, inventory_limit, pnl_limit)
+        self.inv_manager = InventoryManager(mpid, inv_limit, pnl_limit)
         self.quote_engine = QuoteEngine(alpha, beta, gamma, base_size)
 
         self.active_orders: dict[
@@ -151,7 +151,7 @@ class PassiveMM(BaseBot):
                 sell_price -= random.choice([-0.01, 0.00, 0.01])
 
                 await self._refresh_quotes(buy_price, sell_price)
-
+                
             await asyncio.sleep(self.quote_interval + random.random() * 0.05)
 
     def stop(self) -> None:
@@ -174,12 +174,12 @@ class PassiveMM(BaseBot):
         # Place missing orders
         for side, price in [("buy", bid_price), ("sell", ask_price)]:
             if side not in self.active_orders:
-                assert side in {"buy", "sell"} 
+                assert side in {"buy", "sell"}
                 order = Order(
                     mpid=self.mpid,
                     symbol=self.symbol,
                     order_type=side,
-                    quantity=self.base_size,
+                    quantity=self.settings.base_size,
                     limit_price=price,
                 )
                 await self.exchange.add_order(order)

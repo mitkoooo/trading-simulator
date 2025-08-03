@@ -27,7 +27,7 @@ class RetailPoissonSettings:
             Price increment for limit order offsets from mid price.
 
         market_probability (float):
-            Probability of generating a limit order instead of market.
+            Probability of generating a market order instead of limit.
 
     """
 
@@ -96,12 +96,12 @@ class RetailPoisson(BaseBot):
         self._running = True
         while self._running:
             # Sample inter-arrival delay ~ (Poisson) Exponential(rate)
-            if random.random() < self.market_probability:
+            if random.random() < self.settings.market_probability:
                 order_type = "limit"
-                delay = random.expovariate(self.market_rate)
+                delay = random.expovariate(self.settings.market_rate)
             else:
                 order_type = "market"
-                delay = random.expovariate(self.limit_rate)
+                delay = random.expovariate(self.settings.limit_rate)
             await asyncio.sleep(delay)
 
             # Don't know mid and limit order? Do nothing.
@@ -124,7 +124,8 @@ class RetailPoisson(BaseBot):
                 )
             else:
                 # one tick inward from mid
-                offset = -self.tick_size if side == "buy" else self.tick_size
+                tick_size = self.settings.tick_size 
+                offset = -tick_size if side == "buy" else tick_size
                 assert self.current_mid, ValueError(
                     "Current mid price is unexpectedly None"
                 )

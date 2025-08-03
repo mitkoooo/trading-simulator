@@ -1,9 +1,16 @@
 import { API_BASE } from "../config/api";
-import type { MePortfolioResponse } from "../types/api";
+import type { PortfolioResponse } from "../types/api";
 import type { Order, Portfolio } from "../types/domain";
 
-export async function getPortfolio(): Promise<Portfolio> {
-  const res = await fetch(`${API_BASE}/me/portfolio`, {
+export interface GetPendingOrdersResponse {
+  status: number;
+  orders: Order[];
+}
+
+export async function getPortfolio(
+  trader_id: string,
+): Promise<PortfolioResponse> {
+  const res = await fetch(`${API_BASE}/users/${trader_id}/portfolio`, {
     method: "GET",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -14,13 +21,18 @@ export async function getPortfolio(): Promise<Portfolio> {
   return data;
 }
 
-export async function getPendingOrders(): Promise<Order[]> {
+export async function getPendingOrders(
+  trader_id: string,
+): Promise<GetPendingOrdersResponse> {
   try {
-    const res = await fetch(`${API_BASE}/me/pending-orders`, {
-      method: "GET",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-    });
+    const res = await fetch(
+      `${API_BASE}/users/${trader_id}/orders?status=pending`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      },
+    );
 
     if (!res.ok) {
       const errorData = await res.json();
@@ -28,8 +40,8 @@ export async function getPendingOrders(): Promise<Order[]> {
       const errorMessage = errorData.detail || "Unknown error";
       throw Error(errorMessage);
     } else {
-      const pendingOrders: Order[] = await res.json();
-      return pendingOrders;
+      const result: GetPendingOrdersResponse = await res.json();
+      return result;
     }
   } catch (err: unknown) {
     console.error(err);
