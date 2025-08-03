@@ -52,7 +52,7 @@ const OrderView = (): React.JSX.Element => {
 									{o.order_type.toUpperCase()}
 								</span>
 								<span>{o.symbol}</span>
-								<span className="font-mono">${o.limit_price}</span>
+								<span className="font-mono">{o.limit_price ?? "MARKET"}</span>
 								<span>{o.quantity}</span>
 							</div>
 							<button data-order-id={o.order_id}>

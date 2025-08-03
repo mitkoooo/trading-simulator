@@ -1,4 +1,3 @@
-from typing import Dict, Optional
 
 from engine.trader import Trader
 
@@ -6,12 +5,29 @@ from engine.trader import Trader
 class Session:
     """Keeps track of the active trader on the exchange."""
 
-    def __init__(self, traders: Dict[int, Trader]):
-        self._traders: Dict[int, Trader] = traders
+    def __init__(self, traders: dict[str, Trader]) -> None:
+        """Initialize `Session`.
+        
+        Args:
+            traders (dict[str, Trader]):
+                Dict of traders registered on the exchange.
+
+        """
+        self._traders: dict[str, Trader] = traders
         self._active_trader: Trader | None = None
 
-    def login(self, trader_id: int) -> None:
-        """Login into the session with `trader_id`
+    @property
+    def traders(self) -> dict[str, Trader]:
+        """Dict of traders registered on the exchange."""
+        return self._traders
+
+    @property
+    def active_trader(self) -> Trader | None:
+        """Currently logged in trader."""
+        return self._active_trader
+
+    def login(self, trader_id: str) -> None:
+        """Login into the session with `trader_id`.
 
         Args:
           trader_id (int): ID of the current trader
@@ -21,24 +37,26 @@ class Session:
 
         """
         if trader_id not in self._traders:
-            raise ValueError(f"No such existing trader: {trader_id}")
+            raise KeyError(f"No such existing trader: {trader_id}")
 
         self._active_trader = self._traders[trader_id]
 
     def logout(self) -> None:
-        """Logs out the current trader.
+        """Log out the current trader.
 
         Raises:
             (RuntimeError): If no trader is currently logged in
 
         """
         if not self._active_trader:
-            raise RuntimeError("Cannot log out: no trader is currently logged in.")
+            raise RuntimeError(
+                "Cannot log out: no trader is currently logged in."
+            )
 
         self._active_trader = None
 
     def require_active(self) -> Trader:
-        """Returns currently active trader, raises `RuntimeError` if None
+        """Return currently active trader, raises `RuntimeError` if None.
 
         Returns:
           (Trader): Currently active trader.
@@ -52,7 +70,4 @@ class Session:
 
         return self._active_trader
 
-    @property
-    def active_trader(self) -> Optional[Trader]:
-        """Currently logged in trader"""
-        return self._active_trader
+

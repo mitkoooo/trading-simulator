@@ -9,7 +9,7 @@ export async function postOrder(
   const order = { symbol, order_type, quantity, price };
 
   try {
-    const res = await fetch(`${API_BASE}/order`, {
+    const res = await fetch(`${API_BASE}/orders`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -32,8 +32,8 @@ export async function postOrder(
 export async function postCancelOrder(order_id: string): Promise<boolean> {
   const body = { order_id };
   try {
-    const res = await fetch(`${API_BASE}/order/cancel`, {
-      method: "POST",
+    const res = await fetch(`${API_BASE}/orders/${order_id}`, {
+      method: "DELETE",
       credentials: "include",
       headers: {
         "Content-Type": "application/json",

@@ -9,13 +9,26 @@ class Trade:
     """A record of an executed match between a buy and a sell order.
 
     Attributes:
-      trade_id (str): Unique trade indentifier.
-      buy_order (Order): The buy order involved in the trade.
-      sell_order (Order): The sell order involved in the trade.
-      symbol (str): Ticker symbol (e.g. "AAPL").
-      quantity (int): Actual number of shares traded.
-      price (float): Actual execution price.
-      timestamp (datetime): Creation time of the trade.
+      trade_id (str):
+        Unique trade indentifier.
+
+      buy_order (Order):
+        The buy order involved in the trade.
+
+      sell_order (Order):
+        The sell order involved in the trade.
+
+      symbol (str):
+        Ticker symbol (e.g. "AAPL").
+
+      quantity (int):
+        Actual number of shares traded.
+
+      price (float):
+        Actual execution price.
+
+      timestamp (datetime):
+        Creation time of the trade.
 
     """
 
@@ -26,16 +39,27 @@ class Trade:
         symbol: str,
         quantity: int,
         price: float,
-    ):
+    ) -> None:
         """Create a Trade. Used by Exchange.match_orders().
 
         Args:
-          buy_order (Order): The buy order involved in the trade.
-          sell_order (Order): The sell order involved in the trade.
-          symbol (str): Ticker symbol (e.g. "AAPL").
-          quantity (int): Actual number of shares traded.
-          price (float): Actual execution price.
-          status (Literal["pending", "fulfilled", "cancelled"]: Status of the trade.
+          buy_order (Order):
+            The buy order involved in the trade.
+
+          sell_order (Order):
+            The sell order involved in the trade.
+
+          symbol (str):
+            Ticker symbol (e.g. "AAPL").
+
+          quantity (int):
+            Actual number of shares traded.
+
+          price (float):
+            Actual execution price.
+
+          status (Literal["pending", "fulfilled", "cancelled"]:
+            Status of the trade.
 
         Example:
             >>> from engine.trade import Trade
@@ -55,3 +79,15 @@ class Trade:
         self.price = price
         self.status: Literal["pending", "fulfilled", "cancelled"] = "pending"
         self.timestamp = datetime.now()
+
+    def __repr__(self) -> str:
+        """Return representation string about `Trade`."""
+        return (
+            f"<Trade id={self.trade_id!r} "
+            f"symbol={self.symbol!r} "
+            f"qty={self.quantity} "
+            f"price={self.price:.2f} "
+            f"buy={self.buy_order!r} "
+            f"sell={self.sell_order!r} "
+            f"time={self.timestamp.isoformat()}>"
+        )

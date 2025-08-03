@@ -89,5 +89,24 @@ indent-style = "space"
 line-ending = "auto"
 
 [tool.ruff.lint]
-select = ["E", "F", "D", "B", "I", "N", "FAST001", "FAST002", "FAST003"]
+select = [
+  "E",    # pycodestyle: whitespace, indentation, etc.
+  "F",    # pyflakes: undefined names, imports, etc.
+  "B",    # flake8-bugbear: likely bugs, bad patterns
+  "I",    # isort: import sorting
+  "UP",   # pyupgrade: modern syntax (e.g. f-strings)
+  "N",    # pep8-naming: class/function/variable naming
+  "D",    # pydocstyle: docstring style & presence
+  "ANN",  # flake8-annotations: function type hints
+  "C90",  # McCabe complexity: flag overly complex functions
+  "RUF",  # Ruff-specific rules (e.g., unused noqa)
+  "PL",   # pylint-style lints (variable naming, etc.)
+  "TID",  # tidy imports: remove unused imports
+  "FAST001", 
+  "FAST002", 
+  "FAST003"
+  ]
 ignore = ["D100", "D104"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D", "ANN201"]

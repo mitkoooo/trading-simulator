@@ -15,7 +15,9 @@ const PlaceOrderButton = ({
 
 	const formattedAction =
 		currentSide?.slice(0, 1).toUpperCase() + currentSide?.slice(1);
-	const formattedPrice = currentPrice ? String(currentPrice?.toFixed(2)) : "";
+	const formattedPrice = currentPrice
+		? String(Number(currentPrice)?.toFixed(2))
+		: "";
 
 	return (
 		<button

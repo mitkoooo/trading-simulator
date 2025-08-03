@@ -1,0 +1,472 @@
+# ——————————————————————————————————————————————————————————
+# Market‑Maker bots: one per symbol
+# ——————————————————————————————————————————————————————————
+system_seed:
+  - mpid: SEED
+    # - ParticipantInfo fields -
+    display_name: "SYSTEM SEED"
+    ptype: direct_member
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [AAPL, MSFT, GOOG, AMZN, TSLA, NFLX, META, NVDA, INTC]
+    max_order_size:
+      AAPL: 100
+      MSFT: 100
+      GOOG: 100
+      AMZN: 100
+      TSLA: 100
+      NFLX: 100
+      META: 100
+      NVDA: 100
+      INTC: 100
+    max_notional_per_minute: 50000
+    max_msgs_per_second: 50
+    clearing_member_id: "N/I"
+    settlement_account: "N/I"
+    initial_cash: 1000000
+    initial_positions:
+      AAPL: 999
+      MSFT: 999
+      GOOG: 999
+      AMZN: 999
+      TSLA: 999
+      NFLX: 999
+      META: 999
+      NVDA: 999
+      INTC: 999
+
+market_makers:
+  - mpid: MM_AAPL
+    # - ParticipantInfo fields -
+    display_name: "PEAR SECURITIES"
+    ptype: direct_member
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [AAPL]
+    max_order_size:
+      AAPL: 100
+    max_notional_per_minute: 50000
+    max_msgs_per_second: 50
+    clearing_member_id: "N/I"
+    settlement_account: "N/I"
+    initial_cash: 1000000
+    initial_positions:
+      AAPL: 0
+    # - init parameters -
+    symbol: AAPL
+    base_size: 100
+    inv_limit: 500
+    alpha: 1.2
+    beta: 0.0020
+    gamma: 0.50
+
+  - mpid: MM_MSFT
+    # - ParticipantInfo fields -
+    display_name: "MACROHARD CAPITAL"
+    ptype: direct_member
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [MSFT]
+    max_order_size:
+      MSFT: 100
+    max_notional_per_minute: 50000
+    max_msgs_per_second: 50
+    clearing_member_id: N/I
+    settlement_account: N/I
+    initial_cash: 1000000
+    initial_positions:
+      MSFT: 0
+    # - init parameters -
+    symbol: MSFT
+    base_size: 100
+    inv_limit: 200
+    alpha: 1.1
+    beta: 0.0018
+    gamma: 0.45
+
+  - mpid: MM_GOOG
+    # ParticipantInfo fields -
+    display_name: "GOOGOO FINANCIAL"
+    ptype: direct_member
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [GOOG]
+    max_order_size:
+      GOOG: 100
+    max_notional_per_minute: 50000
+    max_msgs_per_second: 50
+    clearing_member_id: N/I
+    settlement_account: N/I
+    initial_cash: 1000000
+    initial_positions:
+      GOOG: 0
+    # - init parameters -
+    symbol: GOOG
+    base_size: 20
+    inv_limit: 200
+    alpha: 1.5
+    beta: 0.0030
+    gamma: 0.60
+
+  - mpid: MM_AMZN
+    # - ParticipantInfo fields -
+    display_name: "FOREST VENTURES"
+    ptype: direct_member
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [AMZN]
+    max_order_size:
+      AMZN: 100
+    max_notional_per_minute: 50000
+    max_msgs_per_second: 50
+    clearing_member_id: N/I
+    settlement_account: N/I
+    initial_cash: 1000000
+    initial_positions:
+      AMZN: 0
+    # - init parameters -
+    symbol: AMZN
+    base_size: 20
+    inv_limit: 200
+    alpha: 1.4
+    beta: 0.0025
+    gamma: 0.60
+
+  - mpid: MM_TSLA
+    # - ParticipantInfo fields -
+    display_name: "NICOLA MARKETS"
+    ptype: direct_member
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [TSLA]
+    max_order_size:
+      TSLA: 100
+    max_notional_per_minute: 50000
+    max_msgs_per_second: 50
+    clearing_member_id: N/I
+    settlement_account: N/I
+    initial_cash: 1000000
+    initial_positions:
+      TSLA: 0
+    # - init parameters -
+    symbol: TSLA
+    base_size: 50
+    inv_limit: 200
+    alpha: 2.0
+    beta: 0.0040
+    gamma: 0.80
+
+  - mpid: MM_NFLX
+    # - ParticipantInfo fields -
+    display_name: "COUCH TRADING CO."
+    ptype: direct_member
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [NFLX]
+    max_order_size:
+      NFLX: 100
+    max_notional_per_minute: 50000
+    max_msgs_per_second: 50
+    clearing_member_id: N/I
+    settlement_account: N/I
+    initial_cash: 1000000
+    initial_positions:
+      NFLX: 0
+    # - init parameters -
+    symbol: NFLX
+    base_size: 30
+    inv_limit: 200
+    alpha: 1.8
+    beta: 0.0035
+    gamma: 0.70
+
+  - mpid: MM_META
+    # - ParticipantInfo fields -
+    display_name: "ZUCK BROKERAGE"
+    ptype: direct_member
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [META]
+    max_order_size:
+      META: 100
+    max_notional_per_minute: 50000
+    max_msgs_per_second: 50
+    clearing_member_id: N/I
+    settlement_account: N/I
+    initial_cash: 1000000
+    initial_positions:
+      META: 0
+    # - init parameters -
+    symbol: META
+    base_size: 50
+    inv_limit: 200
+    alpha: 1.3
+    beta: 0.0020
+    gamma: 0.50
+
+  - mpid: MM_NVDA
+    # - ParticipantInfo fields -
+    display_name: "BUBBLE CAPITAL"
+    ptype: direct_member
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [NVDA]
+    max_order_size:
+      NVDA: 100
+    max_notional_per_minute: 50000
+    max_msgs_per_second: 50
+    clearing_member_id: N/I
+    settlement_account: N/I
+    initial_cash: 1000000
+    initial_positions:
+      NVDA: 0
+    # - init parameters -
+    symbol: NVDA
+    base_size: 40
+    inv_limit: 200
+    alpha: 1.7
+    beta: 0.0030
+    gamma: 0.60
+
+  - mpid: MM_INTC
+    # - ParticipantInfo fields -
+    display_name: "FAILURE VENTURES"
+    ptype: direct_member
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [INTC]
+    max_order_size:
+      INTC: 100
+    max_notional_per_minute: 50000
+    max_msgs_per_second: 50
+    clearing_member_id: N/I
+    settlement_account: N/I
+    initial_cash: 1000000
+    initial_positions:
+      INTC: 0
+    # - init parameters -
+    symbol: INTC
+    base_size: 200
+    inv_limit: 200
+    alpha: 0.9
+    beta: 0.0015
+    gamma: 0.40
+# ——————————————————————————————————————————————————————————
+# Retail-Poisson bots: one per symbol (limit + market noise)
+# ——————————————————————————————————————————————————————————
+retail_bots:
+  - mpid: RP_AAPL
+    # - ParticipantInfo fields -
+    display_name: "Appletini Retail"
+    ptype: direct_member
+    symbol: AAPL
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [AAPL]
+    max_order_size:
+      AAPL: 5
+    max_notional_per_minute: 5000
+    max_msgs_per_second: 20
+    clearing_member_id: "N/I"
+    settlement_account: "N/I"
+    initial_cash: 10000
+    initial_positions:
+      AAPL: 0
+    # - init parameters -
+    limit_rate: 1.0 # passive limit orders/sec
+    market_rate: 0.2 # market orders/sec
+    quantity_range: [1, 5] # shares per order
+    tick_size: 0.02
+    market_probability: 0.3 # 30% of events are market orders
+
+  - mpid: RP_MSFT
+    # - ParticipantInfo fields -
+    display_name: "SoftMart Retail"
+    ptype: direct_member
+    symbol: MSFT
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [MSFT]
+    max_order_size:
+      MSFT: 5
+    max_notional_per_minute: 5000
+    max_msgs_per_second: 20
+    clearing_member_id: "N/I"
+    settlement_account: "N/I"
+    initial_cash: 10000
+    initial_positions:
+      MSFT: 0
+    # - init parameters -
+    limit_rate: 1.0
+    market_rate: 0.2
+    quantity_range: [1, 5]
+    tick_size: 0.02
+    market_probability: 0.3
+
+  - mpid: RP_GOOG
+    # - ParticipantInfo fields -
+    display_name: "Googol Retail"
+    ptype: direct_member
+    symbol: GOOG
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [GOOG]
+    max_order_size:
+      GOOG: 2
+    max_notional_per_minute: 5000
+    max_msgs_per_second: 20
+    clearing_member_id: "N/I"
+    settlement_account: "N/I"
+    initial_cash: 10000
+    initial_positions:
+      GOOG: 0
+    # - init parameters -
+    limit_rate: 1.0
+    market_rate: 0.2
+    quantity_range: [1, 2]
+    tick_size: 0.02
+    market_probability: 0.3
+
+  - mpid: RP_AMZN
+    # - ParticipantInfo fields -
+    display_name: "Zonetail Retail"
+    ptype: direct_member
+    symbol: AMZN
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [AMZN]
+    max_order_size:
+      AMZN: 2
+    max_notional_per_minute: 5000
+    max_msgs_per_second: 20
+    clearing_member_id: "N/I"
+    settlement_account: "N/I"
+    initial_cash: 10000
+    initial_positions:
+      AMZN: 0
+    # - init parameters -
+    limit_rate: 1.0
+    market_rate: 0.2
+    quantity_range: [1, 2]
+    tick_size: 0.02
+    market_probability: 0.3
+
+  - mpid: RP_TSLA
+    # - ParticipantInfo fields -
+    display_name: "ElectroRetail"
+    ptype: direct_member
+    symbol: TSLA
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [TSLA]
+    max_order_size:
+      TSLA: 5
+    max_notional_per_minute: 5000
+    max_msgs_per_second: 20
+    clearing_member_id: "N/I"
+    settlement_account: "N/I"
+    initial_cash: 10000
+    initial_positions:
+      TSLA: 0
+    # - init parameters -
+    limit_rate: 1.0
+    market_rate: 0.2
+    quantity_range: [1, 5]
+    tick_size: 0.02
+    market_probability: 0.3
+
+  - mpid: RP_NFLX
+    # - ParticipantInfo fields -
+    display_name: "CouchTrade Retail"
+    ptype: direct_member
+    symbol: NFLX
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [NFLX]
+    max_order_size:
+      NFLX: 3
+    max_notional_per_minute: 5000
+    max_msgs_per_second: 20
+    clearing_member_id: "N/I"
+    settlement_account: "N/I"
+    initial_cash: 10000
+    initial_positions:
+      NFLX: 0
+    # - init parameters -
+    limit_rate: 1.0
+    market_rate: 0.2
+    quantity_range: [1, 3]
+    tick_size: 0.02
+    market_probability: 0.3
+
+  - mpid: RP_META
+    # - ParticipantInfo fields -
+    display_name: "MetaScroll Retail"
+    ptype: direct_member
+    symbol: META
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [META]
+    max_order_size:
+      META: 5
+    max_notional_per_minute: 5000
+    max_msgs_per_second: 20
+    clearing_member_id: "N/I"
+    settlement_account: "N/I"
+    initial_cash: 10000
+    initial_positions:
+      META: 0
+    # - init parameters -
+    limit_rate: 1.0
+    market_rate: 0.2
+    quantity_range: [1, 5]
+    tick_size: 0.02
+    market_probability: 0.3
+
+  - mpid: RP_NVDA
+    # - ParticipantInfo fields -
+    display_name: "ChipChase Retail"
+    ptype: direct_member
+    symbol: NVDA
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [NVDA]
+    max_order_size:
+      NVDA: 4
+    max_notional_per_minute: 5000
+    max_msgs_per_second: 20
+    clearing_member_id: "N/I"
+    settlement_account: "N/I"
+    initial_cash: 10000
+    initial_positions:
+      NVDA: 0
+    # - init parameters -
+    limit_rate: 1.0
+    market_rate: 0.2
+    quantity_range: [1, 4]
+    tick_size: 0.02
+    market_probability: 0.3
+
+  - mpid: RP_INTC
+    # - ParticipantInfo fields -
+    display_name: "ChipCast Retail"
+    ptype: direct_member
+    symbol: INTC
+    margin_category: standard_equity
+    price_band_limit: 0.05
+    allowed_symbols: [INTC]
+    max_order_size:
+      INTC: 20
+    max_notional_per_minute: 5000
+    max_msgs_per_second: 20
+    clearing_member_id: "N/I"
+    settlement_account: "N/I"
+    initial_cash: 10000
+    initial_positions:
+      INTC: 0
+    # - init parameters -
+    limit_rate: 1.0
+    market_rate: 0.2
+    quantity_range: [1, 20]
+    tick_size: 0.02
+    market_probability: 0.3

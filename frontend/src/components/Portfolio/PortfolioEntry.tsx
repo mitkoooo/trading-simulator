@@ -1,4 +1,4 @@
-import type { Position } from "../types/domain";
+import type { Position } from "../../types/domain";
 
 interface PortfolioEntryProps {
   className?: string;
@@ -13,10 +13,10 @@ const PortfolioEntry = ({
 
   return (
     <div
-      className={`bg-panel border-divider rounded-md flex  gap-8  border p-3  justify-start ${className} w-sm`}
+      className={`bg-panel border-divider flex justify-start gap-8 rounded-md border p-3 ${className} w-sm`}
     >
       <p className="font-semibold">{entry.symbol}</p>
-      <p className="font-mono">${entry.avg_price}</p>
+      <p className="font-mono">${entry.avg_price.toFixed(2)}</p>
       <p>{entry.qty}</p>
     </div>
   );

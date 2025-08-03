@@ -1,16 +1,13 @@
-import type { DataMap, Position, Stock } from "./domain";
+import type { Position } from "./domain";
 
 export interface MeResponse {
-  trader_id: number;
+  trader_id: string;
 }
 
-export interface MePortfolioResponse {
+export interface PortfolioResponse {
+  status: number;
   positions: Position[];
   cash: number;
   value: number;
-  totalPnL: number;
-}
-
-export interface MarketDataResponse {
-  market_data: DataMap<Stock>;
+  total_pnl: number;
 }

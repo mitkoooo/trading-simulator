@@ -5,7 +5,8 @@ from dataclasses import dataclass
 class Position:
     """Represent a position in a trader's portfolio.
 
-    Keeps track of the quantity held, along with the average price they were bought at.
+    Keeps track of the quantity held,
+    along with the average price they were bought at.
 
     Attributes:
         qty (int): Quantity held.

@@ -1,0 +1,61 @@
+import os
+import subprocess
+import sys
+
+CLI_LOOP_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "main.py")
+)
+
+
+def run_cli(commands: str, tmp_path: os.PathLike) -> str:
+    """Run main.py with a sequence of newline-separated commands."""
+    proc = subprocess.run(
+        [sys.executable, CLI_LOOP_PATH, "--cli"],
+        check=False, input=commands,
+        text=True,
+        capture_output=True,
+        timeout=5.00,
+        cwd=str(tmp_path),
+    )
+
+    assert proc.returncode == 0, f"CLI crashed: {proc.stderr!r}"
+
+    return proc.stdout
+
+
+def test_smoke_flow(tmp_path: os.PathLike) -> None:
+    """Run the smoke test with output piped into tmp_path.
+    
+    Args:
+        tmp_path (Path): path to tmp/ for logging to go be logged to
+
+    """
+    cmds = (
+        "\n".join(
+            [
+                "login 1",
+                "next",
+                "buy AAPL 1 150.0",
+                "status",
+                "portfolio",
+                "quit",
+            ]
+        )
+        + "\n"
+    )
+    output = run_cli(cmds, tmp_path)
+
+    # Basic CLI output checks
+    assert "AAPL" in output
+    assert "Cash:" in output
+    assert "Positions:" in output
+    assert "Order placed for AAPL." in output
+
+    # Verify that logs went into tmp_path/trading.log, not project root
+    log_file = tmp_path / "trading.log"
+    assert log_file.exists()
+    content = log_file.read_text()
+    print(content)
+    assert "NEXT command received" and "NEXT command processed" in content
+    assert "BUY order queued: symbol=AAPL" in content
+    assert "STATUS viewed:" in content
