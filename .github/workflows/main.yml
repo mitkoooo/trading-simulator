@@ -28,7 +28,7 @@ jobs:
       - name: Install Ruff
         working-directory: backend
         run: pip install ruff
-    
+
       - name: Cache uv environment
         uses: actions/cache@v3
         with:
@@ -49,8 +49,8 @@ jobs:
         working-directory: backend
         run: |
           uv add pip
-          uv run pip install types-PyYAML"
-          uv run mypy .
+          uv run pip install mypy types-PyYAML types-requests types-pytest
+          uv run mypy . --cache-dir .mypy_cache
 
       - name: Run tests & collect coverage
         working-directory: backend
