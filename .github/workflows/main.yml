@@ -48,12 +48,15 @@ jobs:
       - name: Type-check with mypy
         working-directory: backend
         run: |
-          uv run mypy --install-types --non-interactive
+          uv add pip
+          uv run pip install types-PyYAML"
           uv run mypy .
 
       - name: Run tests & collect coverage
         working-directory: backend
-        run: uv run pytest --maxfail=1 --disable-warnings --cov=engine --cov-report=term-missing --cov-report=xml
+        run: |
+          uv add pytest
+          uv run pytest --maxfail=1 --disable-warnings --cov=engine --cov-report=term-missing --cov-report=xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
