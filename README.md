@@ -46,11 +46,11 @@ trading-simulator/
 │   ├── app/
 │   ├── cli/
 │   ├── engine/
-│   ├── view/
+│   ├── scripts/                    # helper scripts (e.g. bootstrap)
 │   ├── main.py
 │   ├── logging_config.py
 │   ├── pyproject.toml
-│   ├── poetry.lock
+│   ├── uv.lock
 │   └── Dockerfile
 ├── frontend/                   # TypeScript React/Vite or Next.js UI
 │   ├── public/
@@ -59,8 +59,6 @@ trading-simulator/
 │   ├── yarn.lock
 │   ├── vite.config.ts
 │   └── Dockerfile
-├── data/                       # historical CSV feeds, sample data
-├── scripts/                    # helper scripts (e.g. migrations, ETL)
 ├── docker-compose.yml
 ├── tests/
 └── README.md
@@ -75,8 +73,8 @@ trading-simulator/
 - **Docker & Docker Compose**  
   Install Docker Desktop (macOS/Windows) or `docker.io` + `docker-compose` (Linux) so you can spin up both services with a single command.
 
-- **Python 3.11+ & Poetry** (backend)  
-  Poetry is used to manage and lock Python dependencies.
+- **Python 3.11+ & UV** (backend)  
+  UV is used to manage and lock Python dependencies.
 
   ```bash
   # Install Poetry (if not already)
@@ -128,7 +126,7 @@ python backend/main.py
 You’ll see:
 
 ```text
-YORK STOCK EXCHANGE TERMINAL
+GHOSTSWAP TERMINAL
 
 Please log in with your Trader ID before issuing any other commands.
 
@@ -136,7 +134,6 @@ Please log in with your Trader ID before issuing any other commands.
     logout     - Log out the trader
     help       — Display this menu
     next       — Refresh market data
-    match      — Execute order matching
     portfolio  — View your portfolio holdings and P&L
     status     — Show pending orders
     buy        — Place a buy order
@@ -158,9 +155,6 @@ Order placed for AAPL.
 >>> status
 [2025-05-28 10:15:00] Pending Buy Order: 5 shares of AAPL at $150.00.
 
->>> match AAPL
-No trades yet
-
 >>> quit
 Thank you for using York Stock Exchange.
 ```
@@ -172,7 +166,7 @@ Thank you for using York Stock Exchange.
 Run the full unit test suite using:
 
 ```bash
-pytest
+uv run pytest
 ```
 
 ---
@@ -180,9 +174,7 @@ pytest
 ## Future Enhancements
 
 - Support for multiple financial instruments
-- Stop-loss and limit order types
 - Historical backtesting for strategy validation
-- Streamlit-based graphical dashboard
 
 ---
 

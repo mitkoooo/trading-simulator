@@ -6,7 +6,6 @@ HELP_MENU = """
     logout     - Log out the trader
     help       — Display this menu
     next       — Refresh market data
-    match      — Execute order matching
     portfolio  — View your portfolio holdings and P&L
     status     — Show pending orders
     buy        — Place a buy order
