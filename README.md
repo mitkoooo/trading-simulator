@@ -77,7 +77,7 @@ trading-simulator/
   UV is used to manage and lock Python dependencies.
 
   ```bash
-  # Install Poetry (if not already)
+  # Install UV (if not already)
   curl -LsSf https://astral.sh/uv/install.sh | sh
   ```
 
