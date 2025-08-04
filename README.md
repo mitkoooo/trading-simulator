@@ -78,7 +78,7 @@ trading-simulator/
 
   ```bash
   # Install Poetry (if not already)
-  curl -sSL https://install.python-poetry.org | python3 -
+  curl -LsSf https://astral.sh/uv/install.sh | sh
   ```
 
 - **Node.js 18+ & Yarn** (frontend)
@@ -98,7 +98,7 @@ cd trading-simulator
 
 # 1) Backend
 cd backend
-poetry install          # installs Python deps into the container or virtualenv
+uv sync          # installs Python deps into the container or virtualenv
 
 # 2) Frontend
 cd ../frontend
