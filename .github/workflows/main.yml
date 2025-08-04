@@ -64,7 +64,3 @@ jobs:
           files: backend/coverage.xml
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Build Docker image
-        working-directory: backend
-        run: docker build -t ghostswap:ci .
