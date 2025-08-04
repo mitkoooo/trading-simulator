@@ -28,7 +28,7 @@ jobs:
       - name: Install Ruff
         working-directory: backend
         run: pip install ruff
-
+    
       - name: Cache uv environment
         uses: actions/cache@v3
         with:
@@ -47,7 +47,8 @@ jobs:
 
       - name: Type‑check with mypy
         working-directory: backend
-        run: uv run mypy .
+        run: uv run mypy --install-types 
+             uv run mypy .
 
       - name: Run tests & collect coverage
         working-directory: backend
