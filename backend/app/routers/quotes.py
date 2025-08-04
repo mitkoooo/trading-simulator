@@ -75,17 +75,20 @@ def quotes(ctx: ContextDep) -> GetQuotesResponse:
     """
     quotes: list[MarketQuote] = list(ctx.exchange.quotes.values())
 
-    for i, q in enumerate(quotes):
-        quotes[i] = QuoteDTO(symbol = q.symbol,
+
+    quotes_res: list[QuoteDTO] = []
+
+    for q in quotes:
+        quotes_res.append(QuoteDTO(symbol = q.symbol,
                              bid_price = q.bid_price,
                              bid_size = q.bid_size,
                              ask_price = q.ask_price,
                              ask_size = q.ask_size,
                              last_price= q.last_price,
-                             timestamp=q.timestamp,
-                )
+                             timestamp=q.timestamp)
+                          )
 
     res = GetQuotesResponse(status=status.HTTP_200_OK,
-                            quotes=quotes)
+                            quotes=quotes_res)
 
     return res 

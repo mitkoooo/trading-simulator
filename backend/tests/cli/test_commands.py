@@ -1,6 +1,7 @@
 import logging
 
 import pytest
+from _pytest.logging import LogCaptureFixture
 
 from app.context import AppContext
 from cli.commands import (
@@ -25,7 +26,7 @@ def test_validate_symbol_unknown(sample_exchange: Exchange):
 
 @pytest.mark.asyncio
 async def test_handle_order_invalid_args_num(test_context: AppContext,
-                                             caplog: logging.Logger):
+                                             caplog: LogCaptureFixture):
     test_logger = test_context.logger
     assert test_logger
     exchange = test_context.exchange
@@ -91,7 +92,7 @@ async def test_do_place_order_places_order(test_context: AppContext):
 
 @pytest.mark.asyncio
 async def test_do_match_invalid_args_num(test_context: AppContext,
-                                         caplog: logging.Logger):
+                                         caplog: LogCaptureFixture):
     test_logger = test_context.logger
     assert test_logger
 

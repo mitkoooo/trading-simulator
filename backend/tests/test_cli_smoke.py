@@ -1,4 +1,5 @@
 import os
+import pathlib
 import subprocess
 import sys
 
@@ -7,7 +8,7 @@ CLI_LOOP_PATH = os.path.abspath(
 )
 
 
-def run_cli(commands: str, tmp_path: os.PathLike) -> str:
+def run_cli(commands: str, tmp_path: pathlib.Path) -> str:
     """Run main.py with a sequence of newline-separated commands."""
     proc = subprocess.run(
         [sys.executable, CLI_LOOP_PATH, "--cli"],
@@ -23,7 +24,7 @@ def run_cli(commands: str, tmp_path: os.PathLike) -> str:
     return proc.stdout
 
 
-def test_smoke_flow(tmp_path: os.PathLike) -> None:
+def test_smoke_flow(tmp_path: pathlib.Path) -> None:
     """Run the smoke test with output piped into tmp_path.
     
     Args:

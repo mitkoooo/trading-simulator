@@ -50,10 +50,10 @@ class RetailPoisson(BaseBot):
         exchange: Exchange,
         symbol: str,
         mpid: str,
-        settings: RetailPoissonSettings = None
+        settings: RetailPoissonSettings | None = None
     ) -> None:
         """Initialize a `RetailPoisson` Bot."""
-        self.current_mid = None
+        self.current_mid: float | None = None
         self.exchange = exchange
         self.symbol = symbol
         self.settings = settings if settings else RetailPoissonSettings()

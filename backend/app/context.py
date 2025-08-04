@@ -45,7 +45,7 @@ class AppContext:
 
     def __repr__(self) -> str:
         """Display a representation string for `AppContext`."""
-        def n(x: list) -> int:  # helper for None-safe len
+        def n(x: dict) -> int:  # helper for None-safe len
             return 0 if x is None else len(x)
 
         exch_name = getattr(self.exchange, "name", "Exchange")

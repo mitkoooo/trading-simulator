@@ -9,6 +9,7 @@ from cli.render import (
 )
 from cli.validation import parse_order, validate_symbol
 from engine.trade import Trade
+from engine.trader import Trader
 
 
 async def handle_order(
@@ -34,6 +35,8 @@ async def handle_order(
         context.logger,
         context.broker,
     )
+
+    assert logger
 
     try:
         trader = session.require_active()
@@ -109,6 +112,7 @@ async def do_place_order(
 
     """
     logger = context.logger
+    assert logger
 
     symbol, qty, price = parse_order(args)
 
@@ -128,9 +132,10 @@ async def do_place_order(
 async def do_cancel_order(context: AppContext) -> None:
     """Cancel a pending order."""
     logger = context.logger
+    assert logger
 
     try:
-        trader = context.session.require_active()
+        context.session.require_active()
     except RuntimeError:
         msg = ("\nYou must log in to use this command." +
                "Please use login <trader_id>.\n")
@@ -143,7 +148,8 @@ async def do_cancel_order(context: AppContext) -> None:
         )
         return
 
-    trader = context.session.active_trader
+    trader: Trader | None = context.session.active_trader
+    assert trader
     broker = context.broker
 
     pending_orders = list(trader.pending_orders.values())
@@ -203,6 +209,8 @@ def do_match(context: AppContext, args: list[str]) -> None:
     exchange = context.exchange
     broker = context.broker
 
+    assert logger
+
     if not args or len(args) != 1:
         print("\nUsage: match <SYMBOL>\n")
         logger.warning(
@@ -256,6 +264,7 @@ def do_portfolio(ctx: AppContext) -> None:
         ctx.exchange,
         ctx.broker,
     )
+    assert logger
 
     try:
         trader = session.require_active()
@@ -289,6 +298,7 @@ def do_status(ctx: AppContext) -> None:
 
     """
     logger, exchange = ctx.logger, ctx.exchange
+    assert logger
 
     pending = sum(book.total_size for book in exchange.order_books.values())
     if pending > 0:
@@ -311,6 +321,7 @@ def do_login(ctx: AppContext, args: list[str]) -> None:
 
     """
     logger, session = ctx.logger, ctx.session
+    assert logger
 
     if args is None or len(args) != 1 or not args[0].isnumeric():
         print("\nUsage: login <trader_id>\n")
@@ -326,6 +337,7 @@ def do_login(ctx: AppContext, args: list[str]) -> None:
 
     try:
         session.login(trader_id)
+        assert session.active_trader
         print(f"\n Logged in as trader {session.active_trader.trader_id}\n")
     except KeyError:
         print("\nUnknown trader_id. Please try again.\n")
@@ -347,6 +359,7 @@ def do_logout(ctx: AppContext) -> None:
 
     """
     session, logger = ctx.session, ctx.logger
+    assert logger
 
     try:
         session.logout()
@@ -374,6 +387,7 @@ def log_quit(ctx: AppContext) -> None:
 
     """
     logger = ctx.logger
+    assert logger
 
     print("\nThank you for using York Stock Exchange.")
     logger.info("York Stock Exchange CLI shutting down")

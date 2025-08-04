@@ -1,3 +1,5 @@
+from typing import Literal
+
 import pytest
 
 from app.context import AppContext
@@ -8,7 +10,7 @@ from engine.trader import Trader
 @pytest.mark.asyncio
 async def test_broker_reserves_cash_on_order(test_context: AppContext):
     symbol = "AAPL"
-    order_type = "buy"
+    order_type: Literal["buy", "sell"] = "buy"
     quantity = 10
     limit_price = 10
     notional = quantity * limit_price
@@ -27,7 +29,7 @@ async def test_broker_reserves_cash_on_order(test_context: AppContext):
 @pytest.mark.asyncio
 async def test_broker_reserves_shares_on_order(test_context: AppContext):
     symbol = "AAPL"
-    order_type = "sell"
+    order_type: Literal["buy", "sell"] = "sell"
     old_quantity = 10
     quantity = 10
     limit_price = 10
@@ -52,7 +54,7 @@ async def test_broker_reserves_shares_on_order(test_context: AppContext):
 @pytest.mark.asyncio
 async def test_broker_release_cash_on_cancel(test_context: AppContext):
     symbol = "AAPL"
-    order_type = "buy"
+    order_type: Literal["buy", "sell"] = "buy"
     quantity = 10
     limit_price = 10
 
@@ -74,7 +76,7 @@ async def test_broker_release_cash_on_cancel(test_context: AppContext):
 @pytest.mark.asyncio
 async def test_broker_release_shares_on_cancel(test_context: AppContext):
     symbol = "AAPL"
-    order_type = "sell"
+    order_type: Literal["buy", "sell"] = "sell"
     old_quantity = 10
     quantity = 10
     limit_price = 10

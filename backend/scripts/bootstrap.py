@@ -101,34 +101,34 @@ async def bootstrap(
         _register_bots_from_yaml(exchange, mm)
 
 
-        settings: PassiveMMSettings = PassiveMMSettings
+        mm_settings: PassiveMMSettings = PassiveMMSettings()
 
-        settings.base_size = mm["base_size"]
-        settings.inv_limit = mm["inv_limit"]
-        settings.alpha = mm["alpha"]
-        settings.beta = mm["beta"]
-        settings.gamma = mm["gamma"]
+        mm_settings.base_size = mm["base_size"]
+        mm_settings.inv_limit = mm["inv_limit"]
+        mm_settings.alpha = mm["alpha"]
+        mm_settings.beta = mm["beta"]
+        mm_settings.gamma = mm["gamma"]
 
-        bot = PassiveMM(symbol=mm["symbol"], exchange=exchange,
-                        mpid=mm["mpid"], settings=settings)
+        mm_bot = PassiveMM(symbol=mm["symbol"], exchange=exchange,
+                        mpid=mm["mpid"], settings=mm_settings)
 
-        bot_manager.register_bot(bot)
+        bot_manager.register_bot(mm_bot)
 
     for rp in config["retail_bots"]:
         _register_bots_from_yaml(exchange, rp)
 
-        settings: RetailPoissonSettings = RetailPoissonSettings
+        rp_settings: RetailPoissonSettings = RetailPoissonSettings()
 
-        settings.limit_rate = rp["limit_rate"]
-        settings.market_rate = rp["market_rate"]
-        settings.quantity_range = rp["quantity_range"]
-        settings.tick_size = rp["tick_size"]
-        settings.market_probability = rp["market_probability"]
+        rp_settings.limit_rate = rp["limit_rate"]
+        rp_settings.market_rate = rp["market_rate"]
+        rp_settings.quantity_range = rp["quantity_range"]
+        rp_settings.tick_size = rp["tick_size"]
+        rp_settings.market_probability = rp["market_probability"]
 
-        bot = RetailPoisson(symbol=rp["symbol"], exchange=exchange,
-                            mpid=rp["mpid"], settings=settings)
+        rp_bot = RetailPoisson(symbol=rp["symbol"], exchange=exchange,
+                            mpid=rp["mpid"], settings=rp_settings)
         
-        bot_manager.register_bot(bot)
+        bot_manager.register_bot(rp_bot)
 
     # SEED THE ORDER BOOKS WITH INITIAL ORDERS
     tick = 0.02

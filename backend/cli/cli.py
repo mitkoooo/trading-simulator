@@ -93,6 +93,7 @@ class CLI:
 
         """
         self.context = context
+        assert self.context.logger
 
         wrap = log_command_factory(self.context.logger)
 
@@ -131,8 +132,8 @@ class CLI:
             """
 
             @functools.wraps(do_place_order)
-            def handler(args: list[str] | None = None) -> None:
-                return do_place_order(self.context, side, args or [])
+            async def handler(args: list[str] | None = None) -> None:
+                await do_place_order(self.context, side, args or [])
 
             return wrap(handler)
 
@@ -178,7 +179,7 @@ class CLI:
                 loop = asyncio.get_event_loop()
                 raw = await loop.run_in_executor(None, input, ">>> ")
             except EOFError:
-                log_quit()
+                log_quit(self.context)
                 break
 
             if not raw.strip():

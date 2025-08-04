@@ -41,7 +41,7 @@ class PassiveMMSettings:
 
     """
 
-    base_size: float = 50
+    base_size: int = 50
     alpha: float = 1.0
     beta: float = 0.001
     gamma: float = 0.5
@@ -132,7 +132,7 @@ class PassiveMM(BaseBot):
             else:
                 # No mid price history? Wait.
                 if len(self.data_handler.mid_history) < min_len:
-                    await asyncio.sleep(self.quote_interval)
+                    await asyncio.sleep(self.settings.quote_interval)
                     continue
 
                 mid = self.data_handler.mid_history[-1]
@@ -152,7 +152,8 @@ class PassiveMM(BaseBot):
 
                 await self._refresh_quotes(buy_price, sell_price)
                 
-            await asyncio.sleep(self.quote_interval + random.random() * 0.05)
+            await asyncio.sleep(self.settings.quote_interval +
+                                random.random() * 0.05)
 
     def stop(self) -> None:
         """Stop the bot's trading algorithm."""
@@ -171,8 +172,11 @@ class PassiveMM(BaseBot):
                 except RuntimeError:
                     pass
 
+        quotes: list[tuple[Literal["buy", "sell"], float]] = [
+                ("buy", bid_price), ("sell", ask_price)]
+
         # Place missing orders
-        for side, price in [("buy", bid_price), ("sell", ask_price)]:
+        for side, price in quotes:
             if side not in self.active_orders:
                 assert side in {"buy", "sell"}
                 order = Order(

@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 from app.dependencies import ContextDep, OrderStatusDep
+from engine.order_book.order import Order
 from engine.position import Position
 from engine.trader import Trader
 
@@ -32,7 +33,6 @@ class OrderDTO(BaseModel):
 
     """
 
-    order_id: str
     mpid: str
     symbol: str
     order_type: Literal["buy", "sell"]
@@ -289,25 +289,24 @@ def get_trader_orders(trader_id: str, order_status: OrderStatusDep,
                 detail="Not allowed to view this trader's orders."
             )
 
-    orders = trader.transaction_log
+    orders: dict[str, Order] = trader.transaction_log
 
 
     if order_status:
-        orders = [o for o in list(orders.values()) if o.status == order_status]
+        orders_sorted = [o for o in orders.values() if
+                         o.status == order_status]
     
-    for i, o in enumerate(orders):
-        orders[i] = OrderDTO(mpid=o.mpid,
-                     symbol=o.symbol,
-                     order_type=o.order_type,
-                     status=o.status,
-                     quantity=o.quantity,
-                     limit_price=o.limit_price,
-                     order_id=o.order_id,
-                     timestamp=o.timestamp
-                )
+    orders_res: list[OrderDTO] = []
+
+    for o in orders_sorted:
+        orders_res.append(OrderDTO(mpid=o.mpid, symbol=o.symbol,
+                                   order_type=o.order_type, status=o.status,
+                                   quantity=o.quantity,
+                                   limit_price=o.limit_price,
+                                   order_id=o.order_id, timestamp=o.timestamp))
 
     res = GetOrdersResponse(status=status.HTTP_200_OK,
-                            orders=orders)
+                            orders=orders_res)
     return res
 
 @router.get("/{trader_id}/portfolio")
@@ -357,7 +356,7 @@ def get_trader_portfolio(trader_id: str,
                 detail="Not allowed to view this trader's portfolio."
             )
 
-    total_pnl = 0
+    total_pnl = 0.00
 
     for symbol in trader.portfolio.positions:
         unrealized_pnl = trader.portfolio.calculate_unrealized_pl(

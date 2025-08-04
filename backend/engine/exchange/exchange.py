@@ -289,7 +289,7 @@ class Exchange:
 
         """
         topic = f"book_update:{symbol}"
-        order_book = self.order_books.get(symbol)
+        order_book = self.order_books[symbol]
 
         # Construct MarketQuote to emit
 
@@ -488,6 +488,8 @@ class Exchange:
         best_sell = order_book.peek_best_sell()
         if not best_buy or not best_sell:
             return None
+        assert best_buy.limit_price and best_sell.limit_price
+
 
         if best_buy.limit_price < best_sell.limit_price:
             return None

@@ -1,4 +1,3 @@
-import asyncio
 from abc import ABC, abstractmethod
 
 
@@ -12,7 +11,7 @@ class BaseBot(ABC):
         pass
 
     @abstractmethod
-    async def run(self) -> asyncio.Task:
+    async def run(self) -> None:
         """Boot the bot's trading algorithm.
         
         Returns:

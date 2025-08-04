@@ -6,7 +6,8 @@ from engine.exchange.exchange import Exchange
 logger = logging.getLogger(LOG_NAME)
 
 
-def parse_order(args: list[str]) -> tuple[str, int, float]:
+def parse_order(args: list[str]) -> tuple[str | None, int | None,
+                                          float | None]:
     """Parse a list of CLI args into (symbol, qty, price).
 
     Args:

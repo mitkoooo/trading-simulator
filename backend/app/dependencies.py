@@ -16,7 +16,7 @@ def get_ctx(request: Request) -> AppContext:
     """
     return request.app.state.context
 
-ContextDep = Annotated[dict, Depends(get_ctx)]
+ContextDep = Annotated[AppContext, Depends(get_ctx)]
 
 def order_status(
     status: Literal["pending",
@@ -31,4 +31,5 @@ def order_status(
         """Dependency that validates and returns the `status` query-param."""
         return status
 
-OrderStatusDep = Annotated[dict, Depends(order_status)]
+OrderStatusDep = Annotated[Literal["pending", "filled", "partially_filled",
+                                    "cancelled"], Depends(order_status)]
