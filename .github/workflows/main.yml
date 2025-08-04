@@ -49,7 +49,7 @@ jobs:
         working-directory: backend
         run: |
           uv add pip
-          uv run pip install mypy types-PyYAML types-requests types-pytest
+          uv run pip install mypy types-PyYAML
           uv run mypy . --cache-dir .mypy_cache
 
       - name: Run tests & collect coverage
