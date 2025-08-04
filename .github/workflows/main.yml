@@ -45,10 +45,11 @@ jobs:
         working-directory: backend
         run: ruff check .
 
-      - name: Type‑check with mypy
+      - name: Type-check with mypy
         working-directory: backend
-        run: uv run mypy --install-types 
-             uv run mypy .
+        run: |
+          uv run mypy --install-types --non-interactive
+          uv run mypy .
 
       - name: Run tests & collect coverage
         working-directory: backend
