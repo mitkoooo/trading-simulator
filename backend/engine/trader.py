@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from engine.order_book.order import Order
+from engine.order_info import OrderInfo
 
 from .portfolio import Portfolio
 
@@ -38,5 +39,20 @@ class Trader:
         """
         self.trader_id = trader_id or str(uuid4())
         self.portfolio = Portfolio(starting_balance)
-        self.transaction_log: dict[str, Order] = {}
+        self.transaction_log: dict[str, OrderInfo] = {}
         self.pending_orders: dict[str, Order] = {}
+
+    def update_order_avg_fill_price(self, order_id: str, trade_price: float,
+                                    quantity: int) -> None:
+        order_info = self.transaction_log[order_id]
+
+        avg_fill_price = (order_info.avg_fill_price if
+                            order_info.avg_fill_price else 0)
+
+        filled_qty = order_info.fill_qty - order_info.remaining_qty
+        net = avg_fill_price * filled_qty + trade_price * quantity
+
+        filled_qty += quantity
+        order_info.remaining_qty -= quantity
+
+        order_info.avg_fill_price = net / filled_qty

@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.routers.market_data import router as market_data_router
 from app.routers.orders import router as orders_router
-from app.routers.quotes import router as quotes_router
 from app.routers.users import router as users_router
 from scripts.bootstrap import bootstrap
 
@@ -43,7 +43,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-routers = [quotes_router, users_router, orders_router]
+routers = [market_data_router, users_router, orders_router]
 
 for r in routers:
     app.include_router(r)

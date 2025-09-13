@@ -1,9 +1,28 @@
-AAPL: 150.00
-MSFT: 295.50
-GOOG: 2830.75
-AMZN: 3505.20
-TSLA: 720.25
-NFLX: 505.60
-META: 355.45
-NVDA: 670.15
-INTC: 42.30
+2025-08-05:
+  AAPL:
+    open: 150.00
+    previous_close: 149.23
+  MSFT:
+    open: 295.50
+    previous_close: 295.57
+  GOOG:
+    open: 2830.75
+    previous_close: 2831.34
+  AMZN:
+    open: 3505.20
+    previous_close: 3505.01
+  TSLA:
+    open: 720.25
+    previous_close: 720.24
+  NFLX:
+    open: 505.60
+    previous_close: 515.32
+  META:
+    open: 355.45
+    previous_close: 355.12
+  NVDA:
+    open: 670.15
+    previous_close: 670.15
+  INTC:
+    open: 42.30
+    previous_close: 43.23

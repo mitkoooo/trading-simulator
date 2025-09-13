@@ -4,10 +4,10 @@ import Logo from "./Logo";
 import { Link } from "@tanstack/react-router";
 
 const LinkClass =
-  "text-xl text-nav-inactive [&.active]:border-b-2 border-accent [&.active]:text-nav-active hover:text-nav-hover";
+  "text-lg text-nav-inactive [&.active]:border-b border-accent [&.active]:text-nav-active hover:text-nav-hover";
 
 const NavBar = (): React.JSX.Element => {
-  const [traderId, setTraderId] = useState<null | number>(null);
+  const [traderId, setTraderId] = useState<null | string>(null);
 
   useEffect(() => {
     (async () => {
@@ -18,23 +18,25 @@ const NavBar = (): React.JSX.Element => {
 
   return (
     <>
-      <div className="sticky top-0 z-50 flex items-center justify-center py-3 px-6 bg-panel border-2 border-divider h-16">
-        <Logo className="absolute left-4" />
-        <div className=" flex gap-4">
+      <div className="bg-panel border-divider sticky top-0 z-50 flex h-8 items-center justify-center border px-1 py-1">
+        <Logo className="absolute left-2" />
+        {/*
+        <div className="flex gap-4">
           <Link to="/" className={LinkClass}>
-            Portfolio
+            Dashboard
           </Link>
           <Link to="/orders" className={LinkClass}>
-            Orders
+            Portfolio
           </Link>
         </div>
-        <div className="flex gap-8 absolute text-xl right-8">
-          <span className="text-info select-none">Trader {traderId}</span>
+	*/}
+        <div className="text-md absolute right-4 flex gap-8">
+          <span className="text-info select-none">TRADER {traderId}</span>
           <Link
-            className="text-xl text-error hover:text-error-hover rounded-md"
+            className="text-error hover:text-error-hover rounded-md"
             to="/logout"
           >
-            Log out
+            LOGOUT
           </Link>
         </div>
       </div>

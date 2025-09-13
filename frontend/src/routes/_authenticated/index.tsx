@@ -1,63 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
 
 import MarketDataView from "../../components/MarketData/MarketDataView";
 import PlaceOrderForm from "../../components/Orders/PlaceOrderForm";
-import OrderView from "../../components/Orders/OrderView";
+import OrderHistoryView from "../../components/Orders/OrderHistoryView";
 import MiniTicker from "../../components/MarketData/MiniTicker";
-import Card from "../../components/UI/Card";
-import { usePortfolioDataStore } from "../../stores/portfolioDataStore";
-import PortfolioView from "../../components/Portfolio/PortfolioView";
+import AccountSummary from "../../components/Portfolio/AccountSummary";
+import PendingOrdersView from "../../components/Orders/PendingOrdersView";
 
 export const Route = createFileRoute("/_authenticated/")({ component: Index });
 
 function Index() {
-  const fetchPortfolioData = usePortfolioDataStore(
-    (state) => state.fetchPortfolioData,
-  );
-  const portfolio = usePortfolioDataStore((state) => state.portfolio);
-
-  const fetchPendingOrders = usePortfolioDataStore(
-    (state) => state.fetchPendingOrders,
-  );
-
-  useEffect(() => {
-    (async () => {
-      await fetchPortfolioData();
-      await fetchPendingOrders();
-    })();
-  }, [fetchPortfolioData]);
-
-  console.log(portfolio);
-
   return (
-    <div className="min-h-full">
+    <div className="flex flex-1 flex-col">
       <MiniTicker />
-      <div className="px-6">
-        <div className="grid w-full grid-cols-2 grid-rows-[auto_28rem] justify-between gap-8 text-nowrap md:grid-cols-3">
-          <Card className="w-full">
-            <Card.Title>Cash Available</Card.Title>
-            <Card.Total currency="$">{portfolio?.cash}</Card.Total>
-          </Card>
-          <Card className="h-24 w-full">
-            <Card.Title>Total Portfolio Value</Card.Title>
-            <Card.Total currency="$">
-              {portfolio?.value && Math.round(portfolio.value * 100) / 100}
-            </Card.Total>
-          </Card>
-          <Card className="w-full">
-            <Card.Title>Unrealized P/L</Card.Title>
-            <Card.Total impact currency="$">
-              {portfolio?.totalPnL}
-            </Card.Total>
-          </Card>
-          <MarketDataView />
-          <PlaceOrderForm />
-          <div>
-            <OrderView />
-          </div>
+      <div className="grid min-w-[1080px] flex-1 grid-cols-3 text-nowrap">
+        <div className="flex flex-col">
+          <MarketDataView className="flex-1" />
+          <div className="flex-1"></div>
         </div>
-        <PortfolioView />
+        <div className="flex flex-col">
+          <PlaceOrderForm className="flex-1" />
+          <PendingOrdersView className="flex-1" />
+        </div>
+        <div className="flex flex-col">
+          <AccountSummary className="flex-1" />
+          <OrderHistoryView className="flex-1" />
+        </div>
       </div>
     </div>
   );

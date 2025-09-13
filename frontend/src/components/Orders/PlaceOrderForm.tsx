@@ -4,7 +4,12 @@ import { API_BASE } from "../../config/api";
 import { useState } from "react";
 import { usePortfolioDataStore } from "../../stores/portfolioDataStore";
 import PlaceOrderButton from "./PlaceOrderButton.tsx";
-import { useQuotesStore } from "../../stores/useQuotesStore.ts";
+import { useMarketDataStore } from "../../stores/marketDataStore.ts";
+import type { Quote } from "../../types/domain.ts";
+
+type PlaceOrderFormProps = {
+  className?: string;
+};
 
 interface PlaceOrderFormData {
   orderSide: "buy" | "sell";
@@ -15,9 +20,11 @@ interface PlaceOrderFormData {
 }
 
 const InputClass =
-  "px-2 py-1 bg-card border-2 rounded-md text-primary border-divider focus:bg-card focus:outline-1 focus:outline-accent";
+  "px-2 py-1 bg-card border-2 text-primary border-divider focus:bg-card focus:outline-1 focus:outline-accent";
 
-const PlaceOrderForm = (): React.JSX.Element => {
+const PlaceOrderForm = ({
+  className,
+}: PlaceOrderFormProps): React.JSX.Element => {
   const {
     control,
     register,
@@ -39,11 +46,13 @@ const PlaceOrderForm = (): React.JSX.Element => {
   const fetchPortfolioData = usePortfolioDataStore(
     (state) => state.fetchPortfolioData,
   );
-  const fetchPendingOrders = usePortfolioDataStore(
-    (state) => state.fetchPendingOrders,
+  const upsertOrderHistory = usePortfolioDataStore(
+    (state) => state.upsertOrderHistory,
   );
 
-  const quotes = useQuotesStore((s) => s.quotes);
+  const fetchPendingOrders = usePortfolioDataStore((s) => s.fetchPendingOrders);
+
+  const quotes: Record<string, Quote> = useMarketDataStore((s) => s.quotes);
 
   const [apiError, setApiError] = useState<string | null>(null);
   // watch keeps the latest value of price in sync
@@ -51,7 +60,8 @@ const PlaceOrderForm = (): React.JSX.Element => {
   const currentType = watch("orderType");
   const currentPrice =
     currentType === "market"
-      ? quotes.find((q) => q.symbol == watch("symbol"))?.lastPrice || null
+      ? Object.values(quotes).find((q) => q.symbol == watch("symbol"))
+          ?.lastPrice || null
       : watch("limitPrice") || null;
   const currentSymbol = watch("symbol");
   const currentQuantity = watch("quantity");
@@ -94,6 +104,7 @@ const PlaceOrderForm = (): React.JSX.Element => {
     } else {
       await fetchPortfolioData();
       await fetchPendingOrders();
+      await upsertOrderHistory();
     }
     reset({
       orderType: "market",
@@ -105,30 +116,33 @@ const PlaceOrderForm = (): React.JSX.Element => {
   };
 
   return (
-    <div className="bg-panel border-divider relative max-w-96 min-w-80 rounded-sm border p-8">
+    <div className={`${className} border-divider relative border-b`}>
+      <h1 className="border-divider mx-2 mb-2 border-b py-1 font-semibold tracking-wide uppercase">
+        Order Entry
+      </h1>
       <form
-        className="flex flex-col"
+        className="mx-2 flex flex-col"
         onSubmit={handleSubmit(handlePlaceOrderSubmit)}
       >
         <div className="mb-4 inline-flex w-full">
           <input
             type="button"
-            value={"Buy"}
-            className={`w-full rounded-l-sm p-1 transition-colors duration-100 ${currentSide === "sell" ? "bg-disabled hover:bg-gray-700" : "bg-green-600"}`}
+            value={"BUY"}
+            className={`w-full transition-colors duration-100 ${currentSide === "sell" ? "bg-neutral-800 text-neutral-500 hover:bg-gray-700" : "bg-neutral-600"}`}
             onClick={() => setValue("orderSide", "buy")}
           />
           <input
             type="button"
-            value={"Sell"}
-            className={`w-full rounded-r-sm p-1 transition-all duration-100 ${currentSide === "buy" ? "bg-disabled hover:bg-gray-700" : "bg-error"}`}
+            value={"SELL"}
+            className={`w-full p-1 transition-all duration-100 ${currentSide === "buy" ? "bg-neutral-800 text-neutral-500 hover:bg-gray-700" : "bg-neutral-600"}`}
             onClick={() => setValue("orderSide", "sell")}
           />
         </div>
         <div className="infline-flex mb-2 w-full items-center justify-start">
           <input
             type="button"
-            value={"Market"}
-            className={`border-divider mr-4 w-16 p-2 text-sm focus:outline-none ${currentType === "market" ? "bg-zinc-800" : "bg-card"}`}
+            value={"MARKET"}
+            className={`border-divider mr-4 w-20 p-2 text-sm focus:outline-none ${currentType === "market" ? "bg-zinc-800" : "bg-card"}`}
             onClick={() => {
               setValue("limitPrice", null);
               setValue("orderType", "market");
@@ -136,8 +150,8 @@ const PlaceOrderForm = (): React.JSX.Element => {
           />
           <input
             type="button"
-            value={"Limit"}
-            className={`bg-card border-divider w-16 p-2 text-sm focus:outline-none ${currentType === "limit" ? "bg-zinc-800" : "bg-card"}`}
+            value={"LIMIT"}
+            className={`bg-card border-divider w-20 p-2 text-sm focus:outline-none ${currentType === "limit" ? "bg-zinc-800" : "bg-card"}`}
             onClick={() => setValue("orderType", "limit")}
           />
         </div>
@@ -184,7 +198,7 @@ const PlaceOrderForm = (): React.JSX.Element => {
         </div>
         {/* ── Price ── */}
         <div
-          className={`transition‐all duration‐200 overflow‐hidden ${currentType === "market" ? "h-0 opacity-0" : "h-auto"}`}
+          className={`transition‐all duration‐200 overflow‐hidden ${currentType === "market" ? "opacity-0" : "h-auto"}`}
         >
           <div className="inline-flex justify-between gap-4">
             <Controller
@@ -241,7 +255,7 @@ const PlaceOrderForm = (): React.JSX.Element => {
         {apiError && (
           <p className="text-error h-[1.25rem] text-sm">{apiError}</p>
         )}
-        <div className="absolute right-0 bottom-10 left-0 mx-12 inline-flex">
+        <div className="absolute right-0 bottom-[2%] left-0 mx-12 inline-flex">
           <PlaceOrderButton
             currentState={{
               currentSide: currentSide,

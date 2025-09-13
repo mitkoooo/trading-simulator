@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 from typing import Literal
 
@@ -67,12 +68,20 @@ async def bootstrap(
     )
 
     market_data_path = Path(market_data_path or CONFIG_DIR / "market_data.yml")
+    instruments = yaml.safe_load(open(Path(CONFIG_DIR / "instruments.yml")))
 
     market_data_yml = yaml.safe_load(open(market_data_path))
 
-    def _get_seed_price(i: int, side: Literal["buy", "sell"]) -> float:
+    def _get_seed_price(symbol: str, i: int,
+                        side: Literal["buy", "sell"]) -> float:
         sign = 1 if side == "sell" else -1
-        return market_data_yml[symbol] + sign * i * tick
+        day = date(2025, 8, 5)
+        today_data = market_data_yml[day]
+        symbol_data = today_data[symbol]
+
+        open_price = symbol_data["open"]
+        
+        return open_price + sign * i * tick
 
     # 1. Core systems
     exchange = Exchange()
@@ -80,10 +89,15 @@ async def bootstrap(
     broker = Broker(exchange, mpid="BR01")
     logger = setup_logger()
 
-    for symbol in market_data_yml:
+    for symbol in instruments["equity"]:
         stock = Stock(symbol, tick_size=1)
         exchange.register_instrument(stock)
-        exchange.order_books[symbol].last_trade_price = market_data_yml[symbol]
+        day = date(2025, 8, 5)
+        today_data = market_data_yml[day]
+        symbol_data = today_data[symbol]
+
+        previous_close = symbol_data["previous_close"]
+        exchange.order_books[symbol].last_trade_price = previous_close
 
     # 2. Register traders
     trader1 = Trader(trader_id="1", starting_balance=1_000_000)
@@ -134,14 +148,15 @@ async def bootstrap(
     tick = 0.02
     for symbol in list(exchange.instruments):
         for i in range(1, 6):
-            bid_price = _get_seed_price(i, "buy")
-            ask_price = _get_seed_price(i, "sell")
+            bid_price = _get_seed_price(symbol, i, "buy")
+            ask_price = _get_seed_price(symbol, i, "sell")
 
-            bid = Order("SEED", symbol, "buy", 100, bid_price)
-            ask = Order("SEED", symbol, "sell", 100, ask_price)
+            for _ in range(1, 100):
+                bid = Order("SEED", symbol, "buy", 100, bid_price)
+                ask = Order("SEED", symbol, "sell", 100, ask_price)
 
-            await exchange.add_order(bid)
-            await exchange.add_order(ask)
+                await exchange.add_order(bid)
+                await exchange.add_order(ask)
 
     exchange.start()
     bot_manager.start_all()

@@ -71,6 +71,10 @@ class OrderBook:
         self.market_buys = MarketOrderQueue()
         self.market_sells = MarketOrderQueue()
 
+
+        self.buy_vol = 0 
+        self.sell_vol = 0 
+
         self._global_sequence = 0
         self.last_trade_price: float | None = None
 
@@ -149,8 +153,11 @@ class OrderBook:
 
         lvl.enqueue(order)
 
-        return
-
+        if side == "buy":
+            self.buy_vol += 1
+        else:
+            self.sell_vol += 1
+        
     def remove_order(self, order: Order) -> None:
         """Remove an existing order from the book's queues.
 
@@ -332,6 +339,10 @@ class OrderBook:
     def total_size(self) -> int:
         """Return the total number of orders (buy + sell)."""
         return self.buy_size() + self.sell_size()
+
+    def get_vol(self) -> int:
+        """Return the daily volume of shares traded in the order book."""
+        return self.buy_vol + self.sell_vol 
 
     def get_n_buy_orders(self, n: int | None = None) -> list[Order]:
         """Return a list of highest `n` limit buy orders.

@@ -25,6 +25,9 @@ class MarketQuote:
         last_price (float or None):
             Latest price at which a stock or a commodity was traded.
 
+        daily_vol (int or None):
+            Current daily volume of shares traded so far.
+
     """
 
     symbol: str
@@ -33,6 +36,7 @@ class MarketQuote:
     ask_price: float | None
     ask_size: int
     last_price: float | None
+    daily_vol: int | None
     timestamp: datetime
 
     @property

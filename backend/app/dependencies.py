@@ -1,9 +1,11 @@
 # ---- Dependency to pull your context/service off the FastAPI app ----
+from datetime import date
 from typing import Annotated, Literal
 
 from fastapi import Depends, Query, Request
 
 from app.context import AppContext
+from services.daily_summary import DailySummary, get_daily_summary
 
 
 def get_ctx(request: Request) -> AppContext:
@@ -33,3 +35,12 @@ def order_status(
 
 OrderStatusDep = Annotated[Literal["pending", "filled", "partially_filled",
                                     "cancelled"], Depends(order_status)]
+
+
+def fetch_daily_summary(symbol: str) -> DailySummary | None:
+    day = date(2025, 8, 5)
+    summary = get_daily_summary(symbol, for_date=day)
+    print(summary)
+    return summary
+
+SummaryDep = Annotated[str, Depends(fetch_daily_summary)]

@@ -16,6 +16,7 @@ def test_update_mid_two_sided(sample_exchange: Exchange):
         ask_price=12,
         ask_size=3,
         last_price=None,
+        daily_vol=100,
         timestamp=datetime.now(),
     )
     rp.update_mid(mq)
@@ -32,6 +33,7 @@ def test_update_mid_ignores_when_empty_side(sample_exchange: Exchange):
         ask_price=12,
         ask_size=3,
         last_price=50,
+        daily_vol=100,
         timestamp=datetime.now(),
     )
     rp.update_mid(mq)
@@ -49,6 +51,7 @@ def test_update_mid_fallback_to_last_price(sample_exchange: Exchange):
         ask_price=None,
         ask_size=5,
         last_price=100,
+        daily_vol=100,
         timestamp=datetime.now(),
     )
     rp.update_mid(mq)

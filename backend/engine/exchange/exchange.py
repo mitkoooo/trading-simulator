@@ -298,6 +298,7 @@ class Exchange:
         ask = order_book.peek_best_sell()
         ask_size = order_book.sell_size()
         last_price = order_book.last_trade_price
+        daily_vol = order_book.get_vol()
         ts = datetime.now()
 
         bid_price = bid.limit_price if bid else 0
@@ -310,6 +311,7 @@ class Exchange:
             ask_price,
             ask_size,
             last_price,
+            daily_vol,
             timestamp=ts,
         )
 
@@ -338,6 +340,7 @@ class Exchange:
         ask = order_book.peek_best_sell()
         ask_size = order_book.sell_size()
         last_price = trade.price
+        daily_vol = order_book.get_vol()
         ts = datetime.now()
 
         bid_price = bid.limit_price if bid else 0
@@ -350,6 +353,7 @@ class Exchange:
             ask_price,
             ask_size,
             last_price,
+            daily_vol,
             timestamp=ts,
         )
         self.quotes[symbol] = quote

@@ -43,7 +43,7 @@ export async function postCancelOrder(order_id: string): Promise<boolean> {
     if (!res.ok) {
       throw new Error(`Couldn't cancel the order (${res.status})`);
     }
-
+    console.log(res.json());
     return res.ok;
   } catch (err) {
     console.error(err);

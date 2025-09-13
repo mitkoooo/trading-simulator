@@ -30,6 +30,7 @@ def test_portfolio_value_combined(test_context: AppContext):
             ask_price=None,
             ask_size=0,
             last_price=100,
+            daily_vol=None,
             timestamp=ts,
         )
     }
@@ -69,6 +70,7 @@ def test_portfolio_calculate_unrealized_pl_loss(test_context: AppContext):
             ask_price=None,
             ask_size=0,
             last_price=last,
+            daily_vol=None,
             timestamp=ts,
         )
     }
@@ -103,6 +105,7 @@ def test_portfolio_calculate_unrealized_pl_profit(test_context: AppContext):
             ask_price=None,
             ask_size=0,
             last_price=last,
+            daily_vol=None,
             timestamp=ts,
         )
     }

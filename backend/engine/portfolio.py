@@ -23,6 +23,7 @@ class Portfolio:
             raise ValueError(msg)
 
         self.cash: float = starting_balance
+        self.realized_pnl: float = 0.0
         self.reserved_cash: float = 0.0
         self.positions: dict[str, Position] = {}
         self.reserved_positions: dict[str, Position] = {}

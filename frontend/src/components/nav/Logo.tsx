@@ -3,7 +3,9 @@ type LogoProps = {
 };
 
 const Logo = ({ className }: LogoProps): React.JSX.Element => (
-  <span className={`${className} font-logo text-3xl select-none`}>YorkX</span>
+  <span className={`${className} font-logo text-md tracking-wider select-none`}>
+    GHOSTSWAP
+  </span>
 );
 
 export default Logo;

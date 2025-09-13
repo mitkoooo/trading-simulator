@@ -3,6 +3,7 @@ from typing import Literal
 from engine.broker.power_ledger import PowerLedger
 from engine.exchange.exchange import Exchange
 from engine.order_book.order import Order
+from engine.order_info import OrderInfo
 from engine.position import Position
 from engine.trade import Trade
 from engine.trader import Trader
@@ -113,7 +114,17 @@ class Broker:
         await self.exchange.add_order(order)
 
         trader.pending_orders[order.order_id] = order
-        trader.transaction_log[order.order_id] = order
+
+        order_info = OrderInfo(mpid=order.mpid,
+                               symbol=order.symbol,
+                               order_type=order.order_type,
+                               fill_qty=order.quantity,
+                               avg_fill_price=order.limit_price,
+                               status="pending",
+                               order_id=order.order_id,
+                               timestamp=order.timestamp)
+
+        trader.transaction_log[order.order_id] = order_info
 
         return order
 
@@ -162,6 +173,8 @@ class Broker:
 
         cancelled_order = trader.pending_orders.pop(order_id)
         cancelled_order.status = "cancelled"
+
+        trader.transaction_log[order.order_id].status = "cancelled"
 
         del self.active_orders[order_id]
 
@@ -278,15 +291,22 @@ class Broker:
         pos.qty += qty
         # Calculate new avg
         pos.avg_price = (old_avg * old_qty + qty * price) / pos.qty
+        
+        trader.update_order_avg_fill_price(order.order_id, price, qty)
+
         # Bookkeeping
         if order.quantity == 0:
             del trader.pending_orders[order.order_id]
-            trader.transaction_log[order.order_id] = order
-
             del self.active_orders[order.order_id]
+            trader.transaction_log[order.order_id].status = "filled"
+
         else:
             self.power_ledger.reserve_cash(trader_id, order)
             trader.pending_orders[order.order_id].quantity = order.quantity
+            trader.transaction_log[order.order_id].status = "partially_filled"
+
+
+
 
     def finalize_sell(self, trade: Trade) -> None:
         """Apply the financial effects of the sell side of a trade.
@@ -327,6 +347,8 @@ class Broker:
 
         trader.portfolio.positions[symbol].qty -= qty
         trader.portfolio.cash += proceeds
+        avg_price = trader.portfolio.positions[symbol].avg_price
+        trader.portfolio.realized_pnl += (proceeds - (avg_price * qty))
 
         if (
             pos.qty == 0
@@ -334,11 +356,12 @@ class Broker:
         ):
             trader.portfolio.positions.pop(symbol, None)
 
+        trader.update_order_avg_fill_price(order.order_id, price, qty)
+
         # Bookkeeping
         if order.quantity == 0:
             trader.pending_orders.pop(order.order_id)
-            trader.transaction_log[order.order_id] = order
-
+            trader.transaction_log[order.order_id].status = "filled"
             self.active_orders.pop(order.order_id)
         else:
             self.power_ledger.reserve_shares(trader_id, order)

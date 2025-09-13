@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from app.dependencies import ContextDep, OrderStatusDep
 from engine.order_book.order import Order
+from engine.order_info import OrderInfo
 from engine.position import Position
 from engine.trader import Trader
 
@@ -41,6 +42,18 @@ class OrderDTO(BaseModel):
     limit_price: float | None
     order_id: str
     timestamp: datetime
+
+class OrderInfoDTO(BaseModel):
+    mpid: str
+    symbol: str
+    order_type: Literal["buy", "sell"]
+    status: Literal["pending", "partially_filled", "filled", "cancelled"]
+    fill_qty: int
+    avg_fill_price: float | None
+    order_id: str
+    timestamp: datetime
+
+
 
 class LoginRequest(BaseModel):
     """Schema for login request data.
@@ -124,8 +137,8 @@ class GetPortfolioResponse(BaseModel):
         value (float):
             Total evaluation of trader's portfolio.
 
-        total_pnl (float):
-            Trader's total unrealized P&L.
+        realized_pnl (float):
+            Trader's total realized P&L.
 
     """
     
@@ -133,7 +146,10 @@ class GetPortfolioResponse(BaseModel):
     positions: list[Position]
     cash: float
     value: float
-    total_pnl: float
+    realized_pnl: float
+
+class GetHistoryResponse(BaseModel):
+    history: list[OrderInfoDTO]
 
 router = APIRouter(prefix="/v1/users", tags=["users"])
 
@@ -232,6 +248,45 @@ def me(ctx: ContextDep) -> MeResponse:
 
     return MeResponse(status = status.HTTP_200_OK, trader_id = tid) 
 
+@router.get("/{trader_id}/orders/history")
+def get_order_history(trader_id: str, ctx: ContextDep) -> GetHistoryResponse:
+    if not ctx.session.active_trader:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated",
+            )
+
+    trader = ctx.session.active_trader
+
+    if trader_id not in ctx.session.traders:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Trader id not found."
+            )
+
+    if trader_id != trader.trader_id:
+        raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not allowed to view this trader's orders."
+            )
+
+    order_history: list[OrderInfo] = list(trader.transaction_log.values())
+
+    history = list()
+
+    for o_info in order_history:
+        history.append(OrderInfoDTO(mpid=o_info.mpid,
+                                order_type=o_info.order_type,
+                                symbol=o_info.symbol,
+                                status=o_info.status,
+                                fill_qty=o_info.fill_qty,
+                                avg_fill_price=o_info.avg_fill_price,
+                                order_id=o_info.order_id,
+                                timestamp=o_info.timestamp,
+                                ))
+    return GetHistoryResponse(history=history)
+
+
 @router.get("/{trader_id}/orders")
 def get_trader_orders(trader_id: str, order_status: OrderStatusDep,
                          ctx: ContextDep) -> GetOrdersResponse:
@@ -275,7 +330,7 @@ def get_trader_orders(trader_id: str, order_status: OrderStatusDep,
             detail="Trader id not found."
         )
 
-    if order_status not in order_status_list:
+    if order_status and order_status not in order_status_list:
         raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Order status not found."
@@ -289,16 +344,21 @@ def get_trader_orders(trader_id: str, order_status: OrderStatusDep,
                 detail="Not allowed to view this trader's orders."
             )
 
-    orders: dict[str, Order] = trader.transaction_log
+    if order_status == "pending":
+        orders: dict[str, Order] = trader.pending_orders
+        orders_filtered = orders.values()
+    else:
+        orders: dict[str, Order] = trader.transaction_log
 
-
-    if order_status:
-        orders_sorted = [o for o in orders.values() if
-                         o.status == order_status]
+        if order_status:
+            orders_filtered = [o for o in orders.values() if
+                               o.status == order_status]
+        else:
+            orders_filtered = orders.values()
     
     orders_res: list[OrderDTO] = []
 
-    for o in orders_sorted:
+    for o in orders_filtered:
         orders_res.append(OrderDTO(mpid=o.mpid, symbol=o.symbol,
                                    order_type=o.order_type, status=o.status,
                                    quantity=o.quantity,
@@ -342,7 +402,6 @@ def get_trader_portfolio(trader_id: str,
         )
 
     trader = ctx.session.active_trader
-    quotes = ctx.exchange.quotes
 
     if trader_id not in ctx.session.traders:
         raise HTTPException(
@@ -356,24 +415,17 @@ def get_trader_portfolio(trader_id: str,
                 detail="Not allowed to view this trader's portfolio."
             )
 
-    total_pnl = 0.00
-
-    for symbol in trader.portfolio.positions:
-        unrealized_pnl = trader.portfolio.calculate_unrealized_pl(
-            symbol, quotes
-        )
-        if unrealized_pnl:
-            total_pnl += unrealized_pnl
 
     positions = list(trader.portfolio.positions.values())
     cash = trader.portfolio.cash
     value = trader.portfolio.value(ctx.exchange.quotes)
+    realized_pnl = trader.portfolio.realized_pnl
     
     res = GetPortfolioResponse(status=status.HTTP_200_OK,
                                positions=positions,
                                cash=cash,
                                value=value,
-                               total_pnl=total_pnl)
+                               realized_pnl=realized_pnl)
 
     return res 
 

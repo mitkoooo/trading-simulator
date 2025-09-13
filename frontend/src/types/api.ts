@@ -9,5 +9,5 @@ export interface PortfolioResponse {
   positions: Position[];
   cash: number;
   value: number;
-  total_pnl: number;
+  realized_pnl: number;
 }

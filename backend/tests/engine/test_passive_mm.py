@@ -76,6 +76,7 @@ def test_get_mid_history(sample_exchange: Exchange):
         ask_price=None,
         ask_size=1,
         last_price=100,
+        daily_vol=100,
         timestamp=ts,
     )
 
@@ -97,6 +98,7 @@ def test_on_book_update_mid_on_no_quote(sample_exchange: Exchange):
         ask_price=None,
         ask_size=1,
         last_price=None,
+        daily_vol=None,
         timestamp=ts,
     )
 
@@ -118,6 +120,7 @@ def test_on_book_update_mid_on_quote_empty(sample_exchange: Exchange):
         ask_price=None,
         ask_size=0,
         last_price=None,
+        daily_vol=None,
         timestamp=ts,
     )
 
@@ -140,6 +143,7 @@ def test_on_book_update_mid_on_quote(sample_exchange: Exchange):
         ask_price=99,
         ask_size=1,
         last_price=None,
+        daily_vol=None,
         timestamp=ts,
     )
 
