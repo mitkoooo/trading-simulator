@@ -38,6 +38,7 @@ OrderStatusDep = Annotated[Literal["pending", "filled", "partially_filled",
 
 
 def fetch_daily_summary(symbol: str) -> DailySummary | None:
+    """Retrieve daily summary as a route dependency."""
     day = date(2025, 8, 5)
     summary = get_daily_summary(symbol, for_date=day)
     print(summary)

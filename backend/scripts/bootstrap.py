@@ -68,7 +68,6 @@ async def bootstrap(
     )
 
     market_data_path = Path(market_data_path or CONFIG_DIR / "market_data.yml")
-    instruments = yaml.safe_load(open(Path(CONFIG_DIR / "instruments.yml")))
 
     market_data_yml = yaml.safe_load(open(market_data_path))
 
@@ -89,21 +88,11 @@ async def bootstrap(
     broker = Broker(exchange, mpid="BR01")
     logger = setup_logger()
 
-    for symbol in instruments["equity"]:
-        stock = Stock(symbol, tick_size=1)
-        exchange.register_instrument(stock)
-        day = date(2025, 8, 5)
-        today_data = market_data_yml[day]
-        symbol_data = today_data[symbol]
+    _register_instruments(market_data_yml=market_data_yml,
+                          exchange=exchange)
 
-        previous_close = symbol_data["previous_close"]
-        exchange.order_books[symbol].last_trade_price = previous_close
+    trs = _register_traders(broker)
 
-    # 2. Register traders
-    trader1 = Trader(trader_id="1", starting_balance=1_000_000)
-    trader2 = Trader(trader_id="2", starting_balance=1_000_000)
-    for tr in (trader1, trader2):
-        broker.register_trader(tr)
 
     # 2. Load participants
     config = yaml.safe_load(open(participants_path))
@@ -161,9 +150,34 @@ async def bootstrap(
     exchange.start()
     bot_manager.start_all()
 
-    traders = {"1": trader1, "2": trader2}
+    traders = {"1": trs[0], "2": trs[1]}
 
     context = AppContext(Session(traders),broker, exchange,
                          bot_manager, logger)
 
     return context
+
+
+def _register_instruments(market_data_yml: dict, exchange: Exchange) -> None:
+    instruments = yaml.safe_load(open(Path(CONFIG_DIR / "instruments.yml")))
+
+    for symbol in instruments["equity"]:
+        stock = Stock(symbol, tick_size=1)
+        exchange.register_instrument(stock)
+        day = date(2025, 8, 5)
+        today_data = market_data_yml[day]
+        symbol_data = today_data[symbol]
+
+        previous_close = symbol_data["previous_close"]
+        exchange.order_books[symbol].last_trade_price = previous_close
+
+def _register_traders(broker: Broker) -> list[Trader]:
+    trader1 = Trader(trader_id="1", starting_balance=1_000_000)
+    trader2 = Trader(trader_id="2", starting_balance=1_000_000)
+
+    traders = [trader1, trader2]
+
+    for tr in traders:
+        broker.register_trader(tr)
+
+    return traders

@@ -44,6 +44,14 @@ class Trader:
 
     def update_order_avg_fill_price(self, order_id: str, trade_price: float,
                                     quantity: int) -> None:
+        """Update order history's fill price upon trade completion.
+
+        Args:
+            order_id (str): ID of the order.
+            trade_price (float): Price of the executed trade.
+            quantity (int): Number of shares traded.
+
+        """
         order_info = self.transaction_log[order_id]
 
         avg_fill_price = (order_info.avg_fill_price if

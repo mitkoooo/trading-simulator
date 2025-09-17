@@ -44,6 +44,35 @@ class OrderDTO(BaseModel):
     timestamp: datetime
 
 class OrderInfoDTO(BaseModel):
+    """Schema for order info data.
+
+    Attributes:
+        mpid (str):
+            Market participant ID.
+
+        symbol (str):
+            Ticker symbol.
+
+        order_type (Literal["buy", "sell"]):
+            Order side.
+
+        status (Literal["pending", "partially_filled", "filled", "cancelled"]):
+            Status of the order.
+
+        fill_qty (int):
+            Total quantity to be filled of the order.
+
+        avg_fill_price (float | None):
+            Average price at which shares were filled so far.
+
+        order_id (str):
+            ID of the order.
+
+        timestamp (datetime):
+            Order placement timestamp.
+
+    """
+    
     mpid: str
     symbol: str
     order_type: Literal["buy", "sell"]
@@ -149,6 +178,14 @@ class GetPortfolioResponse(BaseModel):
     realized_pnl: float
 
 class GetHistoryResponse(BaseModel):
+    """Schema for get history response data.
+        
+    Attributes:
+        history (list[OrderInfoDTO]): 
+            A list of OrderInfo objects.
+
+    """
+
     history: list[OrderInfoDTO]
 
 router = APIRouter(prefix="/v1/users", tags=["users"])
@@ -250,6 +287,22 @@ def me(ctx: ContextDep) -> MeResponse:
 
 @router.get("/{trader_id}/orders/history")
 def get_order_history(trader_id: str, ctx: ContextDep) -> GetHistoryResponse:
+    """Retrieve order history of a trader by id.
+
+    Args:
+        trader_id (str): ID of the trader.
+        ctx (ContextDep): Injected dependency managing session context.
+
+    Raises:
+        (HTTPException):
+            If user not authenticated or trader's ID not found or
+            the user is not allowed to view this trader's orders.
+
+    Returns:
+        (GetHistoryResponse):
+            Pydantic Schema for the response containing order history.
+
+    """
     if not ctx.session.active_trader:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

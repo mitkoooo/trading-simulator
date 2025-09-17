@@ -46,7 +46,7 @@ class QuoteDTO(BaseModel):
     timestamp: datetime
 
 
-class GetQuotesResponse(BaseModel):
+class GetQuotesRes(BaseModel):
     """Schema for get quotes response.
 
     Attributes:
@@ -62,8 +62,27 @@ class GetQuotesResponse(BaseModel):
 
 
 
-class GetBulkSummaries(BaseModel):
+class GetSummariesRes(BaseModel):
+    """Schema for get daily summaries response.
+
+    Attributes:
+        summaries (list[DailySummary]):
+            All available daily summaries for equities.
+
+    """
+
     summaries: list[DailySummary]
+
+class GetSummaryRes(BaseModel):
+    """Schema for get single daily summary response.
+    
+    Attributes:
+        summary (DailySummary):
+            Requested daily summary for an equity symbol. 
+
+    """
+
+    summary: DailySummary
 
 router = APIRouter(prefix="/v1/market-data", tags=["core"])
 
@@ -71,7 +90,20 @@ router = APIRouter(prefix="/v1/market-data", tags=["core"])
 # ——— HTTP Endpoints ———
 
 @router.get("/quotes/{symbol:^[A-Z]+$}")
-def get_quote(ctx: ContextDep, symbol: str):
+def get_quote(ctx: ContextDep, symbol: str) -> QuoteDTO:
+    """Return a market quote for an equity.
+    
+    Args:
+        ctx (ContextDep): Context FASTApi dependency.
+        symbol (str): A ticker symbol.
+
+    Returns:
+        (QuoteDTO): A requested quote response.
+
+    Raises:
+        (HTTPException): If ticker symbol is invalid.
+
+    """
     if symbol not in ctx.exchange.instruments:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND,
                             detail="Symbol not found.")
@@ -89,7 +121,7 @@ def get_quote(ctx: ContextDep, symbol: str):
 
 
 @router.get("/quotes")
-def get_quotes(ctx: ContextDep) -> GetQuotesResponse:
+def get_quotes(ctx: ContextDep) -> GetQuotesRes:
     """Fetch latest market quotes for all registered instruments.
 
     Args:
@@ -97,9 +129,7 @@ def get_quotes(ctx: ContextDep) -> GetQuotesResponse:
             Application context.
 
     Returns:
-        (GetQuotesResponse):
-            Pydantic model describing the returned object.
-            (See GetQuotesResponse docstring)
+        (GetQuotesRes): Requested quotes response.
 
     """
     quotes: list[MarketQuote] = list(ctx.exchange.quotes.values())
@@ -117,20 +147,43 @@ def get_quotes(ctx: ContextDep) -> GetQuotesResponse:
                              timestamp=q.timestamp)
                           )
 
-    res = GetQuotesResponse(status=status.HTTP_200_OK,
+    res = GetQuotesRes(status=status.HTTP_200_OK,
                             quotes=quotes_res)
 
     return res
 
 @router.get("/daily-summary/{symbol:^[A-Z]+$}")
-def get_daily_summary(symbol:str, daily_summary: SummaryDep):
-    if summary is None:
+def get_daily_summary(symbol:str, daily_summary: SummaryDep) -> GetSummaryRes:
+    """Return dialy summary for an equity.
+
+    Args:
+        symbol (str): A ticker symbol.
+        daily_summary (SummaryDep): Summary FASTApi dependency.
+
+    Returns:
+        (GetSummaryRes): Requested summary response.
+
+    Raises:
+        (HTTPException): If ticker symbol is invalid.
+
+    """
+    if daily_summary is None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
                             detail="Unknown ticker symbol")
 
-@router.get("/daily-summary/bulk")
-def get_daily_summaries(ctx: ContextDep):
+    return GetSummaryRes(summary=daily_summary)
 
+@router.get("/daily-summary/bulk")
+def get_daily_summaries(ctx: ContextDep) -> GetSummariesRes:
+    """Return all daily summaries for all the available equities.
+    
+    Args:
+        ctx (ContextDep): Context FASTApi dependency.
+
+    Returns:
+        (GetSummariesRes): Requested summaries response.
+
+    """
     exchange = ctx.exchange
 
     summaries = []
@@ -141,7 +194,4 @@ def get_daily_summaries(ctx: ContextDep):
         summaries.append(summary)
 
 
-    return GetBulkSummaries(summaries=summaries)
-
-    
-   
+    return GetSummariesRes(summaries=summaries)
