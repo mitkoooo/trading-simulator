@@ -13,9 +13,6 @@ This project implements a discrete-time stock trading simulator designed to mode
 - **Portfolio Management**  
   Per-user asset tracking, cash balance updates, and transaction logs for auditability.
 
-- **Performance Metrics**  
-  Tools for computing profitability, drawdown, and Sharpe ratio of trading strategies.
-
 - **Extensible Architecture**  
   Designed for future support of multiple instruments, order types (e.g., stop-loss), and real-time GUI dashboards.
 
