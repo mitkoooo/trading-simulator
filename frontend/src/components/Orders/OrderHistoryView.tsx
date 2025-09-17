@@ -18,8 +18,10 @@ const OrderHistoryView = ({
   );
 
   const maxLines = 10;
-  const maxPageNumber =
-    Math.ceil(Object.values(orderHistory).length / maxLines) - 1;
+  const maxPageNumber = Math.ceil(
+    Object.values(orderHistory).length / maxLines,
+  );
+
   const [pageNumber, setPageNumber] = useState<number>(0);
 
   const handleClickPrev = () => {

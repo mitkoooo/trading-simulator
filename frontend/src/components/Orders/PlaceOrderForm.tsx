@@ -129,13 +129,19 @@ const PlaceOrderForm = ({
             type="button"
             value={"BUY"}
             className={`w-full transition-colors duration-100 ${currentSide === "sell" ? "bg-neutral-800 text-neutral-500 hover:bg-gray-700" : "bg-neutral-600"}`}
-            onClick={() => setValue("orderSide", "buy")}
+            onClick={() => {
+              setApiError("");
+              setValue("orderSide", "buy");
+            }}
           />
           <input
             type="button"
             value={"SELL"}
             className={`w-full p-1 transition-all duration-100 ${currentSide === "buy" ? "bg-neutral-800 text-neutral-500 hover:bg-gray-700" : "bg-neutral-600"}`}
-            onClick={() => setValue("orderSide", "sell")}
+            onClick={() => {
+              setApiError("");
+              setValue("orderSide", "sell");
+            }}
           />
         </div>
         <div className="infline-flex mb-2 w-full items-center justify-start">
@@ -144,6 +150,7 @@ const PlaceOrderForm = ({
             value={"MARKET"}
             className={`border-divider mr-4 w-20 p-2 text-sm focus:outline-none ${currentType === "market" ? "bg-zinc-800" : "bg-card"}`}
             onClick={() => {
+              setApiError("");
               setValue("limitPrice", null);
               setValue("orderType", "market");
             }}
@@ -152,7 +159,10 @@ const PlaceOrderForm = ({
             type="button"
             value={"LIMIT"}
             className={`bg-card border-divider w-20 p-2 text-sm focus:outline-none ${currentType === "limit" ? "bg-zinc-800" : "bg-card"}`}
-            onClick={() => setValue("orderType", "limit")}
+            onClick={() => {
+              setApiError("");
+              setValue("orderType", "limit");
+            }}
           />
         </div>
         <p
@@ -197,6 +207,11 @@ const PlaceOrderForm = ({
           </p>
         </div>
         {/* ── Price ── */}
+        {apiError && (
+          <p className="text-error h-[1.25rem] text-sm">
+            {apiError.replaceAll("\'", "")}
+          </p>
+        )}
         <div
           className={`transition‐all duration‐200 overflow‐hidden ${currentType === "market" ? "opacity-0" : "h-auto"}`}
         >
@@ -212,6 +227,7 @@ const PlaceOrderForm = ({
                   currentType === "limit"
                     ? (v !== null && v > 0) || "Please enter valid limit price"
                     : true,
+                onChange: () => setApiError(""),
               }}
               render={({ field }) => {
                 const safeValue = field.value ?? "";
@@ -247,14 +263,11 @@ const PlaceOrderForm = ({
               </button>
             </div>
           </div>
-
-          <p className="text-error my-1 h-[1.25rem] text-sm">
+          <p className="text-error mt-1 h-[1.25rem] text-sm">
             {errors?.limitPrice?.message ?? "\u00A0"}
-          </p>
+          </p>{" "}
         </div>
-        {apiError && (
-          <p className="text-error h-[1.25rem] text-sm">{apiError}</p>
-        )}
+
         <div className="absolute right-0 bottom-[2%] left-0 mx-12 inline-flex">
           <PlaceOrderButton
             currentState={{
