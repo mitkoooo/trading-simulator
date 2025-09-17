@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { isAuthenticated } from "../api/auth";
 import { API_BASE } from "../config/api";
+import { usePortfolioDataStore } from "../stores/portfolioDataStore";
 
 // ——— Types ———
 interface LoginFormData {
@@ -37,6 +38,7 @@ function Login() {
   const router = useRouter();
   const search = useSearch({ from: "/login" });
   const [error, setError] = useState(null);
+  const setTraderId = usePortfolioDataStore((s) => s.setTraderId);
 
   const handleLoginSubmit: SubmitHandler<LoginFormData> = async (
     data: LoginFormData,
@@ -50,6 +52,7 @@ function Login() {
     });
 
     if (res.ok) {
+      setTraderId(trader_id);
       router.history.push(search.redirect ?? "/");
     } else {
       const errorData = await res.json(); // 👈 this parses the error body
@@ -64,7 +67,6 @@ function Login() {
       <h3 className="mb-2 text-lg font-semibold">
         Please log in before continuing
       </h3>
-
       <form
         onSubmit={handleSubmit(handleLoginSubmit)}
         className="flex items-end"
@@ -95,7 +97,14 @@ function Login() {
       {errors.trader_id && (
         <p className="mt-1 text-sm text-red-600">{errors.trader_id.message}</p>
       )}
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      <p className="mt-2 text-sm text-gray-400">
+        Note: trader ID is either 1 or 2.
+      </p>{" "}
+      {error && (
+        <p className="mt-1 text-sm text-red-600">
+          {error.replaceAll("\'", "")}
+        </p>
+      )}
     </div>
   );
 }

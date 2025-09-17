@@ -219,7 +219,7 @@ def login(data: LoginRequest, ctx: ContextDep) -> LoginResponse:
 
     try:
         ctx.session.login(id)
-    except ValueError as e:
+    except KeyError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     
     res = LoginResponse(status=status.HTTP_200_OK, trader_id=id)

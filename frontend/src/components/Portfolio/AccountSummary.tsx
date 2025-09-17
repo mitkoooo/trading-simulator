@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePortfolioDataStore } from "../../stores/portfolioDataStore";
 import { formatNumber } from "../../utils/utils";
 import PortfolioView from "./PortfolioView";
 import { useMarketDataStore } from "../../stores/marketDataStore";
-import type { Quote } from "../../types/domain";
+import type { Position, Quote } from "../../types/domain";
 
 type AccountSummaryProps = {
   className?: string;
@@ -15,15 +15,21 @@ const AccountSummary = ({
   const fetchPortfolioData = usePortfolioDataStore(
     (state) => state.fetchPortfolioData,
   );
-  const portfolio = usePortfolioDataStore((state) => state.portfolio);
-  const positions = portfolio.positions;
+  const positions =
+    usePortfolioDataStore((state) => state?.portfolio?.positions) ?? [];
+  const realizedPnL =
+    usePortfolioDataStore((s) => s?.portfolio?.realizedPnL) ?? 0;
+  const portfolioValue = usePortfolioDataStore((s) => s?.portfolio?.value) ?? 0;
+  const cash = usePortfolioDataStore((s) => s?.portfolio?.cash) ?? 0;
+
   const quotes: Record<string, Quote> = useMarketDataStore((s) => s.quotes);
 
-  let unrealizedPnL = 0;
-  for (const p of positions) {
-    const price: number = quotes[p.symbol].lastPrice ?? 0;
-    unrealizedPnL += (price - p.avg_price) * p.qty;
-  }
+  const unrealizedPnL = useMemo(() => {
+    return positions?.reduce((acc, p) => {
+      const price = quotes[p.symbol]?.lastPrice ?? 0;
+      return acc + (price - p.avg_price) * p.qty;
+    }, 0);
+  }, [positions, quotes]);
 
   useEffect(() => {
     (async () => {
@@ -52,17 +58,13 @@ const AccountSummary = ({
           <span className="tracking-wider text-neutral-400 uppercase">
             cash
           </span>
-          <span className="font-semibold">
-            ${formatNumber(portfolio?.cash ?? 0)}
-          </span>
+          <span className="font-semibold">${formatNumber(cash)}</span>
         </div>
         <div className="mx-1 flex flex-row items-center justify-between py-1">
           <span className="tracking-wider text-neutral-400 uppercase">
             portfolio value
           </span>
-          <span className="font-semibold">
-            ${formatNumber(portfolio?.value ?? 0)}
-          </span>
+          <span className="font-semibold">${formatNumber(portfolioValue)}</span>
         </div>
         <div className="mx-1 flex flex-row items-center justify-between py-1">
           <span className="tracking-wider text-neutral-400 uppercase">
@@ -74,9 +76,8 @@ const AccountSummary = ({
         </div>
         <div className="mx-1 flex flex-row items-center justify-between py-1">
           <span className="tracking-wider text-neutral-400 uppercase">p&l</span>
-          <span className={`font-semibold ${pnlCSS(portfolio?.realizedPnL)}`}>
-            {pnlSign(portfolio?.realizedPnL)}$
-            {pnlPlaceholder(portfolio?.realizedPnL)}
+          <span className={`font-semibold ${pnlCSS(realizedPnL)}`}>
+            {pnlSign(realizedPnL)}${pnlPlaceholder(realizedPnL)}
           </span>
         </div>
       </div>

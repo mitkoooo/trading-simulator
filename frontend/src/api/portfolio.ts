@@ -27,7 +27,7 @@ export async function getPortfolio(
 
 export async function getOrderHistory(
   trader_id: string,
-): Promise<GetOrderHistoryResponse> {
+): Promise<GetOrderHistoryResponse | undefined> {
   try {
     const res = await fetch(`${API_BASE}/users/${trader_id}/orders/history`, {
       method: "GET",
@@ -46,14 +46,13 @@ export async function getOrderHistory(
     }
   } catch (err: unknown) {
     console.error(err);
-    throw err;
   }
 }
 
 export async function getOrders(
   trader_id: string,
   status: string,
-): Promise<GetOrdersResponse> {
+): Promise<GetOrdersResponse | undefined> {
   try {
     const res = await fetch(
       `${API_BASE}/users/${trader_id}/orders?status=${status}`,
@@ -75,6 +74,5 @@ export async function getOrders(
     }
   } catch (err: unknown) {
     console.error(err);
-    throw err;
   }
 }

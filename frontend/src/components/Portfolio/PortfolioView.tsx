@@ -45,7 +45,7 @@ const PortfolioView = ({
         </thead>
         <tbody>
           {portfolio &&
-            portfolio.positions.map((position, i) => {
+            portfolio?.positions?.map((position, i) => {
               return (
                 <PortfolioEntry
                   entry={position}

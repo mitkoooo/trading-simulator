@@ -411,14 +411,6 @@ class Exchange:
             self.avg_service_time * (self.trade_num[0] - 1) + delta
         ) / self.trade_num[0]
 
-        if self.trade_num[0] % 100 == 0:
-            print(f"""Trades handled so far:
-                        {self.trade_num[0]}
-                      Time passed since last 100:
-                        {delta} ms
-                      Avg service time for 100 orders:
-                        {self.avg_service_time} ms""")
-
         self.trade_num = (self.trade_num[0], datetime.now())
 
         # Store last trade price in the order book

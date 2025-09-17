@@ -10,6 +10,7 @@ interface PortfolioDataStore {
   orderHistory: Record<string, OrderInfo>;
   pendingOrders: Record<string, Order>;
   fetchTraderId: () => Promise<string>;
+  setTraderId: (traderId: string) => void;
   fetchPortfolioData: () => Promise<void>;
   upsertOrderHistory: () => Promise<void>;
   fetchPendingOrders: () => Promise<void>;
@@ -30,6 +31,9 @@ export const usePortfolioDataStore = create<PortfolioDataStore>((set, get) => ({
     const traderId = await getTraderId();
     set({ traderId: traderId });
     return traderId;
+  },
+  setTraderId: (traderId: string) => {
+    set({ traderId: traderId });
   },
   fetchPortfolioData: async () => {
     if (!get().traderId) {
@@ -57,6 +61,9 @@ export const usePortfolioDataStore = create<PortfolioDataStore>((set, get) => ({
     const traderId = get().traderId;
     if (!traderId) return;
     const newData = await getOrderHistory(traderId);
+
+    if (!newData) return;
+
     const orderHistory = newData.history;
 
     set((s) => {
@@ -86,6 +93,9 @@ export const usePortfolioDataStore = create<PortfolioDataStore>((set, get) => ({
     const traderId = get().traderId;
     if (!traderId) return;
     const newData = await getOrders(traderId, "pending");
+
+    if (!newData) return;
+
     const pendingOrders = newData.orders;
 
     set((s) => {

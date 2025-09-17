@@ -14,7 +14,5 @@ export async function getDailySummaries() {
 
   const data: GetDailySummaryResponse = await res.json();
 
-  console.log(data);
-
   return data;
 }

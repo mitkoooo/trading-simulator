@@ -18,7 +18,7 @@ const OrderHistoryView = ({
   );
 
   const maxLines = 10;
-  const maxPageNumber = Math.ceil(
+  const maxPageNumber = Math.floor(
     Object.values(orderHistory).length / maxLines,
   );
 
