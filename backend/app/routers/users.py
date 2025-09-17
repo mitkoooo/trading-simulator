@@ -397,26 +397,50 @@ def get_trader_orders(trader_id: str, order_status: OrderStatusDep,
                 detail="Not allowed to view this trader's orders."
             )
 
-    if order_status == "pending":
-        orders: dict[str, Order] = trader.pending_orders
-        orders_filtered = orders.values()
-    else:
-        orders: dict[str, Order] = trader.transaction_log
-
-        if order_status:
-            orders_filtered = [o for o in orders.values() if
-                               o.status == order_status]
-        else:
-            orders_filtered = orders.values()
-    
+    order_history: dict[str, OrderInfo] = trader.transaction_log
+    pending_orders: dict[str, Order] = trader.pending_orders
     orders_res: list[OrderDTO] = []
 
-    for o in orders_filtered:
-        orders_res.append(OrderDTO(mpid=o.mpid, symbol=o.symbol,
-                                   order_type=o.order_type, status=o.status,
-                                   quantity=o.quantity,
-                                   limit_price=o.limit_price,
-                                   order_id=o.order_id, timestamp=o.timestamp))
+    if order_status == "pending":
+        orders = pending_orders.values()
+
+        for o in orders:
+            orders_res.append(OrderDTO(mpid=o.mpid, symbol=o.symbol,
+                                       order_type=o.order_type,
+                                       status=o.status,
+                                       quantity=o.quantity,
+                                       limit_price=o.limit_price,
+                                       order_id=o.order_id,
+                                       timestamp=o.timestamp))
+
+    elif order_status and order_status != "pending":
+        orders_filtered = [o for o in order_history.values() if
+                  o.status == order_status]
+
+        for o_info in orders_filtered:
+            orders_res.append(OrderDTO(mpid=o_info.mpid, symbol=o_info.symbol,
+                                       order_type=o_info.order_type,
+                                       status=o_info.status,
+                                       quantity=o_info.fill_qty,
+                                       limit_price=o_info.avg_fill_price,
+                                       order_id=o_info.order_id,
+                                       timestamp=o_info.timestamp))
+
+
+    else: 
+        orders = order_history.values()
+    
+        for o in orders:
+            orders_res.append(OrderDTO(mpid=o.mpid, symbol=o.symbol,
+                                       order_type=o.order_type,
+                                       status=o.status,
+                                       quantity=o.quantity,
+                                       limit_price=o.limit_price,
+                                       order_id=o.order_id,
+                                       timestamp=o.timestamp))
+
+
+
 
     res = GetOrdersResponse(status=status.HTTP_200_OK,
                             orders=orders_res)

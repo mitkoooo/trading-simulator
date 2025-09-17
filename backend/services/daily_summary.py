@@ -24,7 +24,7 @@ class DailySummary(BaseModel):
     previous_close: float
 
 @lru_cache(maxsize=1)
-def _load_all_data() -> dict[str, dict[str, dict]]:
+def _load_all_data() -> dict[date, dict[str, dict]]:
     """Return a nested dict.
 
     { "YYYY-MM-DD": { "SYMBOL": {open:…, previous_close:…}, … }, … }
