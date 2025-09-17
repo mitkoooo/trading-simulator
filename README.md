@@ -10,17 +10,8 @@ This project implements a discrete-time stock trading simulator designed to mode
   A custom order book that maintains sorted maps of buy and sell prices each pointing to FIFO queues of limit orders,
   alongside separate FIFO queues for market‐price buys and sells—fully enforcing price‐time priority.
 
-- **Market Simulation**  
-  Time-stepped engine capable of replaying historical stock price data and processing market events deterministically.
-
 - **Portfolio Management**  
   Per-user asset tracking, cash balance updates, and transaction logs for auditability.
-
-- **Strategy API**  
-  Interface for automated trading bots to interact with the market based on user-defined heuristics or models.
-
-- **Profit Optimization Tool**  
-  Integration of Kadane’s algorithm and dynamic programming to determine optimal trade windows.
 
 - **Performance Metrics**  
   Tools for computing profitability, drawdown, and Sharpe ratio of trading strategies.
