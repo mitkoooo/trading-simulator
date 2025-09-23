@@ -82,7 +82,7 @@ npm install --global yarn
 
 ```bash
 git clone https://github.com/vadimmitko/trading-simulator.git
-cd trading-simulator
+cd stock-exchange-sim
 
 # 1) Backend
 cd backend
@@ -144,7 +144,7 @@ Order placed for AAPL.
 [2025-05-28 10:15:00] Pending Buy Order: 5 shares of AAPL at $150.00.
 
 >>> quit
-Thank you for using York Stock Exchange.
+Thank you for using Ghostswap.
 ```
 
 ---
