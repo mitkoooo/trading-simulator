@@ -1,6 +1,6 @@
-# Stock Trading Simulator
+# Stock Exchange Simulator
 
-This project implements a discrete-time stock trading simulator designed to model the behavior of a simplified exchange environment. It provides a priority–queue–based matching engine for buy and sell orders, portfolio tracking for users, and infrastructure for evaluating strategies over historical price data.
+This project implements a discrete-time stock exchange simulator designed to model the behavior of a simplified exchange environment. It provides a priority–queue–based matching engine for buy and sell orders, portfolio tracking for users.
 
 ---
 
