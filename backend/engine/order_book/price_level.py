@@ -41,7 +41,7 @@ class PriceLevel(OrderQueue):
     def dequeue(self) -> Order | None:
         """Remove and return the order at the front of the queue.
 
-        Returns:
+        Return:
             Order or None:
                 The oldest order in queue, `None` if queue is empty.
 

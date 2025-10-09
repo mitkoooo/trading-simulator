@@ -6,6 +6,7 @@ import OrderHistoryView from "../../components/Orders/OrderHistoryView";
 import MiniTicker from "../../components/MarketData/MiniTicker";
 import AccountSummary from "../../components/Portfolio/AccountSummary";
 import PendingOrdersView from "../../components/Orders/PendingOrdersView";
+import StockView from "../../components/MarketData/StockView";
 
 export const Route = createFileRoute("/_authenticated/")({ component: Index });
 
@@ -16,7 +17,7 @@ function Index() {
       <div className="grid min-w-[1080px] flex-1 grid-cols-3 text-nowrap">
         <div className="flex flex-col">
           <MarketDataView className="flex-1" />
-          <div className="flex-1"></div>
+          <StockView className="flex-1" />
         </div>
         <div className="flex flex-col">
           <PlaceOrderForm className="flex-1" />

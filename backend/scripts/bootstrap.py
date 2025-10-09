@@ -141,8 +141,8 @@ async def bootstrap(
             ask_price = _get_seed_price(symbol, i, "sell")
 
             for _ in range(1, 100):
-                bid = Order("SEED", symbol, "buy", 100, bid_price)
-                ask = Order("SEED", symbol, "sell", 100, ask_price)
+                bid = Order("SEED", symbol, "buy", 10000, bid_price)
+                ask = Order("SEED", symbol, "sell", 10000, ask_price)
 
                 await exchange.add_order(bid)
                 await exchange.add_order(ask)

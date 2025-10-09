@@ -61,7 +61,7 @@ class RetailPoisson(BaseBot):
         self._mpid = mpid
         self._running = False
 
-        self.exchange.subscribe(f"book_update{symbol}", self.update_mid)
+        self.exchange.subscribe(f"book_update:{symbol}", self.update_mid)
     
     @property
     def mpid(self) -> str:

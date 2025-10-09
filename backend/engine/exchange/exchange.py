@@ -1,6 +1,6 @@
 import asyncio
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from engine.exchange.participant_info import ParticipantInfo
 from engine.exchange.risk_gateway import RiskGateway
@@ -71,6 +71,8 @@ class Exchange:
         self._subscriptions: dict[str, list[Callable]] = {}
 
         self.current_time = datetime.now()
+        self._stats_interval = timedelta(seconds=1)
+        self._stats_last_trade_num = 0 
 
     def register_instrument(self, stock: Stock) -> None:
         """Register a new instrument on the exchange.
@@ -412,6 +414,12 @@ class Exchange:
         ) / self.trade_num[0]
 
         self.trade_num = (self.trade_num[0], datetime.now())
+
+        if datetime.now() - self.current_time > self._stats_interval:
+            delta_trade_num = self.trade_num[0] - self._stats_last_trade_num
+            print(f"Engine: {delta_trade_num} orders / sec")
+            self._stats_last_trade_num = self.trade_num[0]
+            self.current_time = datetime.now()
 
         # Store last trade price in the order book
         self.order_books[symbol].last_trade_price = trade.price
