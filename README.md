@@ -40,7 +40,7 @@ trading-simulator/
 │   ├── pyproject.toml
 │   ├── uv.lock
 │   └── Dockerfile
-├── frontend/                   # TypeScript React/Vite or Next.js UI
+├── frontend/                   # TypeScript React UI
 │   ├── public/
 │   ├── src/
 │   ├── package.json
