@@ -30,10 +30,6 @@ frontend/.tanstack/
 dist/
 .vite/
 
-
-# ── Yarn error logs ───────────────────────────────────
-yarn-error.log
-
 # ── IDE / Editor folders ─────────────────────────────
 .vscode/
 !.vscode/extensions.json
