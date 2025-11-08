@@ -4,7 +4,7 @@ type LogoProps = {
 
 const Logo = ({ className }: LogoProps): React.JSX.Element => (
   <span className={`${className} font-logo text-md tracking-wider select-none`}>
-    GHOSTSWAP
+    STOCK EXCHANGE TERMINAL
   </span>
 );
 

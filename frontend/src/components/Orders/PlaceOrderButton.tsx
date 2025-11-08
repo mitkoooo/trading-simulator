@@ -21,7 +21,7 @@ const PlaceOrderButton = ({
 
   return (
     <button
-      className={`w-full p-3 ${currentSide === "sell" ? SellCSS : BuyCSS} focus:outline-accent w-full duration-150 focus:outline-1`}
+      className={`w-full p-2 ${currentSide === "sell" ? SellCSS : BuyCSS} focus:outline-accent w-full duration-150 focus:outline-1`}
       type="submit"
     >
       {formattedAction} {currentQuantity ? currentQuantity + " " : ""}

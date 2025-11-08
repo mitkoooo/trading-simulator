@@ -9,6 +9,21 @@ from engine.market_data.quote import MarketQuote
 from services.daily_summary import DailySummary
 
 
+class StockDTO(BaseModel):
+    """Schema for `Stock`.
+
+    Attributes:
+        symbol (str):
+            A ticker symbol (eg. AAPL or MSFT).
+
+        history (list[float]):
+            Historical prices of the stock.
+
+    """
+
+    symbol: str
+    history: list[tuple[float, datetime]]
+
 class QuoteDTO(BaseModel):
     """Schema for `MarketQuote`.
 
@@ -84,12 +99,77 @@ class GetSummaryRes(BaseModel):
 
     summary: DailySummary
 
+class GetStockRes(BaseModel):
+    """Schema for get all traded stocks on the exchange.
+    
+    Attributes:
+        stocks (list[StockDTO]):
+            All traded stocks on the exchange. 
+
+    """
+
+    stock: StockDTO
+
+
+class GetStocksRes(BaseModel):
+    """Schema for get all traded stocks on the exchange.
+    
+    Attributes:
+        stocks (list[StockDTO]):
+            All traded stocks on the exchange. 
+
+    """
+
+    stocks: list[StockDTO] 
+
 router = APIRouter(prefix="/v1/market-data", tags=["core"])
 
 
 # ——— HTTP Endpoints ———
+@router.get("/stocks/{symbol}")
+def get_stock(ctx: ContextDep, symbol: str) -> GetStockRes:
+    """Return stock's price history.
 
-@router.get("/quotes/{symbol:^[A-Z]+$}")
+    Args:
+        ctx (ContextDep): Context FASTApi dependency.
+        symbol (str): A ticker symbol.
+
+    Raises:
+        (HTTPException): If ticker symbol is invalid.
+
+    """
+    if symbol not in ctx.exchange.instruments:
+            raise HTTPException(status_code=HTTP_404_NOT_FOUND,
+                                detail="Symbol not found.")
+    exchange = ctx.exchange
+    price_histories = exchange.price_histories
+    history = price_histories.get(symbol, [])
+    return GetStockRes(
+            stock=StockDTO(symbol=symbol, history=history))
+
+
+@router.get("/stocks")
+def get_stocks(ctx: ContextDep) -> GetStocksRes:
+    """Return all stock price histories.
+
+    Args:
+        ctx (ContextDep): Context FASTApi dependency.
+
+    """
+    exchange = ctx.exchange
+    price_histories = exchange.price_histories
+    stocks = []
+    print(price_histories.items())
+    for symbol, history in price_histories.items():
+        print(symbol, history)
+        stocks.append(StockDTO(
+            symbol=symbol,
+            history=history))
+    return GetStocksRes(
+            stocks=stocks)
+
+
+@router.get("/quotes/{symbol}")
 def get_quote(ctx: ContextDep, symbol: str) -> QuoteDTO:
     """Return a market quote for an equity.
     

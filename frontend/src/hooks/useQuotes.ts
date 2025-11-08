@@ -23,8 +23,6 @@ async function fetchQuotes(): Promise<Quote[]> {
     quotes: QuoteDTO[];
   };
 
-  console.log(data);
-
   return data.quotes.map((q) => ({
     symbol: q.symbol,
     bidPrice: q.bid_price,
