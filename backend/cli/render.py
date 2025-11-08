@@ -15,7 +15,7 @@ HELP_MENU = """
     """
 
 WELCOME_MESSAGE = f"""
-GHOSTSWAP TERMINAL
+STOCK EXCHANGE TERMINAL
 
 Please log in with your Trader ID before issuing any other commands.
 {HELP_MENU}"""

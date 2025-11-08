@@ -383,11 +383,11 @@ def log_quit(ctx: AppContext) -> None:
 
     Examples:
         >>> log_quit() # doctest: +NORMALIZE_WHITESPACE
-        Thank you for using York Stock Exchange.
+        Thank you for using Stock Exchange.
 
     """
     logger = ctx.logger
     assert logger
 
-    print("\nThank you for using York Stock Exchange.")
-    logger.info("York Stock Exchange CLI shutting down")
+    print("\nThank you for using Stock Exchange.")
+    logger.info("Stock Exchange CLI shutting down")

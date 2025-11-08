@@ -47,7 +47,7 @@ def log_command_factory(logger: Logger) -> Callable:
 
 
 class CLI:
-    """Read-Eval-Print Loop for the York Stock Exchange CLI.
+    """Read-Eval-Print Loop for the Stock Exchange CLI.
 
     Manages user input and dispatches commands to the appropriate handlers.
 
