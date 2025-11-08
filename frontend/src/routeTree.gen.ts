@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedLogoutRouteImport } from './routes/_authenticated/logout'
 
 const LoginRoute = LoginRouteImport.update({
@@ -29,11 +28,6 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
-  id: '/orders',
-  path: '/orders',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedLogoutRoute = AuthenticatedLogoutRouteImport.update({
   id: '/logout',
   path: '/logout',
@@ -43,13 +37,11 @@ const AuthenticatedLogoutRoute = AuthenticatedLogoutRouteImport.update({
 export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/logout': typeof AuthenticatedLogoutRoute
-  '/orders': typeof AuthenticatedOrdersRoute
   '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/logout': typeof AuthenticatedLogoutRoute
-  '/orders': typeof AuthenticatedOrdersRoute
   '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
@@ -57,20 +49,18 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/logout': typeof AuthenticatedLogoutRoute
-  '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/login' | '/logout' | '/orders' | '/'
+  fullPaths: '/login' | '/logout' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/logout' | '/orders' | '/'
+  to: '/login' | '/logout' | '/'
   id:
     | '__root__'
     | '/_authenticated'
     | '/login'
     | '/_authenticated/logout'
-    | '/_authenticated/orders'
     | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
@@ -102,13 +92,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/orders': {
-      id: '/_authenticated/orders'
-      path: '/orders'
-      fullPath: '/orders'
-      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/logout': {
       id: '/_authenticated/logout'
       path: '/logout'
@@ -121,13 +104,11 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedLogoutRoute: typeof AuthenticatedLogoutRoute
-  AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedLogoutRoute: AuthenticatedLogoutRoute,
-  AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 

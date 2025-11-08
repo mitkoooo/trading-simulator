@@ -13,9 +13,7 @@ export interface Portfolio {
 
 export interface Stock {
   symbol: string;
-  price: number;
-  volatility: number;
-  history: number[];
+  history: [number, string][];
 }
 
 export interface Order {

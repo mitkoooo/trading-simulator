@@ -13,15 +13,6 @@ services:
       - backend
     environment:
       - NODE_ENV=development
-    # develop:
-    #  watch:
-    #   - action: sync
-    #      path: ./frontend
-    #      target: /app
-    #      ignore:
-    #        - node_modules/
-    #    - action: rebuild
-    #      path: ./frontend/package.json
 
   backend:
     build:
@@ -31,22 +22,11 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # - ./backend:/app
+      - ./backend:/app
       - /app/.venv
       - uv-cache:/root/.cache/uv
     environment:
       - PYTHONUNBUFFERED=1
-    develop:
-      watch:
-        - action: sync
-          path: ./backend
-          target: /app
-          ignore:
-            - .venv/
-            - __pycache__/
-            - "*.pyc"
-        - action: rebuild
-          path: ./backend/pyproject.toml
 
 volumes:
   uv-cache:

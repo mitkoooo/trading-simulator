@@ -54,8 +54,8 @@ market_makers:
       AAPL: 0
     # - init parameters -
     symbol: AAPL
-    base_size: 100
-    inv_limit: 200
+    base_size: 5000
+    inv_limit: 10000
     alpha: 0.8
     beta: 0.35
     gamma: 1
@@ -273,8 +273,8 @@ retail_bots:
     initial_positions:
       AAPL: 0
     # - init parameters -
-    limit_rate: 1000 # passive limit orders/sec
-    market_rate: 200 # market orders/sec
+    limit_rate: 300 # passive limit orders/sec
+    market_rate: 50 # market orders/sec
     quantity_range: [1, 10] # shares per order
     tick_size: 0.02
     market_probability: 0.3 # 30% of events are market orders
@@ -297,8 +297,8 @@ retail_bots:
     initial_positions:
       MSFT: 0
     # - init parameters -
-    limit_rate: 1000
-    market_rate: 200
+    limit_rate: 300
+    market_rate: 50
     quantity_range: [1, 10]
     tick_size: 0.02
     market_probability: 0.3

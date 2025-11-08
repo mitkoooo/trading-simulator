@@ -55,6 +55,7 @@ class Exchange:
         """
         self.name: str = "GhostSwap"
         self.instruments: dict[str, Stock] = {}
+        self.price_histories: dict[str, list[tuple[float, datetime]]] = {}
         self.order_books: dict[str, OrderBook] = {}
         self.market_participants: dict[str, ParticipantInfo] = {}
 
@@ -360,6 +361,15 @@ class Exchange:
         )
         self.quotes[symbol] = quote
 
+        last_entry = self.price_histories.get(symbol,
+                        [(0, datetime.fromtimestamp(0))])[-1]
+        prev_timestamp = last_entry[1]
+
+        if (datetime.now() - prev_timestamp > self._stats_interval 
+            and quote.last_price):
+            self.price_histories.setdefault(symbol, []).append(
+                (quote.last_price, quote.timestamp))
+
         for mpid in mpids:
             self._dispatch(topic + ":" + mpid, trade)
 
@@ -415,11 +425,11 @@ class Exchange:
 
         self.trade_num = (self.trade_num[0], datetime.now())
 
-        if datetime.now() - self.current_time > self._stats_interval:
-            delta_trade_num = self.trade_num[0] - self._stats_last_trade_num
-            print(f"Engine: {delta_trade_num} orders / sec")
-            self._stats_last_trade_num = self.trade_num[0]
-            self.current_time = datetime.now()
+        #if datetime.now() - self.current_time > self._stats_interval:
+        #    delta_trade_num = self.trade_num[0] - self._stats_last_trade_num
+        #    print(f"Engine: {delta_trade_num} orders / sec")
+        #    self._stats_last_trade_num = self.trade_num[0]
+        #    self.current_time = datetime.now()
 
         # Store last trade price in the order book
         self.order_books[symbol].last_trade_price = trade.price

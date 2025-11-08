@@ -14,18 +14,16 @@ function Index() {
   return (
     <div className="flex flex-1 flex-col">
       <MiniTicker />
-      <div className="grid min-w-[1080px] flex-1 grid-cols-3 text-nowrap">
-        <div className="flex flex-col">
-          <MarketDataView className="flex-1" />
-          <StockView className="flex-1" />
+      <div className="flex min-w-[1080px] grow-1 text-nowrap">
+        <div className="border-divider flex w-96 shrink-0 flex-col border-x border-b">
+          <AccountSummary className="border-divider flex-1 border-b" />
+          <OrderHistoryView className="border-divider flex-1 border-b" />
         </div>
-        <div className="flex flex-col">
-          <PlaceOrderForm className="flex-1" />
-          <PendingOrdersView className="flex-1" />
-        </div>
-        <div className="flex flex-col">
-          <AccountSummary className="flex-1" />
-          <OrderHistoryView className="flex-1" />
+        <StockView className="grow-1" />
+        <div className="border-divider flex w-96 shrink-0 flex-col border-x border-b">
+          <PlaceOrderForm className="border-divider flex-1 border-b" />
+          <PendingOrdersView className="border-divider flex-1 border-b" />
+          <MarketDataView className="border-divider flex-1 border-b" />
         </div>
       </div>
     </div>

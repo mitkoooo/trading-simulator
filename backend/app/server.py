@@ -1,3 +1,4 @@
+
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -30,8 +31,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     try:
         yield
     finally:
-        await app.state.context.bot_manager.stop_all()
-        await app.state.context.exchange.stop()
+        pass
 
 app = FastAPI(title="GhostSwap API", lifespan=lifespan)
 

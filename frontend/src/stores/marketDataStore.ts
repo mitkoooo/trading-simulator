@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Quote } from "../types/domain";
+import type { Quote, Stock } from "../types/domain";
 
 export interface DailySummary {
   symbol: string;
@@ -8,9 +8,11 @@ export interface DailySummary {
 }
 
 interface MarketDataState {
+  stocks: Record<string, Stock>;
   quotes: Record<string, Quote>;
   dailySummaries: Record<string, DailySummary>;
 
+  setStocks: (ss: Stock[]) => void;
   upsertSummary: (summary: DailySummary) => void;
   upsertQuote: (q: Quote) => void;
 
@@ -19,8 +21,16 @@ interface MarketDataState {
 }
 
 export const useMarketDataStore = create<MarketDataState>((set) => ({
+  stocks: {},
   quotes: {},
   dailySummaries: {},
+  setStocks: (ss) =>
+    set((s) => {
+      for (const stock of ss) {
+        s.stocks[stock.symbol] = stock;
+      }
+      return s;
+    }),
   upsertQuote: (q) => set((s) => ({ quotes: { ...s.quotes, [q.symbol]: q } })),
   upsertSummary: (summ) =>
     set((s) => ({

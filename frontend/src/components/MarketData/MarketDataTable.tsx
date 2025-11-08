@@ -1,5 +1,6 @@
 import { useQuotes } from "../../hooks/useQuotes";
 import { useMarketDataStore } from "../../stores/marketDataStore";
+import { useStockViewDataStore } from "../../stores/stockViewDataStore";
 import type { Quote } from "../../types/domain";
 
 type MarketDataTableProps = {
@@ -9,9 +10,10 @@ type MarketDataTableProps = {
 const MarketDataTable = ({ className }: MarketDataTableProps) => {
   useQuotes();
   const quotes: Record<string, Quote> = useMarketDataStore((s) => s.quotes);
+  const setSelectedSymbol = useStockViewDataStore((s) => s.setSelectedSymbol);
 
   return (
-    <div className={`${className ?? ""} p-1`}>
+    <div className={`${className ?? ""} px-1 pt-1`}>
       <table className="text-sm">
         <colgroup>
           <col className="w-[5%]" />
@@ -44,9 +46,13 @@ const MarketDataTable = ({ className }: MarketDataTableProps) => {
             return (
               <tr
                 key={quote.symbol}
-                className={`${index === quotes.length - 1 ? "" : "border-b"} border-divider`}
+                className={`${index === Object.keys(quotes).length - 1 ? "" : "border-b"} border-divider`}
               >
-                <td className="p-1 text-left">{quote.symbol}</td>
+                <td className="cursor-pointer p-1 text-left transition-all duration-150 hover:font-semibold">
+                  <button onClick={() => setSelectedSymbol(quote.symbol)}>
+                    {quote.symbol}
+                  </button>
+                </td>
                 <td className="p-1 text-right">
                   ${quote?.bidPrice?.toFixed(2)}
                 </td>

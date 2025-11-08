@@ -116,7 +116,7 @@ const PlaceOrderForm = ({
   };
 
   return (
-    <div className={`${className} border-divider relative border-b`}>
+    <div className={`${className} relative`}>
       <h1 className="border-divider mx-2 mb-2 border-b py-1 font-semibold tracking-wide uppercase">
         Order Entry
       </h1>
@@ -268,7 +268,7 @@ const PlaceOrderForm = ({
           </p>{" "}
         </div>
 
-        <div className="absolute right-0 bottom-[2%] left-0 mx-12 inline-flex">
+        <div className="right-0 left-0 mx-12 mb-1 inline-flex">
           <PlaceOrderButton
             currentState={{
               currentSide: currentSide,

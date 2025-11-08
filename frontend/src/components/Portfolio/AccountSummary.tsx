@@ -47,9 +47,7 @@ const AccountSummary = ({
     (pnl ?? 0) > 0 ? "+" : (pnl ?? 0) < 0 ? "-" : "";
 
   return (
-    <div
-      className={`${className} border-divider flex flex-col border-x border-b`}
-    >
+    <div className={`${className} flex flex-col`}>
       <h1 className="border-divider mx-1 border-b py-1 font-semibold tracking-wide">
         ACCOUNT SUMMARY
       </h1>

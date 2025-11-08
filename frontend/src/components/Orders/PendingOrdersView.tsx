@@ -36,7 +36,7 @@ const PendingOrdersView = ({
   }, [fetchPendingOrders]);
 
   return (
-    <div className={`${className} border-divider relative border-x border-b`}>
+    <div className={`${className} relative`}>
       <h1 className="border-divider mx-2 mb-2 border-b py-1 font-semibold tracking-wide uppercase">
         Pending Orders
       </h1>
