@@ -90,7 +90,7 @@ uv sync          # installs Python deps into the container or virtualenv
 
 # 2) Frontend
 cd ../frontend
-yarn install            # installs JS deps
+bun install            # installs JS deps
 
 # 3) Start everything
 cd ..
@@ -114,7 +114,7 @@ python backend/main.py
 You’ll see:
 
 ```text
-GHOSTSWAP TERMINAL
+STOCK EXCHANGE TERMINAL
 
 Please log in with your Trader ID before issuing any other commands.
 
@@ -144,7 +144,7 @@ Order placed for AAPL.
 [2025-05-28 10:15:00] Pending Buy Order: 5 shares of AAPL at $150.00.
 
 >>> quit
-Thank you for using Ghostswap.
+Thank you for using Stock Exchange.
 ```
 
 ---
