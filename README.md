@@ -69,13 +69,13 @@ trading-simulator/
   curl -LsSf https://astral.sh/uv/install.sh | sh
   ```
 
-- **Node.js 18+ & Yarn** (frontend)
-  The UI is built with Vite (or Next.js) and uses Yarn to lock JS deps.
+- **Node.js 18+ & Bun** (frontend)
+  The UI is built with Vite (or Next.js) and uses Bun to lock JS deps.
 
 ```bash
 # macOS/Linux
 
-npm install --global yarn
+npm install --global bun
 ```
 
 ### Clone & get up and running
